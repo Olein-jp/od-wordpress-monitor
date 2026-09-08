@@ -41,4 +41,4 @@ npm run test:php
 
 `npm run test:php` は `.wp-env.test.json` で分離したWordPress PHPUnit環境内でAgent、Monitor、repository、REST APIのテストを実行します。ビルド対象のJavaScript/CSSはPhase 1にないため、フロントエンドbuild commandはありません。
 
-各プラグインの導入手順は [`plugins/monitor/README.md`](plugins/monitor/README.md) と [`plugins/agent/README.md`](plugins/agent/README.md) を参照してください。
+各プラグインの導入手順は [`plugins/monitor/README.md`](plugins/monitor/README.md) と [`plugins/agent/README.md`](plugins/agent/README.md) を参照してください。独立した配布ZIPとGitHub Releaseの運用方法は [`docs/releases.md`](docs/releases.md) にまとめています。
