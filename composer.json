@@ -1,0 +1,26 @@
+{
+  "name": "olein/od-wordpress-monitor",
+  "description": "A WordPress monitoring plugin.",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0-or-later",
+  "authors": [
+    {
+      "name": "Koji Kuno",
+      "homepage": "https://olein-design.com"
+    }
+  ],
+  "require-dev": {
+    "dealerdirect/phpcodesniffer-composer-installer": "^1.2",
+    "wp-coding-standards/wpcs": "^3.4"
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    },
+    "sort-packages": true
+  },
+  "scripts": {
+    "lint": "phpcs",
+    "format": "phpcbf"
+  }
+}

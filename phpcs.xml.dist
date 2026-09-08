@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<ruleset name="OD WordPress Monitor">
+	<description>WordPress Coding Standards for OD WordPress Monitor.</description>
+
+	<file>od-wordpress-monitor.php</file>
+
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+
+	<arg name="basepath" value="."/>
+	<arg name="colors"/>
+	<arg value="ps"/>
+	<arg name="extensions" value="php"/>
+
+	<rule ref="WordPress"/>
+
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="od-wordpress-monitor"/>
+			</property>
+		</properties>
+	</rule>
+</ruleset>
