@@ -7,6 +7,8 @@
   "mappings": {
     "wp-content/od-wordpress-monitor-workspace": "."
   },
+  "port": 8890,
+  "autoPort": true,
   "config": {
     "WP_DEBUG": true,
     "SCRIPT_DEBUG": true

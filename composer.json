@@ -1,7 +1,7 @@
 {
   "name": "olein/od-wordpress-monitor",
-  "description": "A WordPress monitoring plugin.",
-  "type": "wordpress-plugin",
+  "description": "Development tooling for the OD WordPress Monitor monorepo.",
+  "type": "project",
   "license": "GPL-2.0-or-later",
   "authors": [
     {
@@ -9,9 +9,20 @@
       "homepage": "https://olein-design.com"
     }
   ],
+  "require": {
+    "php": ">=8.1"
+  },
   "require-dev": {
     "dealerdirect/phpcodesniffer-composer-installer": "^1.2",
+    "phpunit/phpunit": "^9.6",
+    "yoast/phpunit-polyfills": "^3.1",
     "wp-coding-standards/wpcs": "^3.4"
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Olein\\WordPressMonitor\\": "plugins/monitor/src/",
+      "Olein\\MonitorAgent\\": "plugins/agent/src/"
+    }
   },
   "config": {
     "allow-plugins": {
@@ -20,7 +31,14 @@
     "sort-packages": true
   },
   "scripts": {
+    "install:plugins": [
+      "@composer install --working-dir=plugins/monitor --no-interaction",
+      "@composer install --working-dir=plugins/agent --no-interaction"
+    ],
+    "post-install-cmd": "@install:plugins",
+    "post-update-cmd": "@install:plugins",
     "lint": "phpcs",
-    "format": "phpcbf"
+    "format": "phpcbf",
+    "test": "phpunit -c phpunit.xml.dist"
   }
 }

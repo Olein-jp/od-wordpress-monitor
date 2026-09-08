@@ -1,0 +1,51 @@
+<?php
+/**
+ * Monitor administration hooks.
+ *
+ * @package OD_WordPress_Monitor
+ */
+
+namespace Olein\WordPressMonitor\Admin;
+
+final class Admin {
+	public function __construct(
+		private readonly SitesPage $sites_page,
+		private readonly AddSitePage $add_site_page
+	) {
+	}
+
+	public function register_hooks(): void {
+		add_action( 'admin_menu', array( $this, 'register_menu' ) );
+		add_action( 'admin_post_odm_add_site', array( $this->add_site_page, 'handle_post' ) );
+		add_action( 'admin_post_odm_test_connection', array( $this->sites_page, 'handle_test' ) );
+	}
+
+	public function register_menu(): void {
+		add_menu_page(
+			__( 'WordPress Monitor', 'od-wordpress-monitor' ),
+			__( 'WordPress Monitor', 'od-wordpress-monitor' ),
+			'manage_options',
+			'od-wordpress-monitor',
+			array( $this->sites_page, 'render' ),
+			'dashicons-visibility'
+		);
+
+		add_submenu_page(
+			'od-wordpress-monitor',
+			__( 'Sites', 'od-wordpress-monitor' ),
+			__( 'Sites', 'od-wordpress-monitor' ),
+			'manage_options',
+			'od-wordpress-monitor',
+			array( $this->sites_page, 'render' )
+		);
+
+		add_submenu_page(
+			'od-wordpress-monitor',
+			__( 'Add Site', 'od-wordpress-monitor' ),
+			__( 'Add Site', 'od-wordpress-monitor' ),
+			'manage_options',
+			'od-wordpress-monitor-add',
+			array( $this->add_site_page, 'render' )
+		);
+	}
+}

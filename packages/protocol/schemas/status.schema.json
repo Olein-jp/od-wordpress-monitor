@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://olein-design.com/schemas/od-monitor-agent/v1/status.schema.json",
+  "title": "OD Monitor Agent Status Response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "site", "wordpress", "server", "agent", "timestamp"],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "site": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "home_url", "name"],
+      "properties": {
+        "url": {"type": "string", "format": "uri"},
+        "home_url": {"type": "string", "format": "uri"},
+        "name": {"type": "string"}
+      }
+    },
+    "wordpress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "multisite", "environment"],
+      "properties": {
+        "version": {"type": "string", "minLength": 1},
+        "multisite": {"type": "boolean"},
+        "environment": {"type": "string", "minLength": 1}
+      }
+    },
+    "server": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["php_version"],
+      "properties": {
+        "php_version": {"type": "string", "minLength": 1}
+      }
+    },
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version"],
+      "properties": {
+        "version": {"type": "string", "minLength": 1}
+      }
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

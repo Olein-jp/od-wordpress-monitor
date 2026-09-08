@@ -1,0 +1,28 @@
+{
+  "name": "olein/od-wordpress-monitor",
+  "description": "Administrative client for OD Monitor Agent sites.",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0-or-later",
+  "require": {
+    "php": ">=8.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "Olein\\WordPressMonitor\\": "src/"
+    }
+  },
+  "require-dev": {
+    "dealerdirect/phpcodesniffer-composer-installer": "^1.2",
+    "wp-coding-standards/wpcs": "^3.4"
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    },
+    "sort-packages": true
+  },
+  "scripts": {
+    "lint": "phpcs --standard=../../phpcs.xml.dist .",
+    "format": "phpcbf --standard=../../phpcs.xml.dist ."
+  }
+}

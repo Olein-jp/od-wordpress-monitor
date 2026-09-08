@@ -2,22 +2,38 @@
 <ruleset name="OD WordPress Monitor">
 	<description>WordPress Coding Standards for OD WordPress Monitor.</description>
 
-	<file>od-wordpress-monitor.php</file>
+	<file>plugins</file>
+	<file>tests</file>
 
 	<exclude-pattern>*/node_modules/*</exclude-pattern>
 	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/tests/bootstrap.php</exclude-pattern>
 
 	<arg name="basepath" value="."/>
 	<arg name="colors"/>
 	<arg value="ps"/>
 	<arg name="extensions" value="php"/>
 
-	<rule ref="WordPress"/>
+	<rule ref="WordPress-Core"/>
+	<rule ref="WordPress-Extra"/>
+
+	<!-- PSR-4 and PHPUnit require class-based filenames rather than legacy WP filenames. -->
+	<rule ref="WordPress.Files.FileName.NotHyphenatedLowercase">
+		<exclude-pattern>plugins/*/src/*</exclude-pattern>
+		<exclude-pattern>plugins/*/tests/*Test.php</exclude-pattern>
+		<exclude-pattern>tests/*/*Test.php</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.Files.FileName.InvalidClassFileName">
+		<exclude-pattern>plugins/*/src/*</exclude-pattern>
+		<exclude-pattern>plugins/*/tests/*Test.php</exclude-pattern>
+		<exclude-pattern>tests/*/*Test.php</exclude-pattern>
+	</rule>
 
 	<rule ref="WordPress.WP.I18n">
 		<properties>
 			<property name="text_domain" type="array">
 				<element value="od-wordpress-monitor"/>
+				<element value="od-monitor-agent"/>
 			</property>
 		</properties>
 	</rule>

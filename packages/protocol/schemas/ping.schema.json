@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://olein-design.com/schemas/od-monitor-agent/v1/ping.schema.json",
+  "title": "OD Monitor Agent Ping Response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "success", "agent", "timestamp"],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "success": {
+      "const": true
+    },
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slug", "version"],
+      "properties": {
+        "slug": {
+          "const": "od-monitor-agent"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}
