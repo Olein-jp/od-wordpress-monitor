@@ -46,5 +46,6 @@ new Inc2734\WP_GitHub_Plugin_Updater\Bootstrap(
 );
 
 register_activation_hook( __FILE__, array( Olein\WordPressMonitor\Activation\Activator::class, 'activate' ) );
+register_deactivation_hook( __FILE__, array( Olein\WordPressMonitor\Activation\Activator::class, 'deactivate' ) );
 
 ( new Olein\WordPressMonitor\Plugin() )->register_hooks();

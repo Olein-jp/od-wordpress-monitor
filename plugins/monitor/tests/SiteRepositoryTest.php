@@ -38,4 +38,15 @@ final class SiteRepositoryTest extends \WP_UnitTestCase {
 		$this->assertSame( 'Updated', $this->repository->find( $id )->name() );
 		$this->assertFalse( $this->repository->find( $id )->enabled() );
 	}
+
+	public function test_enabled_returns_only_enabled_sites(): void {
+		$this->repository->create( new Site( null, wp_generate_uuid4(), 'Enabled', 'https://enabled.example.com', 'https://enabled.example.com/agent', true ) );
+		$this->repository->create( new Site( null, wp_generate_uuid4(), 'Disabled', 'https://disabled.example.com', 'https://disabled.example.com/agent', false ) );
+
+		$sites = $this->repository->enabled();
+
+		$this->assertCount( 1, $sites );
+		$this->assertSame( 'Enabled', $sites[0]->name() );
+		$this->assertTrue( $sites[0]->enabled() );
+	}
 }

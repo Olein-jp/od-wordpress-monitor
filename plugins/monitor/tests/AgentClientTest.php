@@ -39,6 +39,14 @@ final class AgentClientTest extends \WP_UnitTestCase {
 		$this->assertTrue( $result['success'] );
 	}
 
+	public function test_successful_updates_request(): void {
+		$this->mock_response( 200, $this->valid_updates() );
+		$result = $this->client->updates( $this->site, $this->credential );
+
+		$this->assertIsArray( $result );
+		$this->assertSame( 1, $result['summary']['total'] );
+	}
+
 	public function test_request_uses_basic_authentication_and_configured_timeout(): void {
 		add_filter(
 			'pre_http_request',
@@ -170,6 +178,29 @@ final class AgentClientTest extends \WP_UnitTestCase {
 				'version' => '1.0.0',
 			),
 			'timestamp'      => '2026-09-08T09:00:00Z',
+		);
+	}
+
+	/**
+	 * @return array<string,mixed>
+	 */
+	private function valid_updates(): array {
+		return array(
+			'schema_version' => '1.0',
+			'wordpress'      => array(
+				'current_version'  => '7.1',
+				'latest_version'   => '7.1.1',
+				'update_available' => true,
+			),
+			'plugins'        => array(),
+			'themes'         => array(),
+			'summary'        => array(
+				'wordpress' => 1,
+				'plugins'   => 0,
+				'themes'    => 0,
+				'total'     => 1,
+			),
+			'timestamp'      => '2026-09-09T09:00:00Z',
 		);
 	}
 }

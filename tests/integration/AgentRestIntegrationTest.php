@@ -20,9 +20,11 @@ final class AgentRestIntegrationTest extends \WP_UnitTestCase {
 
 	public function test_registered_ping_route_rejects_anonymous_request(): void {
 		wp_set_current_user( 0 );
-		$response = rest_do_request( new WP_REST_Request( 'GET', '/od-monitor-agent/v1/ping' ) );
+		$ping    = rest_do_request( new WP_REST_Request( 'GET', '/od-monitor-agent/v1/ping' ) );
+		$updates = rest_do_request( new WP_REST_Request( 'GET', '/od-monitor-agent/v1/updates' ) );
 
-		$this->assertSame( 403, $response->get_status() );
+		$this->assertSame( 403, $ping->get_status() );
+		$this->assertSame( 403, $updates->get_status() );
 	}
 
 	public function test_registered_endpoints_return_data_for_capable_user(): void {
@@ -31,13 +33,16 @@ final class AgentRestIntegrationTest extends \WP_UnitTestCase {
 		$user->add_cap( Capability::READ );
 		wp_set_current_user( $user_id );
 
-		$ping   = rest_do_request( new WP_REST_Request( 'GET', '/od-monitor-agent/v1/ping' ) );
-		$status = rest_do_request( new WP_REST_Request( 'GET', '/od-monitor-agent/v1/status' ) );
+		$ping    = rest_do_request( new WP_REST_Request( 'GET', '/od-monitor-agent/v1/ping' ) );
+		$status  = rest_do_request( new WP_REST_Request( 'GET', '/od-monitor-agent/v1/status' ) );
+		$updates = rest_do_request( new WP_REST_Request( 'GET', '/od-monitor-agent/v1/updates' ) );
 
 		$this->assertSame( 200, $ping->get_status() );
 		$this->assertSame( 200, $status->get_status() );
+		$this->assertSame( 200, $updates->get_status() );
 		$this->assertSame( '1.0', $ping->get_data()['schema_version'] );
 		$this->assertSame( PHP_VERSION, $status->get_data()['server']['php_version'] );
+		$this->assertArrayHasKey( 'summary', $updates->get_data() );
 	}
 
 	public function test_wordpress_can_issue_application_password_for_agent_user(): void {

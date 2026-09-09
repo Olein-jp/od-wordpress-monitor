@@ -1,0 +1,90 @@
+<?php
+/**
+ * WP-Cron scheduler tests.
+ *
+ * @package OD_WordPress_Monitor
+ */
+
+namespace Olein\WordPressMonitor\Tests;
+
+use Olein\WordPressMonitor\Activation\Activator;
+use Olein\WordPressMonitor\Activation\DatabaseMigrator;
+use Olein\WordPressMonitor\Scheduler\CheckLockInterface;
+use Olein\WordPressMonitor\Scheduler\CheckRunner;
+use Olein\WordPressMonitor\Scheduler\Scheduler;
+use Olein\WordPressMonitor\Site\Site;
+use Olein\WordPressMonitor\Site\SiteRepository;
+
+final class SchedulerTest extends \WP_UnitTestCase {
+	public function set_up(): void {
+		parent::set_up();
+		Scheduler::clear_scheduled();
+		add_filter( 'cron_schedules', array( Scheduler::class, 'add_schedules' ) ); // phpcs:ignore WordPress.WP.CronInterval.ChangeDetected -- Uses the production interval callback.
+	}
+
+	public function tear_down(): void {
+		Scheduler::clear_scheduled();
+		remove_filter( 'cron_schedules', array( Scheduler::class, 'add_schedules' ) );
+		parent::tear_down();
+	}
+
+	public function test_required_intervals_are_registered(): void {
+		$schedules = wp_get_schedules();
+
+		$this->assertSame( 5 * MINUTE_IN_SECONDS, $schedules['odm_five_minutes']['interval'] );
+		$this->assertSame( 15 * MINUTE_IN_SECONDS, $schedules['odm_fifteen_minutes']['interval'] );
+	}
+
+	public function test_each_check_type_is_scheduled_exactly_once(): void {
+		Scheduler::ensure_scheduled();
+		$first_timestamps = array();
+
+		foreach ( Scheduler::CHECK_SCHEDULES as $check_type => $recurrence ) {
+			$event = wp_get_scheduled_event( Scheduler::HOOK, array( $check_type ) );
+			$this->assertIsObject( $event );
+			$this->assertSame( $recurrence, $event->schedule );
+			$first_timestamps[ $check_type ] = $event->timestamp;
+		}
+
+		Scheduler::ensure_scheduled();
+
+		foreach ( $first_timestamps as $check_type => $timestamp ) {
+			$this->assertSame( $timestamp, wp_next_scheduled( Scheduler::HOOK, array( $check_type ) ) );
+		}
+	}
+
+	public function test_activation_schedules_and_deactivation_clears_plugin_events(): void {
+		Activator::activate();
+
+		foreach ( array_keys( Scheduler::CHECK_SCHEDULES ) as $check_type ) {
+			$this->assertIsInt( wp_next_scheduled( Scheduler::HOOK, array( $check_type ) ) );
+		}
+
+		Activator::deactivate();
+
+		foreach ( array_keys( Scheduler::CHECK_SCHEDULES ) as $check_type ) {
+			$this->assertFalse( wp_next_scheduled( Scheduler::HOOK, array( $check_type ) ) );
+		}
+	}
+
+	public function test_registered_cron_callback_and_direct_call_share_runner(): void {
+		global $wpdb;
+
+		( new DatabaseMigrator( $wpdb ) )->migrate();
+		$repository = new SiteRepository( $wpdb );
+		$lock       = new class() implements CheckLockInterface {
+			public function acquire( Site $site, string $check_type ): ?string {
+				unset( $site, $check_type );
+				return 'owner';
+			}
+
+			public function release( Site $site, string $check_type, string $token ): void {
+				unset( $site, $check_type, $token );
+			}
+		};
+		$scheduler  = new Scheduler( new CheckRunner( $repository, $lock, array() ) );
+		$scheduler->register_hooks();
+
+		$this->assertSame( 10, has_action( Scheduler::HOOK, array( $scheduler, 'run' ) ) );
+	}
+}

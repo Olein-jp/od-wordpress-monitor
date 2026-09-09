@@ -64,6 +64,18 @@ final class SiteRepository {
 		return array_map( array( $this, 'hydrate' ), $rows );
 	}
 
+	/**
+	 * Return enabled monitored sites.
+	 *
+	 * @return list<Site>
+	 */
+	public function enabled(): array {
+		$sql  = "SELECT * FROM {$this->table} WHERE enabled = 1 ORDER BY name ASC"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $this->database->get_results( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+
+		return array_map( array( $this, 'hydrate' ), $rows );
+	}
+
 	public function update( Site $site ): bool {
 		if ( null === $site->id() ) {
 			return false;
