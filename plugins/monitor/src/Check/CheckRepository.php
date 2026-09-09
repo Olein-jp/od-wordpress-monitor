@@ -9,6 +9,7 @@ namespace Olein\WordPressMonitor\Check;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use Olein\WordPressMonitor\Monitor\CheckMetadata;
 use Olein\WordPressMonitor\Monitor\CheckResult;
 use Olein\WordPressMonitor\Support\MetadataCodec;
 use WP_Error;
@@ -19,7 +20,8 @@ final class CheckRepository {
 
 	public function __construct(
 		private readonly wpdb $database,
-		private readonly MetadataCodec $metadata_codec = new MetadataCodec()
+		private readonly MetadataCodec $metadata_codec = new MetadataCodec(),
+		private readonly CheckMetadata $check_metadata = new CheckMetadata()
 	) {
 		$this->table = $database->prefix . 'odm_checks';
 	}
@@ -30,7 +32,7 @@ final class CheckRepository {
 	 * @return int|WP_Error
 	 */
 	public function create( CheckResult $check ) {
-		$metadata = $this->metadata_codec->encode( $check->data() );
+		$metadata = $this->metadata_codec->encode( $this->check_metadata->for_result( $check ) );
 
 		if ( is_wp_error( $metadata ) ) {
 			return $metadata;
@@ -57,6 +59,23 @@ final class CheckRepository {
 		}
 
 		return (int) $this->database->insert_id;
+	}
+
+	/**
+	 * Delete checks strictly older than a UTC cutoff.
+	 *
+	 * @return int|WP_Error Number of deleted rows or a safe failure.
+	 */
+	public function delete_before( DateTimeImmutable $cutoff ): int|WP_Error {
+		$cutoff = $this->format_date( $cutoff );
+		$sql    = $this->database->prepare( "DELETE FROM {$this->table} WHERE checked_at < %s", $cutoff ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$result = $this->database->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		if ( false === $result ) {
+			return new WP_Error( 'DATABASE_ERROR', __( 'Old check results could not be deleted.', 'od-wordpress-monitor' ) );
+		}
+
+		return $result;
 	}
 
 	public function find( int $id ): ?CheckRecord {

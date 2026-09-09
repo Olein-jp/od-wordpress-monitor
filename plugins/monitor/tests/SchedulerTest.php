@@ -9,7 +9,9 @@ namespace Olein\WordPressMonitor\Tests;
 
 use Olein\WordPressMonitor\Activation\Activator;
 use Olein\WordPressMonitor\Activation\DatabaseMigrator;
+use Olein\WordPressMonitor\Check\CheckRepository;
 use Olein\WordPressMonitor\Scheduler\CheckLockInterface;
+use Olein\WordPressMonitor\Scheduler\CheckRetention;
 use Olein\WordPressMonitor\Scheduler\CheckRunner;
 use Olein\WordPressMonitor\Scheduler\Scheduler;
 use Olein\WordPressMonitor\Site\Site;
@@ -38,6 +40,11 @@ final class SchedulerTest extends \WP_UnitTestCase {
 	public function test_each_check_type_is_scheduled_exactly_once(): void {
 		Scheduler::ensure_scheduled();
 		$first_timestamps = array();
+		$cleanup_event    = wp_get_scheduled_event( Scheduler::CLEANUP_HOOK );
+
+		$this->assertIsObject( $cleanup_event );
+		$this->assertSame( Scheduler::CLEANUP_RECURRENCE, $cleanup_event->schedule );
+		$cleanup_timestamp = $cleanup_event->timestamp;
 
 		foreach ( Scheduler::CHECK_SCHEDULES as $check_type => $recurrence ) {
 			$event = wp_get_scheduled_event( Scheduler::HOOK, array( $check_type ) );
@@ -51,6 +58,8 @@ final class SchedulerTest extends \WP_UnitTestCase {
 		foreach ( $first_timestamps as $check_type => $timestamp ) {
 			$this->assertSame( $timestamp, wp_next_scheduled( Scheduler::HOOK, array( $check_type ) ) );
 		}
+
+		$this->assertSame( $cleanup_timestamp, wp_next_scheduled( Scheduler::CLEANUP_HOOK ) );
 	}
 
 	public function test_activation_schedules_and_deactivation_clears_plugin_events(): void {
@@ -59,12 +68,14 @@ final class SchedulerTest extends \WP_UnitTestCase {
 		foreach ( array_keys( Scheduler::CHECK_SCHEDULES ) as $check_type ) {
 			$this->assertIsInt( wp_next_scheduled( Scheduler::HOOK, array( $check_type ) ) );
 		}
+		$this->assertIsInt( wp_next_scheduled( Scheduler::CLEANUP_HOOK ) );
 
 		Activator::deactivate();
 
 		foreach ( array_keys( Scheduler::CHECK_SCHEDULES ) as $check_type ) {
 			$this->assertFalse( wp_next_scheduled( Scheduler::HOOK, array( $check_type ) ) );
 		}
+		$this->assertFalse( wp_next_scheduled( Scheduler::CLEANUP_HOOK ) );
 	}
 
 	public function test_registered_cron_callback_and_direct_call_share_runner(): void {
@@ -86,5 +97,68 @@ final class SchedulerTest extends \WP_UnitTestCase {
 		$scheduler->register_hooks();
 
 		$this->assertSame( 10, has_action( Scheduler::HOOK, array( $scheduler, 'run' ) ) );
+		$this->assertFalse( has_action( Scheduler::CLEANUP_HOOK, array( $scheduler, 'cleanup' ) ) );
+	}
+
+	public function test_unavailable_cleanup_exposes_only_safe_error_code(): void {
+		global $wpdb;
+
+		$repository = new SiteRepository( $wpdb );
+		$lock       = new class() implements CheckLockInterface {
+			public function acquire( Site $site, string $check_type ): ?string {
+				unset( $site, $check_type );
+				return 'owner';
+			}
+
+			public function release( Site $site, string $check_type, string $token ): void {
+				unset( $site, $check_type, $token );
+			}
+		};
+		$error_code = null;
+		$observer   = static function ( string $code ) use ( &$error_code ): void {
+			$error_code = $code;
+		};
+		$scheduler  = new Scheduler( new CheckRunner( $repository, $lock, array() ) );
+
+		add_action( 'odm_check_cleanup_failed', $observer );
+		$result = $scheduler->cleanup();
+		remove_action( 'odm_check_cleanup_failed', $observer );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'CLEANUP_UNAVAILABLE', $error_code );
+	}
+
+	public function test_registered_cleanup_returns_count_and_exposes_safe_result(): void {
+		global $wpdb;
+
+		( new DatabaseMigrator( $wpdb ) )->migrate();
+		$repository = new SiteRepository( $wpdb );
+		$lock       = new class() implements CheckLockInterface {
+			public function acquire( Site $site, string $check_type ): ?string {
+				unset( $site, $check_type );
+				return 'owner';
+			}
+
+			public function release( Site $site, string $check_type, string $token ): void {
+				unset( $site, $check_type, $token );
+			}
+		};
+		$count      = null;
+		$observer   = static function ( int $deleted ) use ( &$count ): void {
+			$count = $deleted;
+		};
+		$scheduler  = new Scheduler(
+			new CheckRunner( $repository, $lock, array() ),
+			new CheckRetention( new CheckRepository( $wpdb ) )
+		);
+
+		add_action( 'odm_check_cleanup_completed', $observer );
+		$scheduler->register_hooks();
+		$result = $scheduler->cleanup();
+		remove_action( 'odm_check_cleanup_completed', $observer );
+
+		$this->assertSame( 10, has_action( Scheduler::CLEANUP_HOOK, array( $scheduler, 'cleanup' ) ) );
+		$this->assertIsInt( $result );
+		$this->assertSame( $result, $count );
 	}
 }

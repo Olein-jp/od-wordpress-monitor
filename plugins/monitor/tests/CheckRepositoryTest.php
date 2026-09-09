@@ -49,6 +49,35 @@ final class CheckRepositoryTest extends \WP_UnitTestCase {
 		$this->assertSame( array(), $this->repository->find( $id )->metadata() );
 	}
 
+	public function test_create_persists_only_allowed_metadata(): void {
+		$time   = new DateTimeImmutable( '2026-09-09T00:00:00Z' );
+		$result = new CheckResult(
+			4,
+			'http',
+			'healthy',
+			null,
+			'Checked.',
+			$time,
+			$time,
+			25,
+			array(
+				'http_status' => 200,
+				'final_url'   => 'https://example.com/path?key=value',
+				'response'    => 'discarded',
+			)
+		);
+		$id     = $this->repository->create( $result );
+
+		$this->assertIsInt( $id );
+		$this->assertSame(
+			array(
+				'http_status' => 200,
+				'final_url'   => 'https://example.com/path',
+			),
+			$this->repository->find( $id )->metadata()
+		);
+	}
+
 	private function result( DateTimeImmutable $time, string $status ): CheckResult {
 		return new CheckResult( 4, 'http', $status, null, 'Checked.', $time, $time, 25, array( 'http_status' => 503 ) );
 	}

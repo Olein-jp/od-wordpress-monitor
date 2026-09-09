@@ -64,8 +64,9 @@ final class CheckResultRecorderTest extends \WP_UnitTestCase {
 		$this->assertSame( EventType::SITE_DOWN, $events[1]->type() );
 	}
 
-	public function test_rolls_back_when_metadata_cannot_be_persisted(): void {
-		$result = $this->result( Status::HEALTHY, '2026-09-09T00:00:00Z', array( 'payload' => str_repeat( 'x', 70000 ) ) );
+	public function test_rolls_back_when_result_cannot_be_evaluated(): void {
+		$checked_at = new DateTimeImmutable( '2026-09-09T00:00:00Z' );
+		$result     = new CheckResult( 7, 'custom', Status::HEALTHY, null, 'Checked.', $checked_at, $checked_at, 5 );
 
 		$this->assertWPError( $this->recorder->record( $result ) );
 		$this->assertCount( 0, $this->checks->for_site( 7 ) );

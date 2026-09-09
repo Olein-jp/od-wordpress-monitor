@@ -8,11 +8,15 @@
 namespace Olein\WordPressMonitor\Evaluation;
 
 use InvalidArgumentException;
+use Olein\WordPressMonitor\Monitor\CheckMetadata;
 use Olein\WordPressMonitor\Monitor\CheckResult;
 use Olein\WordPressMonitor\Monitor\Status;
 use Olein\WordPressMonitor\Status\SiteStatus;
 
 final class StatusEvaluator {
+	public function __construct( private readonly CheckMetadata $check_metadata = new CheckMetadata() ) {
+	}
+
 	/**
 	 * Apply one completed check while preserving the other latest states.
 	 */
@@ -55,7 +59,7 @@ final class StatusEvaluator {
 		}
 
 		$metadata                    = $previous->metadata();
-		$metadata[ $result->type() ] = $result->data();
+		$metadata[ $result->type() ] = $this->check_metadata->for_result( $result );
 
 		return new SiteStatus(
 			$result->site_id(),

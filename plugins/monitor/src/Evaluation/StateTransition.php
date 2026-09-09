@@ -10,11 +10,15 @@ namespace Olein\WordPressMonitor\Evaluation;
 use InvalidArgumentException;
 use Olein\WordPressMonitor\Event\EventType;
 use Olein\WordPressMonitor\Event\MonitoringEvent;
+use Olein\WordPressMonitor\Monitor\CheckMetadata;
 use Olein\WordPressMonitor\Monitor\CheckResult;
 use Olein\WordPressMonitor\Monitor\Status;
 use Olein\WordPressMonitor\Status\SiteStatus;
 
 final class StateTransition {
+	public function __construct( private readonly CheckMetadata $check_metadata = new CheckMetadata() ) {
+	}
+
 	public function detect( SiteStatus $previous, SiteStatus $current, CheckResult $result ): ?MonitoringEvent {
 		if ( $previous->site_id() !== $current->site_id() || $current->site_id() !== $result->site_id() ) {
 			throw new InvalidArgumentException( 'A state transition must belong to one site.' );
@@ -49,7 +53,7 @@ final class StateTransition {
 			return null;
 		}
 
-		$metadata               = $result->data();
+		$metadata               = $this->check_metadata->for_result( $result );
 		$metadata['check_type'] = $result->type();
 
 		return new MonitoringEvent(

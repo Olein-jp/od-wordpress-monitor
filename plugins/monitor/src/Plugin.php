@@ -29,6 +29,7 @@ use Olein\WordPressMonitor\Monitor\Monitoring\SslMonitor;
 use Olein\WordPressMonitor\Monitor\Monitoring\UpdateMonitor;
 use Olein\WordPressMonitor\Protocol\ResponseValidator;
 use Olein\WordPressMonitor\Scheduler\CheckLock;
+use Olein\WordPressMonitor\Scheduler\CheckRetention;
 use Olein\WordPressMonitor\Scheduler\CheckRunner;
 use Olein\WordPressMonitor\Scheduler\Scheduler;
 use Olein\WordPressMonitor\Site\SiteRepository;
@@ -58,9 +59,10 @@ final class Plugin {
 			);
 			$http_client  = new HttpClient();
 			$agent_client = new AgentClient( $http_client, new ResponseValidator() );
+			$checks       = new CheckRepository( $wpdb );
 			$recorder     = new CheckResultRecorder(
 				$wpdb,
-				new CheckRepository( $wpdb ),
+				$checks,
 				new SiteStatusRepository( $wpdb ),
 				new EventRepository( $wpdb ),
 				new StatusEvaluator(),
@@ -78,7 +80,8 @@ final class Plugin {
 						new SslMonitor( new SslCertificateClient() ),
 					),
 					$recorder
-				)
+				),
+				new CheckRetention( $checks )
 			);
 			$scheduler->register_hooks();
 

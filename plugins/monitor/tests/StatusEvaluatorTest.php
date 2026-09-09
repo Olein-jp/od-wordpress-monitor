@@ -62,7 +62,7 @@ final class StatusEvaluatorTest extends \WP_UnitTestCase {
 		$this->assertSame( Status::UNKNOWN, $current->http_status() );
 		$this->assertSame( $finished, $current->agent_checked_at() );
 		$this->assertSame( $finished, $current->last_checked_at() );
-		$this->assertSame( array( 'wordpress' => '6.9' ), $current->metadata()['agent_status'] );
+		$this->assertSame( array(), $current->metadata()['agent_status'] );
 	}
 
 	public function test_rejects_a_result_for_another_site(): void {
