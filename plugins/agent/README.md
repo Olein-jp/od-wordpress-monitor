@@ -19,5 +19,6 @@ OD WordPress Monitor に、認証済みの読み取り専用サイト情報を�
 
 - `GET /wp-json/od-monitor-agent/v1/ping`
 - `GET /wp-json/od-monitor-agent/v1/status`
+- `GET /wp-json/od-monitor-agent/v1/updates`
 
-Application Password を Basic Authentication で送信してください。両エンドポイントは `od_monitor_read` capability を必要とし、書き込み操作は提供しません。認証情報は必ず HTTPS で送信してください。
+Application Password を Basic Authentication で送信してください。すべてのエンドポイントは `od_monitor_read` capability を必要とし、書き込み操作は提供しません。`/updates` はWordPress本体・プラグイン・テーマのキャッシュ済み更新情報を返します。認証情報は必ず HTTPS で送信してください。

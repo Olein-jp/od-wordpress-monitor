@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://olein-design.com/schemas/od-monitor-agent/v1/updates.schema.json",
+  "title": "OD Monitor Agent Updates Response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "wordpress", "plugins", "themes", "summary", "timestamp"],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "wordpress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["current_version", "latest_version", "update_available"],
+      "properties": {
+        "current_version": {"type": "string", "minLength": 1},
+        "latest_version": {"type": "string", "minLength": 1},
+        "update_available": {"type": "boolean"}
+      }
+    },
+    "plugins": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["file", "name", "current_version", "latest_version", "update_available", "active"],
+        "properties": {
+          "file": {"type": "string", "minLength": 1},
+          "name": {"type": "string"},
+          "current_version": {"type": "string"},
+          "latest_version": {"type": "string"},
+          "update_available": {"type": "boolean"},
+          "active": {"type": "boolean"}
+        }
+      }
+    },
+    "themes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["stylesheet", "name", "current_version", "latest_version", "update_available", "active"],
+        "properties": {
+          "stylesheet": {"type": "string", "minLength": 1},
+          "name": {"type": "string"},
+          "current_version": {"type": "string"},
+          "latest_version": {"type": "string"},
+          "update_available": {"type": "boolean"},
+          "active": {"type": "boolean"}
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["wordpress", "plugins", "themes", "total"],
+      "properties": {
+        "wordpress": {"type": "integer", "minimum": 0, "maximum": 1},
+        "plugins": {"type": "integer", "minimum": 0},
+        "themes": {"type": "integer", "minimum": 0},
+        "total": {"type": "integer", "minimum": 0}
+      }
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

@@ -40,6 +40,15 @@ final class AgentClient {
 	}
 
 	/**
+	 * Call the Agent updates endpoint.
+	 *
+	 * @return array<string,mixed>|WP_Error
+	 */
+	public function updates( Site $site, Credential $credential ) {
+		return $this->request( $site, $credential, 'updates' );
+	}
+
+	/**
 	 * Make and normalize an Agent request.
 	 *
 	 * @return array<string,mixed>|WP_Error
@@ -80,7 +89,11 @@ final class AgentClient {
 			return new WP_Error( 'INVALID_JSON', __( 'The Agent returned invalid JSON.', 'od-wordpress-monitor' ) );
 		}
 
-		$valid = 'ping' === $endpoint ? $this->validator->validate_ping( $data ) : $this->validator->validate_status( $data );
+		$valid = match ( $endpoint ) {
+			'ping'    => $this->validator->validate_ping( $data ),
+			'status'  => $this->validator->validate_status( $data ),
+			'updates' => $this->validator->validate_updates( $data ),
+		};
 
 		return is_wp_error( $valid ) ? $valid : $data;
 	}

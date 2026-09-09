@@ -5,6 +5,7 @@
  * Version:           1.0.0
  * Requires at least: 6.8
  * Requires PHP:      8.1
+ * Update URI:        https://github.com/Olein-jp/od-monitor-agent-release
  * Author:            Koji Kuno
  * Author URI:        https://olein-design.com
  * License:           GPL-2.0-or-later
@@ -33,6 +34,16 @@ if ( ! file_exists( $od_monitor_agent_autoloader ) ) {
 }
 
 require_once $od_monitor_agent_autoloader;
+
+new Inc2734\WP_GitHub_Plugin_Updater\Bootstrap(
+	plugin_basename( __FILE__ ),
+	'Olein-jp',
+	'od-monitor-agent-release',
+	array(
+		'requires'     => '6.8',
+		'requires_php' => '8.1',
+	)
+);
 
 register_activation_hook( __FILE__, array( Olein\MonitorAgent\Activation\Activator::class, 'activate' ) );
 register_deactivation_hook( __FILE__, array( Olein\MonitorAgent\Activation\Deactivator::class, 'deactivate' ) );

@@ -48,6 +48,37 @@ final class ResponseValidatorTest extends \WP_UnitTestCase {
 		$this->assertSame( 'INVALID_RESPONSE', $result->get_error_code() );
 	}
 
+	public function test_valid_updates_passes(): void {
+		$this->assertTrue( $this->validator->validate_updates( $this->valid_updates() ) );
+	}
+
+	public function test_updates_rejects_inconsistent_summary(): void {
+		$updates                       = $this->valid_updates();
+		$updates['summary']['plugins'] = 0;
+		$result                        = $this->validator->validate_updates( $updates );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'INVALID_RESPONSE', $result->get_error_code() );
+	}
+
+	public function test_updates_rejects_inconsistent_update_flag(): void {
+		$updates                                   = $this->valid_updates();
+		$updates['plugins'][0]['update_available'] = false;
+		$result                                    = $this->validator->validate_updates( $updates );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'INVALID_RESPONSE', $result->get_error_code() );
+	}
+
+	public function test_updates_rejects_fields_outside_contract(): void {
+		$updates                           = $this->valid_updates();
+		$updates['plugins'][0]['settings'] = array( 'secret' => true );
+		$result                            = $this->validator->validate_updates( $updates );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'INVALID_RESPONSE', $result->get_error_code() );
+	}
+
 	/**
 	 * Return a valid ping fixture.
 	 *
@@ -62,6 +93,40 @@ final class ResponseValidatorTest extends \WP_UnitTestCase {
 				'version' => '1.0.0',
 			),
 			'timestamp'      => '2026-09-08T09:00:00Z',
+		);
+	}
+
+	/**
+	 * Return a valid updates fixture.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function valid_updates(): array {
+		return array(
+			'schema_version' => '1.0',
+			'wordpress'      => array(
+				'current_version'  => '7.1',
+				'latest_version'   => '7.1',
+				'update_available' => false,
+			),
+			'plugins'        => array(
+				array(
+					'file'             => 'example/example.php',
+					'name'             => 'Example Plugin',
+					'current_version'  => '1.0.0',
+					'latest_version'   => '1.1.0',
+					'update_available' => true,
+					'active'           => true,
+				),
+			),
+			'themes'         => array(),
+			'summary'        => array(
+				'wordpress' => 0,
+				'plugins'   => 1,
+				'themes'    => 0,
+				'total'     => 1,
+			),
+			'timestamp'      => '2026-09-09T09:00:00Z',
 		);
 	}
 }
