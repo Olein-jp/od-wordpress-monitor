@@ -9,7 +9,7 @@ MonitorとAgentは、HTTPS上のWordPress REST APIとApplication Passwordを使�
 
 ## 現在のバージョン
 
-- OD WordPress Monitor：1.0.0
+- OD WordPress Monitor：1.0.1
 - OD Monitor Agent：1.0.0
 - 通信スキーマ：1.0
 
@@ -23,9 +23,12 @@ MonitorとAgentは、HTTPS上のWordPress REST APIとApplication Passwordを使�
 - WordPress本体、プラグイン、テーマの更新有無の確認
 - SSL証明書の検証と有効期限確認
 - WP-Cronによる定期実行
+- 定期監視結果と現在状態の保存
+- 稼働停止、復旧、更新あり、SSL警告などの状態変化イベントの保存
+- 90日を超えたチェック履歴の定期削除
 - GitHub Releases経由でのプラグインアップデート
 
-現時点では、**定期監視の結果を保存・一覧表示する画面や、メールなどへの通知機能はありません**。管理画面では、サイト登録時または「Test Connection」実行時に取得した接続状態とバージョン情報を確認できます。定期監視の結果は内部の `odm_check_result` アクションへ渡されるため、開発者が別途保存・通知処理を追加できます。
+定期監視の結果は内部データとして保存されますが、**保存した履歴を一覧表示する画面や、メールなどへの通知機能はまだありません**。管理画面では、サイト登録時または「Test Connection」実行時に取得した接続状態とバージョン情報を確認できます。
 
 また、登録済みサイトの編集・削除は管理画面からは行えません。
 
