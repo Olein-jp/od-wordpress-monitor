@@ -14,6 +14,7 @@ use InvalidArgumentException;
 use Olein\WordPressMonitor\Monitor\CheckResult;
 use Olein\WordPressMonitor\Monitor\MonitorInterface;
 use Olein\WordPressMonitor\Site\Site;
+use Olein\WordPressMonitor\Support\ErrorCode;
 use WP_Error;
 
 final class SslMonitor implements MonitorInterface {
@@ -23,12 +24,12 @@ final class SslMonitor implements MonitorInterface {
 	public const DEFAULT_FAILURE_DAYS = 0;
 
 	private const ERROR_CODES = array(
-		'CERTIFICATE_EXPIRED',
-		'CERTIFICATE_VALIDATION_FAILED',
-		'CONNECTION_ERROR',
-		'INVALID_CERTIFICATE',
-		'SSL_UNAVAILABLE',
-		'TIMEOUT',
+		ErrorCode::CERTIFICATE_EXPIRED,
+		ErrorCode::CERTIFICATE_VALIDATION_FAILED,
+		ErrorCode::CONNECTION_ERROR,
+		ErrorCode::INVALID_CERTIFICATE,
+		ErrorCode::SSL_UNAVAILABLE,
+		ErrorCode::TIMEOUT,
 	);
 
 	private readonly Closure $clock;
@@ -68,7 +69,7 @@ final class SslMonitor implements MonitorInterface {
 				$started_at,
 				$started,
 				CheckResult::STATUS_CRITICAL,
-				'INVALID_URL',
+				ErrorCode::INVALID_URL,
 				__( 'The registered site URL is not a valid public HTTPS URL.', 'od-wordpress-monitor' )
 			);
 		}
@@ -86,7 +87,7 @@ final class SslMonitor implements MonitorInterface {
 		}
 
 		if ( $certificate['valid_from'] >= $certificate['valid_to'] ) {
-			return $this->certificate_error_result( $site, $started_at, $started, new WP_Error( 'INVALID_CERTIFICATE' ), $data );
+			return $this->certificate_error_result( $site, $started_at, $started, new WP_Error( ErrorCode::INVALID_CERTIFICATE ), $data );
 		}
 
 		$now_timestamp     = $started_at->getTimestamp();
@@ -102,7 +103,7 @@ final class SslMonitor implements MonitorInterface {
 				$started_at,
 				$started,
 				CheckResult::STATUS_CRITICAL,
-				'CERTIFICATE_NOT_YET_VALID',
+				ErrorCode::CERTIFICATE_NOT_YET_VALID,
 				__( 'The SSL certificate is not yet valid.', 'od-wordpress-monitor' ),
 				$data
 			);
@@ -114,7 +115,7 @@ final class SslMonitor implements MonitorInterface {
 				$started_at,
 				$started,
 				CheckResult::STATUS_CRITICAL,
-				'CERTIFICATE_EXPIRED',
+				ErrorCode::CERTIFICATE_EXPIRED,
 				__( 'The SSL certificate has expired.', 'od-wordpress-monitor' ),
 				$data
 			);
@@ -126,7 +127,7 @@ final class SslMonitor implements MonitorInterface {
 				$started_at,
 				$started,
 				CheckResult::STATUS_CRITICAL,
-				'CERTIFICATE_EXPIRING',
+				ErrorCode::CERTIFICATE_EXPIRING,
 				__( 'The SSL certificate is within the failure threshold.', 'od-wordpress-monitor' ),
 				$data
 			);
@@ -138,7 +139,7 @@ final class SslMonitor implements MonitorInterface {
 				$started_at,
 				$started,
 				CheckResult::STATUS_WARNING,
-				'CERTIFICATE_EXPIRING',
+				ErrorCode::CERTIFICATE_EXPIRING,
 				__( 'The SSL certificate is approaching expiration.', 'od-wordpress-monitor' ),
 				$data
 			);
@@ -171,13 +172,13 @@ final class SslMonitor implements MonitorInterface {
 			|| isset( $parts['pass'] )
 			|| false === wp_http_validate_url( $url )
 		) {
-			return new WP_Error( 'INVALID_URL' );
+			return new WP_Error( ErrorCode::INVALID_URL );
 		}
 
 		$port = isset( $parts['port'] ) ? (int) $parts['port'] : 443;
 
 		if ( $port < 1 || $port > 65535 ) {
-			return new WP_Error( 'INVALID_URL' );
+			return new WP_Error( ErrorCode::INVALID_URL );
 		}
 
 		return array(
@@ -193,14 +194,14 @@ final class SslMonitor implements MonitorInterface {
 	 */
 	private function certificate_error_result( Site $site, DateTimeImmutable $started_at, float $started, WP_Error $error, array $data ): CheckResult {
 		$error_code = $error->get_error_code();
-		$error_code = is_string( $error_code ) && in_array( $error_code, self::ERROR_CODES, true ) ? $error_code : 'CERTIFICATE_ERROR';
+		$error_code = is_string( $error_code ) && in_array( $error_code, self::ERROR_CODES, true ) ? $error_code : ErrorCode::CERTIFICATE_ERROR;
 		$message    = match ( $error_code ) {
-			'TIMEOUT'                       => __( 'The SSL certificate check timed out.', 'od-wordpress-monitor' ),
-			'CONNECTION_ERROR'              => __( 'The SSL endpoint could not be reached.', 'od-wordpress-monitor' ),
-			'CERTIFICATE_EXPIRED'           => __( 'The SSL certificate has expired.', 'od-wordpress-monitor' ),
-			'CERTIFICATE_VALIDATION_FAILED' => __( 'The SSL certificate could not be verified.', 'od-wordpress-monitor' ),
-			'SSL_UNAVAILABLE'               => __( 'SSL certificate inspection is unavailable.', 'od-wordpress-monitor' ),
-			'INVALID_CERTIFICATE'           => __( 'The SSL endpoint returned an invalid certificate.', 'od-wordpress-monitor' ),
+			ErrorCode::TIMEOUT                       => __( 'The SSL certificate check timed out.', 'od-wordpress-monitor' ),
+			ErrorCode::CONNECTION_ERROR              => __( 'The SSL endpoint could not be reached.', 'od-wordpress-monitor' ),
+			ErrorCode::CERTIFICATE_EXPIRED           => __( 'The SSL certificate has expired.', 'od-wordpress-monitor' ),
+			ErrorCode::CERTIFICATE_VALIDATION_FAILED => __( 'The SSL certificate could not be verified.', 'od-wordpress-monitor' ),
+			ErrorCode::SSL_UNAVAILABLE               => __( 'SSL certificate inspection is unavailable.', 'od-wordpress-monitor' ),
+			ErrorCode::INVALID_CERTIFICATE           => __( 'The SSL endpoint returned an invalid certificate.', 'od-wordpress-monitor' ),
 			default                         => __( 'The SSL certificate check failed.', 'od-wordpress-monitor' ),
 		};
 

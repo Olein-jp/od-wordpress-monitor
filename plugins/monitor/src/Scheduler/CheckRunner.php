@@ -10,10 +10,12 @@ namespace Olein\WordPressMonitor\Scheduler;
 use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
+use Olein\WordPressMonitor\Evaluation\CheckResultRecorder;
 use Olein\WordPressMonitor\Monitor\CheckResult;
 use Olein\WordPressMonitor\Monitor\MonitorInterface;
 use Olein\WordPressMonitor\Site\Site;
 use Olein\WordPressMonitor\Site\SiteRepository;
+use Olein\WordPressMonitor\Support\ErrorCode;
 use Throwable;
 
 final class CheckRunner {
@@ -23,7 +25,12 @@ final class CheckRunner {
 	/**
 	 * @param list<MonitorInterface> $monitors Available monitors.
 	 */
-	public function __construct( private readonly SiteRepository $sites, private readonly CheckLockInterface $lock, array $monitors ) {
+	public function __construct(
+		private readonly SiteRepository $sites,
+		private readonly CheckLockInterface $lock,
+		array $monitors,
+		private readonly ?CheckResultRecorder $recorder = null
+	) {
 		$registry = array();
 
 		foreach ( $monitors as $monitor ) {
@@ -68,6 +75,14 @@ final class CheckRunner {
 				$this->lock->release( $site, $check_type, $token );
 			}
 
+			if ( null !== $this->recorder ) {
+				$recorded = $this->recorder->record( $result );
+
+				if ( is_wp_error( $recorded ) ) {
+					do_action( 'odm_check_persistence_error', $recorded->get_error_code(), $result, $site );
+				}
+			}
+
 			$results[] = $result;
 			do_action( 'odm_check_result', $result, $site );
 		}
@@ -82,7 +97,7 @@ final class CheckRunner {
 			(int) $site->id(),
 			$check_type,
 			CheckResult::STATUS_UNKNOWN,
-			'RUNNER_ERROR',
+			ErrorCode::RUNNER_ERROR,
 			__( 'The scheduled check could not be completed.', 'od-wordpress-monitor' ),
 			$now,
 			$now,

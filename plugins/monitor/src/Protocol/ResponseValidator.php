@@ -7,6 +7,7 @@
 
 namespace Olein\WordPressMonitor\Protocol;
 
+use Olein\WordPressMonitor\Support\ErrorCode;
 use WP_Error;
 
 final class ResponseValidator {
@@ -190,7 +191,7 @@ final class ResponseValidator {
 		}
 
 		if ( self::SUPPORTED_SCHEMA_VERSION !== $data['schema_version'] ) {
-			return new WP_Error( 'UNSUPPORTED_SCHEMA', __( 'The Agent protocol version is not supported.', 'od-wordpress-monitor' ) );
+			return new WP_Error( ErrorCode::UNSUPPORTED_SCHEMA, __( 'The Agent protocol version is not supported.', 'od-wordpress-monitor' ) );
 		}
 
 		if ( ! is_string( $data['timestamp'] ) || false === strtotime( $data['timestamp'] ) ) {
@@ -201,6 +202,6 @@ final class ResponseValidator {
 	}
 
 	private function invalid_response(): WP_Error {
-		return new WP_Error( 'INVALID_RESPONSE', __( 'The Agent returned an unexpected response.', 'od-wordpress-monitor' ) );
+		return new WP_Error( ErrorCode::INVALID_RESPONSE, __( 'The Agent returned an unexpected response.', 'od-wordpress-monitor' ) );
 	}
 }

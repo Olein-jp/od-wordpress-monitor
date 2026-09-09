@@ -14,6 +14,11 @@ use Olein\WordPressMonitor\Admin\SitesPage;
 use Olein\WordPressMonitor\Credential\CredentialEncryptor;
 use Olein\WordPressMonitor\Credential\CredentialRepository;
 use Olein\WordPressMonitor\Credential\CredentialService;
+use Olein\WordPressMonitor\Check\CheckRepository;
+use Olein\WordPressMonitor\Evaluation\CheckResultRecorder;
+use Olein\WordPressMonitor\Evaluation\StateTransition;
+use Olein\WordPressMonitor\Evaluation\StatusEvaluator;
+use Olein\WordPressMonitor\Event\EventRepository;
 use Olein\WordPressMonitor\Http\AgentClient;
 use Olein\WordPressMonitor\Http\HttpClient;
 use Olein\WordPressMonitor\Monitor\Monitoring\AgentPingMonitor;
@@ -28,6 +33,7 @@ use Olein\WordPressMonitor\Scheduler\CheckRunner;
 use Olein\WordPressMonitor\Scheduler\Scheduler;
 use Olein\WordPressMonitor\Site\SiteRepository;
 use Olein\WordPressMonitor\Site\SiteService;
+use Olein\WordPressMonitor\Status\SiteStatusRepository;
 use Olein\WordPressMonitor\Support\UUID;
 use RuntimeException;
 
@@ -52,6 +58,14 @@ final class Plugin {
 			);
 			$http_client  = new HttpClient();
 			$agent_client = new AgentClient( $http_client, new ResponseValidator() );
+			$recorder     = new CheckResultRecorder(
+				$wpdb,
+				new CheckRepository( $wpdb ),
+				new SiteStatusRepository( $wpdb ),
+				new EventRepository( $wpdb ),
+				new StatusEvaluator(),
+				new StateTransition()
+			);
 			$scheduler    = new Scheduler(
 				new CheckRunner(
 					$sites,
@@ -62,7 +76,8 @@ final class Plugin {
 						new AgentStatusMonitor( $agent_client, $credentials ),
 						new UpdateMonitor( $agent_client, $credentials ),
 						new SslMonitor( new SslCertificateClient() ),
-					)
+					),
+					$recorder
 				)
 			);
 			$scheduler->register_hooks();

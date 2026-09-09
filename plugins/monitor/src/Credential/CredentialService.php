@@ -7,6 +7,7 @@
 
 namespace Olein\WordPressMonitor\Credential;
 
+use Olein\WordPressMonitor\Support\ErrorCode;
 use Throwable;
 use WP_Error;
 
@@ -26,7 +27,7 @@ final class CredentialService {
 		try {
 			$encrypted = $this->encryptor->encrypt( $credential->password() );
 		} catch ( Throwable $exception ) {
-			return new WP_Error( 'ENCRYPTION_FAILED', __( 'The credential could not be encrypted.', 'od-wordpress-monitor' ) );
+			return new WP_Error( ErrorCode::ENCRYPTION_FAILED, __( 'The credential could not be encrypted.', 'od-wordpress-monitor' ) );
 		}
 
 		return $this->repository->create( $site_id, $credential->username(), $encrypted );
@@ -41,7 +42,7 @@ final class CredentialService {
 		$stored = $this->repository->find_by_site( $site_id );
 
 		if ( null === $stored ) {
-			return new WP_Error( 'CREDENTIAL_NOT_FOUND', __( 'No credential is stored for this site.', 'od-wordpress-monitor' ) );
+			return new WP_Error( ErrorCode::CREDENTIAL_NOT_FOUND, __( 'No credential is stored for this site.', 'od-wordpress-monitor' ) );
 		}
 
 		try {
@@ -50,7 +51,7 @@ final class CredentialService {
 				$this->encryptor->decrypt( $stored['encrypted_password'] )
 			);
 		} catch ( Throwable $exception ) {
-			return new WP_Error( 'CREDENTIAL_DECRYPTION_FAILED', __( 'The stored credential could not be decrypted.', 'od-wordpress-monitor' ) );
+			return new WP_Error( ErrorCode::CREDENTIAL_DECRYPTION_FAILED, __( 'The stored credential could not be decrypted.', 'od-wordpress-monitor' ) );
 		}
 	}
 }

@@ -15,6 +15,7 @@ use Olein\WordPressMonitor\Http\HttpClient;
 use Olein\WordPressMonitor\Monitor\CheckResult;
 use Olein\WordPressMonitor\Monitor\MonitorInterface;
 use Olein\WordPressMonitor\Site\Site;
+use Olein\WordPressMonitor\Support\ErrorCode;
 use WP_Error;
 use WP_Http;
 
@@ -47,7 +48,7 @@ final class HttpMonitor implements MonitorInterface {
 				$site,
 				$started_at,
 				$started,
-				'INVALID_URL',
+				ErrorCode::INVALID_URL,
 				__( 'The registered site URL is not a valid public HTTP URL.', 'od-wordpress-monitor' )
 			);
 		}
@@ -83,7 +84,7 @@ final class HttpMonitor implements MonitorInterface {
 						$site,
 						$started_at,
 						$started,
-						'REDIRECT_LIMIT',
+						ErrorCode::REDIRECT_LIMIT,
 						__( 'The site exceeded the allowed redirect limit.', 'od-wordpress-monitor' ),
 						$status_code,
 						$url,
@@ -98,7 +99,7 @@ final class HttpMonitor implements MonitorInterface {
 						$site,
 						$started_at,
 						$started,
-						'UNSAFE_REDIRECT',
+						ErrorCode::UNSAFE_REDIRECT,
 						__( 'The site redirected to an unsafe URL.', 'od-wordpress-monitor' ),
 						$status_code,
 						$url,
@@ -137,7 +138,7 @@ final class HttpMonitor implements MonitorInterface {
 			$site,
 			$started_at,
 			$started,
-			'HTTP_STATUS',
+			ErrorCode::HTTP_STATUS,
 			__( 'The site returned a non-success HTTP status.', 'od-wordpress-monitor' ),
 			$status_code,
 			$url,
@@ -156,7 +157,7 @@ final class HttpMonitor implements MonitorInterface {
 			$site,
 			$started_at,
 			$started,
-			$is_timeout ? 'TIMEOUT' : 'CONNECTION_ERROR',
+			$is_timeout ? ErrorCode::TIMEOUT : ErrorCode::CONNECTION_ERROR,
 			$is_timeout
 				? __( 'The site request timed out.', 'od-wordpress-monitor' )
 				: __( 'The site could not be reached.', 'od-wordpress-monitor' ),

@@ -73,8 +73,20 @@ final class SiteStatusRepository {
 	}
 
 	public function find( int $site_id ): ?SiteStatus {
-		$sql = $this->database->prepare( "SELECT * FROM {$this->table} WHERE site_id = %d", $site_id ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$row = $this->database->get_row( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		return $this->find_with_query( $site_id, false );
+	}
+
+	/**
+	 * Find and lock a site's current row during a persistence transaction.
+	 */
+	public function find_for_update( int $site_id ): ?SiteStatus {
+		return $this->find_with_query( $site_id, true );
+	}
+
+	private function find_with_query( int $site_id, bool $for_update ): ?SiteStatus {
+		$locking_clause = $for_update ? ' FOR UPDATE' : '';
+		$sql            = $this->database->prepare( "SELECT * FROM {$this->table} WHERE site_id = %d{$locking_clause}", $site_id ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$row            = $this->database->get_row( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
 		return is_array( $row ) ? $this->hydrate( $row ) : null;
 	}

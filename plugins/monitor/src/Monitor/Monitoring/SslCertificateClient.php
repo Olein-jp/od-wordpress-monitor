@@ -7,6 +7,7 @@
 
 namespace Olein\WordPressMonitor\Monitor\Monitoring;
 
+use Olein\WordPressMonitor\Support\ErrorCode;
 use WP_Error;
 
 final class SslCertificateClient implements SslCertificateClientInterface {
@@ -17,7 +18,7 @@ final class SslCertificateClient implements SslCertificateClientInterface {
 	 */
 	public function inspect( string $host, int $port, int $timeout ): array|WP_Error {
 		if ( ! extension_loaded( 'openssl' ) ) {
-			return new WP_Error( 'SSL_UNAVAILABLE' );
+			return new WP_Error( ErrorCode::SSL_UNAVAILABLE );
 		}
 
 		$context = stream_context_create(
@@ -59,13 +60,13 @@ final class SslCertificateClient implements SslCertificateClientInterface {
 		fclose( $stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- This is a network stream, not a filesystem operation.
 
 		if ( null === $certificate ) {
-			return new WP_Error( 'INVALID_CERTIFICATE' );
+			return new WP_Error( ErrorCode::INVALID_CERTIFICATE );
 		}
 
 		$parsed = openssl_x509_parse( $certificate );
 
 		if ( ! is_array( $parsed ) || ! isset( $parsed['validFrom_time_t'], $parsed['validTo_time_t'] ) ) {
-			return new WP_Error( 'INVALID_CERTIFICATE' );
+			return new WP_Error( ErrorCode::INVALID_CERTIFICATE );
 		}
 
 		return array(
@@ -81,11 +82,11 @@ final class SslCertificateClient implements SslCertificateClientInterface {
 		$details = strtolower( $details );
 
 		if ( str_contains( $details, 'timed out' ) || str_contains( $details, 'timeout' ) ) {
-			return new WP_Error( 'TIMEOUT' );
+			return new WP_Error( ErrorCode::TIMEOUT );
 		}
 
 		if ( str_contains( $details, 'certificate has expired' ) || str_contains( $details, 'certificate expired' ) ) {
-			return new WP_Error( 'CERTIFICATE_EXPIRED' );
+			return new WP_Error( ErrorCode::CERTIFICATE_EXPIRED );
 		}
 
 		if (
@@ -94,9 +95,9 @@ final class SslCertificateClient implements SslCertificateClientInterface {
 			|| str_contains( $details, 'crypto' )
 			|| str_contains( $details, 'unknown ca' )
 		) {
-			return new WP_Error( 'CERTIFICATE_VALIDATION_FAILED' );
+			return new WP_Error( ErrorCode::CERTIFICATE_VALIDATION_FAILED );
 		}
 
-		return new WP_Error( 'CONNECTION_ERROR' );
+		return new WP_Error( ErrorCode::CONNECTION_ERROR );
 	}
 }

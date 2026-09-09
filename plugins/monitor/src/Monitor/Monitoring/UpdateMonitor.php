@@ -16,23 +16,24 @@ use Olein\WordPressMonitor\Http\AgentClient;
 use Olein\WordPressMonitor\Monitor\CheckResult;
 use Olein\WordPressMonitor\Monitor\MonitorInterface;
 use Olein\WordPressMonitor\Site\Site;
+use Olein\WordPressMonitor\Support\ErrorCode;
 use WP_Error;
 
 final class UpdateMonitor implements MonitorInterface {
 	public const TYPE = 'updates';
 
 	private const ERROR_CODES = array(
-		'AGENT_NOT_FOUND',
-		'AUTHENTICATION_FAILED',
-		'CONNECTION_ERROR',
-		'CREDENTIAL_DECRYPTION_FAILED',
-		'CREDENTIAL_NOT_FOUND',
-		'HTTPS_REQUIRED',
-		'INVALID_JSON',
-		'INVALID_RESPONSE',
-		'PERMISSION_DENIED',
-		'TIMEOUT',
-		'UNSUPPORTED_SCHEMA',
+		ErrorCode::AGENT_NOT_FOUND,
+		ErrorCode::AUTHENTICATION_FAILED,
+		ErrorCode::CONNECTION_ERROR,
+		ErrorCode::CREDENTIAL_DECRYPTION_FAILED,
+		ErrorCode::CREDENTIAL_NOT_FOUND,
+		ErrorCode::HTTPS_REQUIRED,
+		ErrorCode::INVALID_JSON,
+		ErrorCode::INVALID_RESPONSE,
+		ErrorCode::PERMISSION_DENIED,
+		ErrorCode::TIMEOUT,
+		ErrorCode::UNSUPPORTED_SCHEMA,
 	);
 
 	private readonly Closure $clock;
@@ -106,20 +107,20 @@ final class UpdateMonitor implements MonitorInterface {
 	 */
 	private function error_result( Site $site, DateTimeImmutable $started_at, float $started, WP_Error $error ): CheckResult {
 		$error_code = $error->get_error_code();
-		$error_code = is_string( $error_code ) && in_array( $error_code, self::ERROR_CODES, true ) ? $error_code : 'AGENT_ERROR';
+		$error_code = is_string( $error_code ) && in_array( $error_code, self::ERROR_CODES, true ) ? $error_code : ErrorCode::AGENT_ERROR;
 
 		$message = match ( $error_code ) {
-			'AUTHENTICATION_FAILED'                         => __( 'Agent authentication failed.', 'od-wordpress-monitor' ),
-			'PERMISSION_DENIED'                             => __( 'The Agent credential lacks the required permission.', 'od-wordpress-monitor' ),
-			'TIMEOUT'                                       => __( 'The Agent request timed out.', 'od-wordpress-monitor' ),
-			'CONNECTION_ERROR'                              => __( 'The Agent could not be reached.', 'od-wordpress-monitor' ),
-			'AGENT_NOT_FOUND'                               => __( 'The Agent endpoint was not found.', 'od-wordpress-monitor' ),
-			'HTTPS_REQUIRED'                                => __( 'The Agent URL must use HTTPS.', 'od-wordpress-monitor' ),
-			'CREDENTIAL_NOT_FOUND',
-			'CREDENTIAL_DECRYPTION_FAILED'                  => __( 'The stored Agent credential is unavailable.', 'od-wordpress-monitor' ),
-			'INVALID_JSON',
-			'INVALID_RESPONSE',
-			'UNSUPPORTED_SCHEMA'                            => __( 'The Agent returned an invalid update response.', 'od-wordpress-monitor' ),
+			ErrorCode::AUTHENTICATION_FAILED                         => __( 'Agent authentication failed.', 'od-wordpress-monitor' ),
+			ErrorCode::PERMISSION_DENIED                             => __( 'The Agent credential lacks the required permission.', 'od-wordpress-monitor' ),
+			ErrorCode::TIMEOUT                                       => __( 'The Agent request timed out.', 'od-wordpress-monitor' ),
+			ErrorCode::CONNECTION_ERROR                              => __( 'The Agent could not be reached.', 'od-wordpress-monitor' ),
+			ErrorCode::AGENT_NOT_FOUND                               => __( 'The Agent endpoint was not found.', 'od-wordpress-monitor' ),
+			ErrorCode::HTTPS_REQUIRED                                => __( 'The Agent URL must use HTTPS.', 'od-wordpress-monitor' ),
+			ErrorCode::CREDENTIAL_NOT_FOUND,
+			ErrorCode::CREDENTIAL_DECRYPTION_FAILED                  => __( 'The stored Agent credential is unavailable.', 'od-wordpress-monitor' ),
+			ErrorCode::INVALID_JSON,
+			ErrorCode::INVALID_RESPONSE,
+			ErrorCode::UNSUPPORTED_SCHEMA                            => __( 'The Agent returned an invalid update response.', 'od-wordpress-monitor' ),
 			default                                         => __( 'The update check failed.', 'od-wordpress-monitor' ),
 		};
 

@@ -11,17 +11,10 @@ use DateTimeImmutable;
 use InvalidArgumentException;
 
 final class CheckResult {
-	public const STATUS_HEALTHY  = 'healthy';
-	public const STATUS_WARNING  = 'warning';
-	public const STATUS_CRITICAL = 'critical';
-	public const STATUS_UNKNOWN  = 'unknown';
-
-	private const STATUSES = array(
-		self::STATUS_HEALTHY,
-		self::STATUS_WARNING,
-		self::STATUS_CRITICAL,
-		self::STATUS_UNKNOWN,
-	);
+	public const STATUS_HEALTHY  = Status::HEALTHY;
+	public const STATUS_WARNING  = Status::WARNING;
+	public const STATUS_CRITICAL = Status::CRITICAL;
+	public const STATUS_UNKNOWN  = Status::UNKNOWN;
 
 	private const SENSITIVE_KEYS = array(
 		'api_key',
@@ -59,7 +52,7 @@ final class CheckResult {
 			throw new InvalidArgumentException( 'The monitor type is invalid.' );
 		}
 
-		if ( ! in_array( $status, self::STATUSES, true ) ) {
+		if ( ! Status::is_valid( $status ) ) {
 			throw new InvalidArgumentException( 'The monitor status is invalid.' );
 		}
 

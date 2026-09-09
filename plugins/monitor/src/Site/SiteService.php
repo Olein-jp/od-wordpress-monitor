@@ -10,6 +10,7 @@ namespace Olein\WordPressMonitor\Site;
 use Olein\WordPressMonitor\Credential\Credential;
 use Olein\WordPressMonitor\Credential\CredentialService;
 use Olein\WordPressMonitor\Http\AgentClient;
+use Olein\WordPressMonitor\Support\ErrorCode;
 use Olein\WordPressMonitor\Support\UUID;
 use WP_Error;
 
@@ -32,7 +33,7 @@ final class SiteService {
 		$username = sanitize_text_field( $username );
 
 		if ( '' === $name || '' === $username || '' === $password ) {
-			return new WP_Error( 'INVALID_RESPONSE', __( 'All fields are required.', 'od-wordpress-monitor' ) );
+			return new WP_Error( ErrorCode::INVALID_RESPONSE, __( 'All fields are required.', 'od-wordpress-monitor' ) );
 		}
 
 		$normalized_url = $this->normalize_url( $site_url );
@@ -128,11 +129,11 @@ final class SiteService {
 		$url = untrailingslashit( esc_url_raw( trim( $url ) ) );
 
 		if ( ! wp_http_validate_url( $url ) || ! wp_parse_url( $url, PHP_URL_HOST ) ) {
-			return new WP_Error( 'INVALID_URL', __( 'Enter a valid public site URL.', 'od-wordpress-monitor' ) );
+			return new WP_Error( ErrorCode::INVALID_URL, __( 'Enter a valid public site URL.', 'od-wordpress-monitor' ) );
 		}
 
 		if ( 'https' !== wp_parse_url( $url, PHP_URL_SCHEME ) ) {
-			return new WP_Error( 'HTTPS_REQUIRED', __( 'The site URL must use HTTPS.', 'od-wordpress-monitor' ) );
+			return new WP_Error( ErrorCode::HTTPS_REQUIRED, __( 'The site URL must use HTTPS.', 'od-wordpress-monitor' ) );
 		}
 
 		return $url;

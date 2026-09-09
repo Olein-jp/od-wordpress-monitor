@@ -10,12 +10,20 @@ namespace Olein\WordPressMonitor\Tests;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use Olein\WordPressMonitor\Activation\DatabaseMigrator;
+use Olein\WordPressMonitor\Check\CheckRepository;
+use Olein\WordPressMonitor\Evaluation\CheckResultRecorder;
+use Olein\WordPressMonitor\Evaluation\StateTransition;
+use Olein\WordPressMonitor\Evaluation\StatusEvaluator;
+use Olein\WordPressMonitor\Event\EventRepository;
+use Olein\WordPressMonitor\Event\EventType;
 use Olein\WordPressMonitor\Monitor\CheckResult;
 use Olein\WordPressMonitor\Monitor\MonitorInterface;
+use Olein\WordPressMonitor\Monitor\Status;
 use Olein\WordPressMonitor\Scheduler\CheckLockInterface;
 use Olein\WordPressMonitor\Scheduler\CheckRunner;
 use Olein\WordPressMonitor\Site\Site;
 use Olein\WordPressMonitor\Site\SiteRepository;
+use Olein\WordPressMonitor\Status\SiteStatusRepository;
 
 final class CheckRunnerTest extends \WP_UnitTestCase {
 	private SiteRepository $sites;
@@ -114,6 +122,40 @@ final class CheckRunnerTest extends \WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'Sensitive', $result->message() );
 	}
 
+	public function test_runner_persists_check_status_and_transition_event(): void {
+		global $wpdb;
+
+		$site_id  = $this->create_site( 'Persisted', true );
+		$checks   = new CheckRepository( $wpdb );
+		$statuses = new SiteStatusRepository( $wpdb );
+		$events   = new EventRepository( $wpdb );
+		$recorder = new CheckResultRecorder(
+			$wpdb,
+			$checks,
+			$statuses,
+			$events,
+			new StatusEvaluator(),
+			new StateTransition()
+		);
+		$wpdb->query( "DELETE FROM {$wpdb->prefix}odm_checks" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query( "DELETE FROM {$wpdb->prefix}odm_site_status" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query( "DELETE FROM {$wpdb->prefix}odm_events" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$now = new DateTimeImmutable( '2026-09-09T00:00:00Z' );
+		$this->assertTrue( $recorder->record( new CheckResult( $site_id, 'http', Status::HEALTHY, null, 'Passed.', $now, $now, 0 ) ) );
+
+		$runner = new CheckRunner(
+			$this->sites,
+			$this->open_lock(),
+			array( $this->monitor( 'http', status: Status::CRITICAL ) ),
+			$recorder
+		);
+		$runner->run( 'http' );
+
+		$this->assertCount( 2, $checks->for_site( $site_id ) );
+		$this->assertSame( Status::CRITICAL, $statuses->find( $site_id )->http_status() );
+		$this->assertSame( EventType::SITE_DOWN, $events->for_site( $site_id )[0]->type() );
+	}
+
 	public function test_duplicate_monitor_types_are_rejected(): void {
 		$monitor = $this->monitor( 'http' );
 
@@ -140,12 +182,12 @@ final class CheckRunnerTest extends \WP_UnitTestCase {
 	/**
 	 * @param list<string> $calls Recorded monitor types.
 	 */
-	private function monitor( string $type, array &$calls = array() ): MonitorInterface {
-		return new class( $type, $calls ) implements MonitorInterface {
+	private function monitor( string $type, array &$calls = array(), string $status = Status::HEALTHY ): MonitorInterface {
+		return new class( $type, $calls, $status ) implements MonitorInterface {
 			/**
 			 * @param list<string> $calls Recorded monitor types.
 			 */
-			public function __construct( private readonly string $type, private array &$calls ) {
+			public function __construct( private readonly string $type, private array &$calls, private readonly string $status ) {
 			}
 
 			public function get_type(): string {
@@ -156,7 +198,7 @@ final class CheckRunnerTest extends \WP_UnitTestCase {
 				$this->calls[] = $this->type;
 				$now           = new DateTimeImmutable( '2026-09-09T00:00:00Z' );
 
-				return new CheckResult( (int) $site->id(), $this->type, CheckResult::STATUS_HEALTHY, null, 'Passed.', $now, $now, 0 );
+				return new CheckResult( (int) $site->id(), $this->type, $this->status, null, 'Passed.', $now, $now, 0 );
 			}
 		};
 	}

@@ -10,6 +10,7 @@ namespace Olein\WordPressMonitor\Http;
 use Olein\WordPressMonitor\Credential\Credential;
 use Olein\WordPressMonitor\Protocol\ResponseValidator;
 use Olein\WordPressMonitor\Site\Site;
+use Olein\WordPressMonitor\Support\ErrorCode;
 use WP_Error;
 
 final class AgentClient {
@@ -55,7 +56,7 @@ final class AgentClient {
 	 */
 	private function request( Site $site, Credential $credential, string $endpoint ) {
 		if ( 'https' !== wp_parse_url( $site->agent_url(), PHP_URL_SCHEME ) ) {
-			return new WP_Error( 'HTTPS_REQUIRED', __( 'Agent connections require HTTPS.', 'od-wordpress-monitor' ) );
+			return new WP_Error( ErrorCode::HTTPS_REQUIRED, __( 'Agent connections require HTTPS.', 'od-wordpress-monitor' ) );
 		}
 
 		$response = $this->http_client->get(
@@ -72,7 +73,7 @@ final class AgentClient {
 
 		if ( is_wp_error( $response ) ) {
 			$message = strtolower( $response->get_error_message() );
-			$code    = str_contains( $message, 'timed out' ) || str_contains( $message, 'timeout' ) ? 'TIMEOUT' : 'CONNECTION_ERROR';
+			$code    = str_contains( $message, 'timed out' ) || str_contains( $message, 'timeout' ) ? ErrorCode::TIMEOUT : ErrorCode::CONNECTION_ERROR;
 
 			return new WP_Error( $code, __( 'The Agent could not be reached.', 'od-wordpress-monitor' ) );
 		}
@@ -86,7 +87,7 @@ final class AgentClient {
 		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
 		if ( JSON_ERROR_NONE !== json_last_error() || ! is_array( $data ) ) {
-			return new WP_Error( 'INVALID_JSON', __( 'The Agent returned invalid JSON.', 'od-wordpress-monitor' ) );
+			return new WP_Error( ErrorCode::INVALID_JSON, __( 'The Agent returned invalid JSON.', 'od-wordpress-monitor' ) );
 		}
 
 		$valid = match ( $endpoint ) {
@@ -100,10 +101,10 @@ final class AgentClient {
 
 	private function http_error( int $status_code ): WP_Error {
 		$code = match ( $status_code ) {
-			401     => 'AUTHENTICATION_FAILED',
-			403     => 'PERMISSION_DENIED',
-			404     => 'AGENT_NOT_FOUND',
-			default => 'CONNECTION_ERROR',
+			401     => ErrorCode::AUTHENTICATION_FAILED,
+			403     => ErrorCode::PERMISSION_DENIED,
+			404     => ErrorCode::AGENT_NOT_FOUND,
+			default => ErrorCode::CONNECTION_ERROR,
 		};
 
 		return new WP_Error(
