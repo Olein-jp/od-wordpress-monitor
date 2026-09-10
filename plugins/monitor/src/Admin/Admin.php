@@ -10,12 +10,14 @@ namespace Olein\WordPressMonitor\Admin;
 final class Admin {
 	public function __construct(
 		private readonly SitesPage $sites_page,
-		private readonly AddSitePage $add_site_page
+		private readonly AddSitePage $add_site_page,
+		private readonly NotificationSettingsPage $notification_settings_page
 	) {
 	}
 
 	public function register_hooks(): void {
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
+		add_action( 'admin_init', array( $this->notification_settings_page, 'register_settings' ) );
 		add_action( 'admin_post_odm_add_site', array( $this->add_site_page, 'handle_post' ) );
 		add_action( 'admin_post_odm_test_connection', array( $this->sites_page, 'handle_test' ) );
 	}
@@ -46,6 +48,15 @@ final class Admin {
 			'manage_options',
 			'od-wordpress-monitor-add',
 			array( $this->add_site_page, 'render' )
+		);
+
+		add_submenu_page(
+			'od-wordpress-monitor',
+			__( 'Notification Settings', 'od-wordpress-monitor' ),
+			__( 'Notifications', 'od-wordpress-monitor' ),
+			'manage_options',
+			NotificationSettingsPage::SLUG,
+			array( $this->notification_settings_page, 'render' )
 		);
 	}
 }

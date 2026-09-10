@@ -10,6 +10,7 @@ namespace Olein\WordPressMonitor;
 use Olein\WordPressMonitor\Activation\DatabaseMigrator;
 use Olein\WordPressMonitor\Admin\AddSitePage;
 use Olein\WordPressMonitor\Admin\Admin;
+use Olein\WordPressMonitor\Admin\NotificationSettingsPage;
 use Olein\WordPressMonitor\Admin\SitesPage;
 use Olein\WordPressMonitor\Credential\CredentialEncryptor;
 use Olein\WordPressMonitor\Credential\CredentialRepository;
@@ -27,6 +28,7 @@ use Olein\WordPressMonitor\Monitor\Monitoring\HttpMonitor;
 use Olein\WordPressMonitor\Monitor\Monitoring\SslCertificateClient;
 use Olein\WordPressMonitor\Monitor\Monitoring\SslMonitor;
 use Olein\WordPressMonitor\Monitor\Monitoring\UpdateMonitor;
+use Olein\WordPressMonitor\Notification\NotificationSettings;
 use Olein\WordPressMonitor\Protocol\ResponseValidator;
 use Olein\WordPressMonitor\Scheduler\CheckLock;
 use Olein\WordPressMonitor\Scheduler\CheckRetention;
@@ -96,7 +98,11 @@ final class Plugin {
 				new UUID()
 			);
 
-			( new Admin( new SitesPage( $sites, $service ), new AddSitePage( $service ) ) )->register_hooks();
+			( new Admin(
+				new SitesPage( $sites, $service ),
+				new AddSitePage( $service ),
+				new NotificationSettingsPage( new NotificationSettings() )
+			) )->register_hooks();
 		} catch ( RuntimeException $exception ) {
 			add_action(
 				'admin_notices',
