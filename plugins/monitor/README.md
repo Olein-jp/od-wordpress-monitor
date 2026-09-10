@@ -1,6 +1,6 @@
 # OD WordPress Monitor
 
-OD Monitor Agent を導入したWordPressサイトを登録し、接続状況、SSL証明書、基本バージョン情報、更新可否を定期確認する管理プラグインです。
+OD Monitor Agent を導入したWordPressサイトを登録し、接続状況、SSL証明書、基本バージョン情報、更新可否、Site Healthを定期確認する管理プラグインです。
 
 ## 必要環境
 
@@ -24,11 +24,12 @@ OD Monitor Agent を導入したWordPressサイトを登録し、接続状況、
 - HTTP稼働確認、Agent Ping：5分
 - Agent Status：15分
 - WordPress・プラグイン・テーマの更新確認：60分
+- WordPress Site Health：60分
 - SSL証明書の検証と期限確認：24時間
 
 同一サイト・監視種別の重複実行は期限付きlockで防止します。system cronからWordPress cronを起動する場合も同じ実行経路を使用します。
 
-監視結果は履歴と現在状態として保存され、稼働停止、復旧、更新あり、SSL証明書の警告など、意味のある状態変化はイベントとして記録されます。チェック履歴は90日間保持され、それより古い履歴だけを日次で削除します。現在状態とイベント履歴はこの定期削除の対象外です。
+監視結果は履歴と現在状態として保存され、稼働停止、復旧、更新あり、Site Healthのcritical、SSL証明書の警告など、意味のある状態変化はイベントとして記録されます。Site Healthのrecommendedのみの状態は履歴へ保存しますが、イベントと通知は生成しません。チェック履歴は90日間保持され、それより古い履歴だけを日次で削除します。現在状態とイベント履歴はこの定期削除の対象外です。
 
 ## メール通知
 
@@ -37,6 +38,13 @@ OD Monitor Agent を導入したWordPressサイトを登録し、接続状況、
 メール送信にはWordPress標準の `wp_mail()` を使用します。実際にメールを配送するには、Monitorサイト側でWordPressのメール送信環境が正しく設定されている必要があります。
 
 ## 変更履歴
+
+### 1.0.3
+
+- AgentのSite Health結果を60分ごとに取得し、healthy・warning・criticalへ判定できるようにしました。
+- Site Healthの状態を履歴・現在状態・総合状態へ反映するようにしました。
+- criticalと復旧のイベント・通知を重複なく生成し、recommendedのみでは通知しないようにしました。
+- 保存するSite Health情報を件数と代表テストの識別子・状態だけに制限しました。
 
 ### 1.0.2
 

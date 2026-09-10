@@ -9,8 +9,8 @@ MonitorとAgentは、HTTPS上のWordPress REST APIとApplication Passwordを使�
 
 ## 現在のバージョン
 
-- OD WordPress Monitor：1.0.2
-- OD Monitor Agent：1.0.0
+- OD WordPress Monitor：1.0.3
+- OD Monitor Agent：1.0.1
 - 通信スキーマ：1.0
 
 ## 現在できること
@@ -21,6 +21,7 @@ MonitorとAgentは、HTTPS上のWordPress REST APIとApplication Passwordを使�
 - サイトのHTTP応答確認
 - Agent APIの稼働確認
 - WordPress本体、プラグイン、テーマの更新有無の確認
+- WordPress Site Healthの安全な診断結果の確認
 - SSL証明書の検証と有効期限確認
 - WP-Cronによる定期実行
 - 定期監視結果と現在状態の保存
@@ -132,9 +133,10 @@ Application Passwordはlibsodiumで暗号化して保存され、登録後の画
 | Agent Ping | 5分 |
 | Agent Status | 15分 |
 | WordPress・プラグイン・テーマの更新有無 | 60分 |
+| WordPress Site Health | 60分 |
 | SSL証明書 | 24時間 |
 
-SSL証明書は信頼チェーンとホスト名を検証し、有効期限まで30日以内になると警告として判定します。同一サイト・同一監視種別の重複実行は、期限付きロックで防止されます。
+Site Healthは安全な同期テストだけを対象とし、criticalがある場合は異常、recommendedのみの場合は警告として判定します。recommendedのみでは通知せず、criticalへの変化と復旧を重複なく通知します。SSL証明書は信頼チェーンとホスト名を検証し、有効期限まで30日以内になると警告として判定します。同一サイト・同一監視種別の重複実行は、期限付きロックで防止されます。
 
 WP-Cronは通常、サイトへのアクセスをきっかけに実行されます。Monitorサイトへのアクセスが少ない場合は、ホスティング環境のcronから `wp-cron.php` を定期実行する構成を検討してください。
 
@@ -145,8 +147,9 @@ Agentは認証済みリクエストに対して、次の読み取り専用エン
 - `GET /wp-json/od-monitor-agent/v1/ping`
 - `GET /wp-json/od-monitor-agent/v1/status`
 - `GET /wp-json/od-monitor-agent/v1/updates`
+- `GET /wp-json/od-monitor-agent/v1/site-health`
 
-応答にはWordPress、PHP、Agentのバージョンや更新情報などが含まれます。データベースのパスワード、WordPressのsalt、APIキー、ユーザー一覧、投稿、注文、フォーム送信、各プラグインの設定は返しません。
+応答にはWordPress、PHP、Agentのバージョン、更新情報、安全なSite Health診断の集計などが含まれます。データベースのパスワード、WordPressのsalt、APIキー、ユーザー一覧、投稿、注文、フォーム送信、各プラグインの設定は返しません。
 
 ## プラグインの更新
 

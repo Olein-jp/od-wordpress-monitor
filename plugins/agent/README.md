@@ -20,5 +20,14 @@ OD WordPress Monitor に、認証済みの読み取り専用サイト情報を�
 - `GET /wp-json/od-monitor-agent/v1/ping`
 - `GET /wp-json/od-monitor-agent/v1/status`
 - `GET /wp-json/od-monitor-agent/v1/updates`
+- `GET /wp-json/od-monitor-agent/v1/site-health`
 
-Application Password を Basic Authentication で送信してください。すべてのエンドポイントは `od_monitor_read` capability を必要とし、書き込み操作は提供しません。`/updates` はWordPress本体・プラグイン・テーマのキャッシュ済み更新情報を返します。認証情報は必ず HTTPS で送信してください。
+Application Password を Basic Authentication で送信してください。すべてのエンドポイントは `od_monitor_read` capability を必要とし、書き込み操作は提供しません。`/updates` はWordPress本体・プラグイン・テーマのキャッシュ済み更新情報を返します。`/site-health` は外部通信やloopbackを行わない安全な同期テストだけを実行し、critical・recommended・goodの件数と各テストの識別子・状態・ラベルを返します。認証情報は必ず HTTPS で送信してください。
+
+## 変更履歴
+
+### 1.0.1
+
+- 認証済みの読み取り専用 `/site-health` エンドポイントを追加しました。
+- WordPress標準Site Healthのうち、安全性を確認した同期テストだけを実行するようにしました。
+- 生の説明文、操作リンク、認証情報、環境詳細を応答へ含めず、結果を15分間キャッシュするようにしました。
