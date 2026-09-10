@@ -27,14 +27,16 @@ final class StatusEvaluator {
 			throw new InvalidArgumentException( 'The check result and site status must belong to the same site.' );
 		}
 
-		$http_status        = $previous->http_status();
-		$http_checked_at    = $previous->http_checked_at();
-		$agent_status       = $previous->agent_status();
-		$agent_checked_at   = $previous->agent_checked_at();
-		$updates_status     = $previous->updates_status();
-		$updates_checked_at = $previous->updates_checked_at();
-		$ssl_status         = $previous->ssl_status();
-		$ssl_checked_at     = $previous->ssl_checked_at();
+		$http_status            = $previous->http_status();
+		$http_checked_at        = $previous->http_checked_at();
+		$agent_status           = $previous->agent_status();
+		$agent_checked_at       = $previous->agent_checked_at();
+		$updates_status         = $previous->updates_status();
+		$updates_checked_at     = $previous->updates_checked_at();
+		$site_health_status     = $previous->site_health_status();
+		$site_health_checked_at = $previous->site_health_checked_at();
+		$ssl_status             = $previous->ssl_status();
+		$ssl_checked_at         = $previous->ssl_checked_at();
 
 		switch ( $result->type() ) {
 			case 'http':
@@ -50,6 +52,10 @@ final class StatusEvaluator {
 				$updates_status     = $result->status();
 				$updates_checked_at = $result->finished_at();
 				break;
+			case 'site_health':
+				$site_health_status     = $result->status();
+				$site_health_checked_at = $result->finished_at();
+				break;
 			case 'ssl':
 				$ssl_status     = $result->status();
 				$ssl_checked_at = $result->finished_at();
@@ -63,15 +69,15 @@ final class StatusEvaluator {
 
 		return new SiteStatus(
 			$result->site_id(),
-			$this->overall_status( $http_status, $agent_status, $updates_status, $ssl_status ),
+			$this->overall_status( $http_status, $agent_status, $updates_status, $site_health_status, $ssl_status ),
 			$http_status,
 			$http_checked_at,
 			$agent_status,
 			$agent_checked_at,
 			$updates_status,
 			$updates_checked_at,
-			$previous->site_health_status(),
-			$previous->site_health_checked_at(),
+			$site_health_status,
+			$site_health_checked_at,
 			$ssl_status,
 			$ssl_checked_at,
 			$result->finished_at(),
@@ -81,8 +87,8 @@ final class StatusEvaluator {
 		);
 	}
 
-	private function overall_status( string $http, string $agent, string $updates, string $ssl ): string {
-		if ( Status::CRITICAL === $http || Status::CRITICAL === $ssl ) {
+	private function overall_status( string $http, string $agent, string $updates, string $site_health, string $ssl ): string {
+		if ( Status::CRITICAL === $http || Status::CRITICAL === $site_health || Status::CRITICAL === $ssl ) {
 			return Status::CRITICAL;
 		}
 
@@ -90,12 +96,13 @@ final class StatusEvaluator {
 			Status::WARNING === $http
 			|| in_array( $agent, array( Status::WARNING, Status::CRITICAL ), true )
 			|| in_array( $updates, array( Status::WARNING, Status::CRITICAL ), true )
+			|| Status::WARNING === $site_health
 			|| Status::WARNING === $ssl
 		) {
 			return Status::WARNING;
 		}
 
-		if ( in_array( Status::UNKNOWN, array( $http, $agent, $updates, $ssl ), true ) ) {
+		if ( in_array( Status::UNKNOWN, array( $http, $agent, $updates, $site_health, $ssl ), true ) ) {
 			return Status::UNKNOWN;
 		}
 

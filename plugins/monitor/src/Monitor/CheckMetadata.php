@@ -17,10 +17,11 @@ final class CheckMetadata {
 		$data = $result->data();
 
 		return match ( $result->type() ) {
-			'http'    => $this->http( $data ),
-			'updates' => $this->updates( $data ),
-			'ssl'     => $this->ssl( $data ),
-			default   => array(),
+			'http'        => $this->http( $data ),
+			'updates'     => $this->updates( $data ),
+			'site_health' => $this->site_health( $data ),
+			'ssl'         => $this->ssl( $data ),
+			default       => array(),
 		};
 	}
 
@@ -57,6 +58,30 @@ final class CheckMetadata {
 			if ( isset( $data[ $key ] ) && is_int( $data[ $key ] ) && $data[ $key ] >= 0 ) {
 				$metadata[ $key ] = $data[ $key ];
 			}
+		}
+
+		return $metadata;
+	}
+
+	/**
+	 * @param array<string|int,mixed> $data Check data.
+	 * @return array<string,mixed>
+	 */
+	private function site_health( array $data ): array {
+		$metadata = array();
+
+		foreach ( array( 'critical', 'recommended', 'good' ) as $key ) {
+			if ( isset( $data[ $key ] ) && is_int( $data[ $key ] ) && $data[ $key ] >= 0 ) {
+				$metadata[ $key ] = $data[ $key ];
+			}
+		}
+
+		if ( isset( $data['representative_test_id'] ) && is_string( $data['representative_test_id'] ) && 1 === preg_match( '/^[a-z0-9_]+$/', $data['representative_test_id'] ) ) {
+			$metadata['representative_test_id'] = $data['representative_test_id'];
+		}
+
+		if ( isset( $data['representative_test_status'] ) && in_array( $data['representative_test_status'], array( 'critical', 'recommended', 'good' ), true ) ) {
+			$metadata['representative_test_status'] = $data['representative_test_status'];
 		}
 
 		return $metadata;

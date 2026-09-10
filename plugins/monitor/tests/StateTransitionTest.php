@@ -43,11 +43,31 @@ final class StateTransitionTest extends \WP_UnitTestCase {
 	 */
 	public function worsening_transition_provider(): array {
 		return array(
-			'site down'     => array( 'http', Status::HEALTHY, Status::CRITICAL, EventType::SITE_DOWN ),
-			'agent failure' => array( 'agent_ping', Status::HEALTHY, Status::CRITICAL, EventType::AGENT ),
-			'updates found' => array( 'updates', Status::HEALTHY, Status::WARNING, EventType::UPDATES ),
-			'ssl expiring'  => array( 'ssl', Status::HEALTHY, Status::WARNING, EventType::SSL ),
-			'ssl escalated' => array( 'ssl', Status::WARNING, Status::CRITICAL, EventType::SSL ),
+			'site down'            => array( 'http', Status::HEALTHY, Status::CRITICAL, EventType::SITE_DOWN ),
+			'agent failure'        => array( 'agent_ping', Status::HEALTHY, Status::CRITICAL, EventType::AGENT ),
+			'updates found'        => array( 'updates', Status::HEALTHY, Status::WARNING, EventType::UPDATES ),
+			'ssl expiring'         => array( 'ssl', Status::HEALTHY, Status::WARNING, EventType::SSL ),
+			'ssl escalated'        => array( 'ssl', Status::WARNING, Status::CRITICAL, EventType::SSL ),
+			'site health critical' => array( 'site_health', Status::HEALTHY, Status::CRITICAL, EventType::SITE_HEALTH_CRITICAL ),
+		);
+	}
+
+	public function test_creates_site_health_recovery_only_from_critical(): void {
+		$result = $this->result( 'site_health', Status::HEALTHY );
+		$event  = $this->transition->detect(
+			$this->status( 'site_health', Status::CRITICAL ),
+			$this->status( 'site_health', Status::HEALTHY ),
+			$result
+		);
+
+		$this->assertNotNull( $event );
+		$this->assertSame( EventType::SITE_HEALTH_RECOVERED, $event->type() );
+		$this->assertNull(
+			$this->transition->detect(
+				$this->status( 'site_health', Status::WARNING ),
+				$this->status( 'site_health', Status::HEALTHY ),
+				$result
+			)
 		);
 	}
 
@@ -105,17 +125,19 @@ final class StateTransitionTest extends \WP_UnitTestCase {
 
 	private function status( string $type, string $status ): SiteStatus {
 		$arguments = array(
-			'site_id'        => 1,
-			'http_status'    => Status::HEALTHY,
-			'agent_status'   => Status::HEALTHY,
-			'updates_status' => Status::HEALTHY,
-			'ssl_status'     => Status::HEALTHY,
+			'site_id'            => 1,
+			'http_status'        => Status::HEALTHY,
+			'agent_status'       => Status::HEALTHY,
+			'updates_status'     => Status::HEALTHY,
+			'site_health_status' => Status::HEALTHY,
+			'ssl_status'         => Status::HEALTHY,
 		);
 
 		$arguments[ match ( $type ) {
 			'http'                       => 'http_status',
 			'agent_ping', 'agent_status' => 'agent_status',
 			'updates'                    => 'updates_status',
+			'site_health'                => 'site_health_status',
 			'ssl'                        => 'ssl_status',
 		} ] = $status;
 

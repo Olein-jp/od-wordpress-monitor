@@ -122,6 +122,37 @@ final class CheckRunnerTest extends \WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'Sensitive', $result->message() );
 	}
 
+	public function test_site_health_failure_for_one_site_does_not_stop_the_next_site(): void {
+		$this->create_site( 'First', true );
+		$this->create_site( 'Second', true );
+		$calls   = 0;
+		$monitor = new class( $calls ) implements MonitorInterface {
+			public function __construct( private int &$calls ) {
+			}
+
+			public function get_type(): string {
+				return 'site_health';
+			}
+
+			public function check( Site $site ): CheckResult {
+				++$this->calls;
+
+				if ( 1 === $this->calls ) {
+					throw new \RuntimeException( 'First site failed.' );
+				}
+
+				$now = new DateTimeImmutable( '2026-09-10T00:00:00Z' );
+				return new CheckResult( (int) $site->id(), 'site_health', Status::HEALTHY, null, 'Passed.', $now, $now, 0 );
+			}
+		};
+		$results = ( new CheckRunner( $this->sites, $this->open_lock(), array( $monitor ) ) )->run( 'site_health' );
+
+		$this->assertCount( 2, $results );
+		$this->assertSame( Status::UNKNOWN, $results[0]->status() );
+		$this->assertSame( Status::HEALTHY, $results[1]->status() );
+		$this->assertSame( 2, $calls );
+	}
+
 	public function test_runner_persists_check_status_and_transition_event(): void {
 		global $wpdb;
 

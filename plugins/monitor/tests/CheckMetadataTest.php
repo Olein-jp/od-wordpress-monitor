@@ -87,6 +87,34 @@ final class CheckMetadataTest extends \WP_UnitTestCase {
 		);
 	}
 
+	public function test_site_health_keeps_only_counts_and_representative_test(): void {
+		$metadata = $this->metadata->for_result(
+			$this->result(
+				'site_health',
+				array(
+					'critical'                   => 1,
+					'recommended'                => 2,
+					'good'                       => 3,
+					'representative_test_id'     => 'direct_requests',
+					'representative_test_status' => 'critical',
+					'label'                      => 'Discarded diagnostic details',
+					'raw_response'               => array( 'discarded' ),
+				)
+			)
+		);
+
+		$this->assertSame(
+			array(
+				'critical'                   => 1,
+				'recommended'                => 2,
+				'good'                       => 3,
+				'representative_test_id'     => 'direct_requests',
+				'representative_test_status' => 'critical',
+			),
+			$metadata
+		);
+	}
+
 	public function test_unknown_monitor_has_no_persisted_metadata(): void {
 		$this->assertSame( array(), $this->metadata->for_result( $this->result( 'custom', array( 'value' => 'discarded' ) ) ) );
 	}

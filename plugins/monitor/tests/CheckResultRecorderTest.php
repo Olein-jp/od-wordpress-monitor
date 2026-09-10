@@ -142,6 +142,48 @@ final class CheckResultRecorderTest extends \WP_UnitTestCase {
 		$this->assertCount( 2, $this->checks->for_site( 7 ) );
 	}
 
+	public function test_persists_site_health_transitions_without_notifying_recommended_state(): void {
+		update_option(
+			NotificationSettings::OPTION,
+			array(
+				'enabled' => '1',
+				'email'   => 'alerts@example.com',
+			)
+		);
+		$sender   = new class() implements NotificationSenderInterface {
+			/** @var list<string> */
+			public array $types = array();
+
+			public function send( string $recipient, MonitoringEvent $event, string $notification_type ): bool {
+				unset( $recipient, $event );
+				$this->types[] = $notification_type;
+
+				return true;
+			}
+		};
+		$recorder = $this->recorder_with_sender( $sender );
+
+		$this->assertTrue( $recorder->record( $this->site_health_result( Status::HEALTHY, '2026-09-10T00:00:00Z', 0, 0 ) ) );
+		$this->assertTrue( $recorder->record( $this->site_health_result( Status::WARNING, '2026-09-10T01:00:00Z', 0, 1 ) ) );
+		$this->assertTrue( $recorder->record( $this->site_health_result( Status::HEALTHY, '2026-09-10T02:00:00Z', 0, 0 ) ) );
+		$this->assertSame( array(), $sender->types );
+		$this->assertCount( 0, $this->events->for_site( 7 ) );
+
+		$this->assertTrue( $recorder->record( $this->site_health_result( Status::CRITICAL, '2026-09-10T03:00:00Z', 1, 0 ) ) );
+		$this->assertTrue( $recorder->record( $this->site_health_result( Status::CRITICAL, '2026-09-10T04:00:00Z', 1, 0 ) ) );
+		$this->assertTrue( $recorder->record( $this->site_health_result( Status::HEALTHY, '2026-09-10T05:00:00Z', 0, 0 ) ) );
+
+		$events = $this->events->for_site( 7 );
+		$status = $this->statuses->find( 7 );
+		$this->assertCount( 6, $this->checks->for_site( 7 ) );
+		$this->assertCount( 2, $events );
+		$this->assertSame( EventType::SITE_HEALTH_RECOVERED, $events[0]->type() );
+		$this->assertSame( EventType::SITE_HEALTH_CRITICAL, $events[1]->type() );
+		$this->assertSame( array( NotificationRule::OUTAGE, NotificationRule::RECOVERY ), $sender->types );
+		$this->assertSame( Status::HEALTHY, $status->site_health_status() );
+		$this->assertSame( 'site_health_test', $status->metadata()['site_health']['representative_test_id'] );
+	}
+
 	private function recorder_with_sender( NotificationSenderInterface $sender ): CheckResultRecorder {
 		return new CheckResultRecorder(
 			$this->database(),
@@ -167,5 +209,32 @@ final class CheckResultRecorderTest extends \WP_UnitTestCase {
 		$checked_at = new DateTimeImmutable( $time );
 
 		return new CheckResult( 7, 'http', $status, Status::CRITICAL === $status ? 'CONNECTION_ERROR' : null, 'Checked.', $checked_at, $checked_at, 5, $data );
+	}
+
+	private function site_health_result( string $status, string $time, int $critical, int $recommended ): CheckResult {
+		$checked_at  = new DateTimeImmutable( $time );
+		$test_status = match ( $status ) {
+			Status::CRITICAL => 'critical',
+			Status::WARNING  => 'recommended',
+			default          => 'good',
+		};
+
+		return new CheckResult(
+			7,
+			'site_health',
+			$status,
+			null,
+			'Checked.',
+			$checked_at,
+			$checked_at,
+			5,
+			array(
+				'critical'                   => $critical,
+				'recommended'                => $recommended,
+				'good'                       => 1,
+				'representative_test_id'     => 'site_health_test',
+				'representative_test_status' => $test_status,
+			)
+		);
 	}
 }

@@ -53,7 +53,7 @@ WordPressのApplication Password認証失敗は401、capability不足は403、�
 
 `UpdateMonitor` は `/updates` の結果を `updates` 種別の `CheckResult` に変換します。更新がない場合はhealthy、1件以上ある場合はwarningです。metadataにはendpoint、schema version、合計・種別別の更新件数、更新対象種別だけを含め、個別項目や完全なAgent応答は保持しません。通信、認証、schema検証の失敗はcriticalとし、上記の正規化済みerror codeを使用します。
 
-Monitorの`AgentClient`は `/site-health` を取得して通信契約を検証できます。状態評価、履歴保存、schedule、event生成は後続Issueで追加します。
+`SiteHealthMonitor` は `/site-health` を60分ごとに取得し、criticalが1件以上ならcritical、criticalがなくrecommendedが1件以上ならwarning、両方なければhealthyとして履歴と現在状態へ保存します。永続化するmetadataは件数と代表testのid/statusだけです。criticalへの遷移は`SITE_HEALTH_CRITICAL`、criticalからhealthyへの復旧は`SITE_HEALTH_RECOVERED`として記録し、recommendedのみの状態ではイベントと通知を生成しません。
 
 ## Compatibility policy
 

@@ -39,7 +39,11 @@ final class StateTransition {
 				return null;
 			}
 
-			$event_type = EventType::RECOVERED;
+			if ( 'site_health' === $result->type() && Status::CRITICAL !== $previous_status ) {
+				return null;
+			}
+
+			$event_type = 'site_health' === $result->type() ? EventType::SITE_HEALTH_RECOVERED : EventType::RECOVERED;
 		} elseif (
 			Status::UNKNOWN === $previous_status
 			|| $this->severity( $current_status ) > $this->severity( $previous_status )
@@ -74,6 +78,7 @@ final class StateTransition {
 			'http'                       => Status::CRITICAL === $current_status ? EventType::SITE_DOWN : null,
 			'agent_ping', 'agent_status' => Status::CRITICAL === $current_status ? EventType::AGENT : null,
 			'updates'                    => in_array( $current_status, array( Status::WARNING, Status::CRITICAL ), true ) ? EventType::UPDATES : null,
+			'site_health'                => Status::CRITICAL === $current_status ? EventType::SITE_HEALTH_CRITICAL : null,
 			'ssl'                        => in_array( $current_status, array( Status::WARNING, Status::CRITICAL ), true ) ? EventType::SSL : null,
 			default                      => throw new InvalidArgumentException( 'The check type cannot generate an event.' ),
 		};
@@ -84,6 +89,7 @@ final class StateTransition {
 			'http'                       => $status->http_status(),
 			'agent_ping', 'agent_status' => $status->agent_status(),
 			'updates'                    => $status->updates_status(),
+			'site_health'                => $status->site_health_status(),
 			'ssl'                        => $status->ssl_status(),
 			default                      => throw new InvalidArgumentException( 'The check type cannot generate a transition.' ),
 		};

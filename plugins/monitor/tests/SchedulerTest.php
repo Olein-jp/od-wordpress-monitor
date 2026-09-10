@@ -35,6 +35,7 @@ final class SchedulerTest extends \WP_UnitTestCase {
 
 		$this->assertSame( 5 * MINUTE_IN_SECONDS, $schedules['odm_five_minutes']['interval'] );
 		$this->assertSame( 15 * MINUTE_IN_SECONDS, $schedules['odm_fifteen_minutes']['interval'] );
+		$this->assertSame( 'hourly', Scheduler::CHECK_SCHEDULES['site_health'] );
 	}
 
 	public function test_each_check_type_is_scheduled_exactly_once(): void {

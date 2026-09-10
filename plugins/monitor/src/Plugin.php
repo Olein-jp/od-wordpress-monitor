@@ -25,6 +25,7 @@ use Olein\WordPressMonitor\Http\HttpClient;
 use Olein\WordPressMonitor\Monitor\Monitoring\AgentPingMonitor;
 use Olein\WordPressMonitor\Monitor\Monitoring\AgentStatusMonitor;
 use Olein\WordPressMonitor\Monitor\Monitoring\HttpMonitor;
+use Olein\WordPressMonitor\Monitor\Monitoring\SiteHealthMonitor;
 use Olein\WordPressMonitor\Monitor\Monitoring\SslCertificateClient;
 use Olein\WordPressMonitor\Monitor\Monitoring\SslMonitor;
 use Olein\WordPressMonitor\Monitor\Monitoring\UpdateMonitor;
@@ -90,6 +91,7 @@ final class Plugin {
 						new AgentPingMonitor( $agent_client, $credentials ),
 						new AgentStatusMonitor( $agent_client, $credentials ),
 						new UpdateMonitor( $agent_client, $credentials ),
+						new SiteHealthMonitor( $agent_client, $credentials ),
 						new SslMonitor( new SslCertificateClient() ),
 					),
 					$recorder

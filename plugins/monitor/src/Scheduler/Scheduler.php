@@ -20,6 +20,7 @@ final class Scheduler {
 		'agent_ping'   => 'odm_five_minutes',
 		'agent_status' => 'odm_fifteen_minutes',
 		'updates'      => 'hourly',
+		'site_health'  => 'hourly',
 		'ssl'          => 'daily',
 	);
 

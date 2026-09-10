@@ -38,6 +38,7 @@ final class StatusEvaluatorTest extends \WP_UnitTestCase {
 			http_status: Status::HEALTHY,
 			agent_status: Status::HEALTHY,
 			updates_status: Status::HEALTHY,
+			site_health_status: Status::HEALTHY,
 			ssl_status: Status::HEALTHY
 		);
 
@@ -47,10 +48,36 @@ final class StatusEvaluatorTest extends \WP_UnitTestCase {
 			'agent critical'       => array( $healthy, $this->result( 'agent_ping', Status::CRITICAL ), Status::WARNING ),
 			'updates warning'      => array( $healthy, $this->result( 'updates', Status::WARNING ), Status::WARNING ),
 			'updates unavailable'  => array( $healthy, $this->result( 'updates', Status::CRITICAL ), Status::WARNING ),
+			'site health warning'  => array( $healthy, $this->result( 'site_health', Status::WARNING ), Status::WARNING ),
+			'site health critical' => array( $healthy, $this->result( 'site_health', Status::CRITICAL ), Status::CRITICAL ),
 			'ssl warning'          => array( $healthy, $this->result( 'ssl', Status::WARNING ), Status::WARNING ),
 			'ssl critical'         => array( $healthy, $this->result( 'ssl', Status::CRITICAL ), Status::CRITICAL ),
 			'incomplete knowledge' => array( new SiteStatus( 1 ), $this->result( 'http', Status::HEALTHY ), Status::UNKNOWN ),
 		);
+	}
+
+	public function test_updates_site_health_state_checked_at_and_metadata(): void {
+		$finished = new DateTimeImmutable( '2026-09-10T05:00:00Z' );
+		$result   = $this->result(
+			'site_health',
+			Status::WARNING,
+			$finished,
+			array(
+				'critical'                   => 0,
+				'recommended'                => 1,
+				'good'                       => 4,
+				'representative_test_id'     => 'utf8mb4_support',
+				'representative_test_status' => 'recommended',
+				'label'                      => 'Discarded',
+			)
+		);
+		$current  = $this->evaluator->apply( new SiteStatus( 1 ), $result );
+
+		$this->assertSame( Status::WARNING, $current->site_health_status() );
+		$this->assertSame( $finished, $current->site_health_checked_at() );
+		$this->assertSame( $finished, $current->last_checked_at() );
+		$this->assertSame( 'utf8mb4_support', $current->metadata()['site_health']['representative_test_id'] );
+		$this->assertArrayNotHasKey( 'label', $current->metadata()['site_health'] );
 	}
 
 	public function test_updates_only_the_matching_check_state_and_safe_metadata(): void {
