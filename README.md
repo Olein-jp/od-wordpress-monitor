@@ -9,7 +9,7 @@ MonitorとAgentは、HTTPS上のWordPress REST APIとApplication Passwordを使�
 
 ## 現在のバージョン
 
-- OD WordPress Monitor：1.0.1
+- OD WordPress Monitor：1.0.2
 - OD Monitor Agent：1.0.0
 - 通信スキーマ：1.0
 
