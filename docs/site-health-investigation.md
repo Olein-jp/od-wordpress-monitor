@@ -152,7 +152,7 @@ Issue #13では、次の変更単位を推奨します。
 1. `plugins/agent/src/Collector/SiteHealthCollector.php`を追加し、class確認、allowlist照合、公開メソッド実行、正規化、summary集計、cacheを担当させる。
 2. `plugins/agent/src/Rest/SiteHealthController.php`を追加し、既存の`RestController`と同じnamespace、schema version、UTC timestamp、`od_monitor_read` capabilityを使う認証済みGET `/site-health`を提供する。
 3. `plugins/agent/src/Plugin.php`でcontrollerを登録する。
-4. `packages/protocol/schemas/site-health-response.schema.json`と対応fixtureを追加し、`summary`、`tests`、`timestamp`をschema 1.0の加算的endpointとして定義する。
+4. `packages/protocol/schemas/site-health.schema.json`と対応fixtureを追加し、`summary`、`tests`、`timestamp`をschema 1.0の加算的endpointとして定義する。
 5. `plugins/monitor/src/Http/AgentClient.php`と`ResponseValidator.php`へsite-health契約を追加する。ただし状態評価、schedule、event生成はIssue #14に残す。
 6. `docs/protocol.md`へendpoint、認証、response、errorを追記する。
 
@@ -178,4 +178,3 @@ Issue #13の実装時は、次を自動テストします。
 - [WordPress 7.1.0 `WP_Site_Health` source](https://github.com/WordPress/wordpress-develop/blob/7.1.0/src/wp-admin/includes/class-wp-site-health.php)
 - [WordPress 6.8.0 Site Health REST controller](https://github.com/WordPress/wordpress-develop/blob/6.8.0/src/wp-includes/rest-api/endpoints/class-wp-rest-site-health-controller.php)
 - [WordPress 7.1.0 Site Health REST controller](https://github.com/WordPress/wordpress-develop/blob/7.1.0/src/wp-includes/rest-api/endpoints/class-wp-rest-site-health-controller.php)
-

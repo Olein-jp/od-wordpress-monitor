@@ -79,6 +79,38 @@ final class ResponseValidatorTest extends \WP_UnitTestCase {
 		$this->assertSame( 'INVALID_RESPONSE', $result->get_error_code() );
 	}
 
+	public function test_valid_site_health_passes(): void {
+		$this->assertTrue( $this->validator->validate_site_health( $this->valid_site_health() ) );
+	}
+
+	public function test_site_health_rejects_inconsistent_summary(): void {
+		$health                        = $this->valid_site_health();
+		$health['summary']['critical'] = 1;
+		$result                        = $this->validator->validate_site_health( $health );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'INVALID_RESPONSE', $result->get_error_code() );
+	}
+
+	public function test_site_health_rejects_duplicate_ids(): void {
+		$health            = $this->valid_site_health();
+		$health['tests'][] = $health['tests'][0];
+		++$health['summary']['good'];
+		$result = $this->validator->validate_site_health( $health );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'INVALID_RESPONSE', $result->get_error_code() );
+	}
+
+	public function test_site_health_rejects_html_label(): void {
+		$health                      = $this->valid_site_health();
+		$health['tests'][0]['label'] = '<strong>Healthy</strong>';
+		$result                      = $this->validator->validate_site_health( $health );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'INVALID_RESPONSE', $result->get_error_code() );
+	}
+
 	/**
 	 * Return a valid ping fixture.
 	 *
@@ -127,6 +159,30 @@ final class ResponseValidatorTest extends \WP_UnitTestCase {
 				'total'     => 1,
 			),
 			'timestamp'      => '2026-09-09T09:00:00Z',
+		);
+	}
+
+	/**
+	 * Return a valid Site Health fixture.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function valid_site_health(): array {
+		return array(
+			'schema_version' => '1.0',
+			'summary'        => array(
+				'critical'    => 0,
+				'recommended' => 0,
+				'good'        => 1,
+			),
+			'tests'          => array(
+				array(
+					'id'     => 'php_extensions',
+					'status' => 'good',
+					'label'  => 'Required PHP modules are available',
+				),
+			),
+			'timestamp'      => '2026-09-10T03:00:00Z',
 		);
 	}
 }

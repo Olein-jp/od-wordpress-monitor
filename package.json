@@ -11,7 +11,10 @@
     "env:cli": "wp-env run cli wp",
     "env:test:start": "wp-env start --config=.wp-env.test.json --auto-port && wp-env run cli --config=.wp-env.test.json wp plugin activate agent monitor",
     "env:test:stop": "wp-env stop --config=.wp-env.test.json",
-    "test:php": "wp-env run cli --config=.wp-env.test.json --env-cwd=wp-content/od-wordpress-monitor-workspace env WP_TESTS_DIR=/wordpress-phpunit composer test"
+    "test:php": "wp-env run cli --config=.wp-env.test.json --env-cwd=wp-content/od-wordpress-monitor-workspace env WP_TESTS_DIR=/wordpress-phpunit composer test",
+    "env:test:wp68:start": "wp-env start --config=.wp-env.wp68.json --auto-port && wp-env run cli --config=.wp-env.wp68.json wp plugin activate agent monitor",
+    "env:test:wp68:stop": "wp-env stop --config=.wp-env.wp68.json",
+    "test:php:wp68": "wp-env run cli --config=.wp-env.wp68.json --env-cwd=wp-content/od-wordpress-monitor-workspace env WP_TESTS_DIR=/wordpress-phpunit composer test"
   },
   "devDependencies": {
     "@wordpress/env": "^11.14.0"

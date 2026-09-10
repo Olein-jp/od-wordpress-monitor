@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/wp-env.json",
+  "core": "https://downloads.wordpress.org/release/wordpress-6.8.zip",
+  "plugins": [
+    "./plugins/monitor",
+    "./plugins/agent"
+  ],
+  "mappings": {
+    "wp-content/od-wordpress-monitor-workspace": "."
+  },
+  "port": 8891,
+  "autoPort": true,
+  "config": {
+    "WP_DEBUG": true,
+    "SCRIPT_DEBUG": true
+  }
+}

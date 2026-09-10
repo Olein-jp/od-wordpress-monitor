@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://olein-design.com/schemas/od-monitor-agent/v1/site-health.schema.json",
+  "title": "OD Monitor Agent Site Health Response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "summary", "tests", "timestamp"],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["critical", "recommended", "good"],
+      "properties": {
+        "critical": {"type": "integer", "minimum": 0},
+        "recommended": {"type": "integer", "minimum": 0},
+        "good": {"type": "integer", "minimum": 0}
+      }
+    },
+    "tests": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "status", "label"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          },
+          "status": {
+            "enum": ["critical", "recommended", "good"]
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[^<>]*$"
+          }
+        }
+      }
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    }
+  }
+}

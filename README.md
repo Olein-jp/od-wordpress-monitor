@@ -207,6 +207,14 @@ composer lint
 npm run test:php
 ```
 
+WordPress 6.8で互換性を確認する場合は、専用環境を使用します。
+
+```sh
+npm run env:test:wp68:start
+npm run test:php:wp68
+npm run env:test:wp68:stop
+```
+
 詳しい仕様は、次の資料を参照してください。
 
 - [アーキテクチャ](docs/architecture.md)

@@ -144,6 +144,77 @@ final class ResponseValidator {
 	}
 
 	/**
+	 * Validate a Site Health response.
+	 *
+	 * @param mixed $data Decoded response data.
+	 * @return true|WP_Error
+	 */
+	public function validate_site_health( $data ) {
+		$base = $this->validate_base( $data );
+
+		if ( is_wp_error( $base ) ) {
+			return $base;
+		}
+
+		if (
+			! isset( $data['summary'], $data['tests'] ) ||
+			! $this->has_only_keys( $data, array( 'schema_version', 'summary', 'tests', 'timestamp' ) ) ||
+			! is_array( $data['summary'] ) ||
+			! $this->has_only_keys( $data['summary'], array( 'critical', 'recommended', 'good' ) ) ||
+			! isset( $data['summary']['critical'], $data['summary']['recommended'], $data['summary']['good'] ) ||
+			! is_array( $data['tests'] ) ||
+			! array_is_list( $data['tests'] ) ||
+			array() === $data['tests'] ||
+			! preg_match( '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $data['timestamp'] )
+		) {
+			return $this->invalid_response();
+		}
+
+		$counts = array(
+			'critical'    => 0,
+			'recommended' => 0,
+			'good'        => 0,
+		);
+		$seen   = array();
+
+		foreach ( $data['summary'] as $count ) {
+			if ( ! is_int( $count ) || $count < 0 ) {
+				return $this->invalid_response();
+			}
+		}
+
+		foreach ( $data['tests'] as $test ) {
+			if (
+				! is_array( $test ) ||
+				! $this->has_only_keys( $test, array( 'id', 'status', 'label' ) ) ||
+				! isset( $test['id'], $test['status'], $test['label'] ) ||
+				! is_string( $test['id'] ) ||
+				1 !== preg_match( '/^[a-z0-9_]+$/', $test['id'] ) ||
+				isset( $seen[ $test['id'] ] ) ||
+				! is_string( $test['status'] ) ||
+				! isset( $counts[ $test['status'] ] ) ||
+				! is_string( $test['label'] ) ||
+				'' === $test['label'] ||
+				str_contains( $test['label'], '<' ) ||
+				str_contains( $test['label'], '>' )
+			) {
+				return $this->invalid_response();
+			}
+
+			$seen[ $test['id'] ] = true;
+			++$counts[ $test['status'] ];
+		}
+
+		foreach ( $counts as $status => $count ) {
+			if ( $count !== $data['summary'][ $status ] ) {
+				return $this->invalid_response();
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * Validate fields shared by core, plugin, and theme update items.
 	 *
 	 * @param mixed       $item           Update item.

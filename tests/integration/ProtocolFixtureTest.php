@@ -15,10 +15,12 @@ final class ProtocolFixtureTest extends \WP_UnitTestCase {
 		$ping      = json_decode( file_get_contents( $root . '/packages/protocol/fixtures/ping-success.json' ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$status    = json_decode( file_get_contents( $root . '/packages/protocol/fixtures/status-success.json' ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$updates   = json_decode( file_get_contents( $root . '/packages/protocol/fixtures/updates-success.json' ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		$health    = json_decode( file_get_contents( $root . '/packages/protocol/fixtures/site-health-success.json' ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$validator = new ResponseValidator();
 
 		$this->assertTrue( $validator->validate_ping( $ping ) );
 		$this->assertTrue( $validator->validate_status( $status ) );
 		$this->assertTrue( $validator->validate_updates( $updates ) );
+		$this->assertTrue( $validator->validate_site_health( $health ) );
 	}
 }

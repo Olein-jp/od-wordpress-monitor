@@ -50,6 +50,15 @@ final class AgentClient {
 	}
 
 	/**
+	 * Call the Agent Site Health endpoint.
+	 *
+	 * @return array<string,mixed>|WP_Error
+	 */
+	public function site_health( Site $site, Credential $credential ) {
+		return $this->request( $site, $credential, 'site-health' );
+	}
+
+	/**
 	 * Make and normalize an Agent request.
 	 *
 	 * @return array<string,mixed>|WP_Error
@@ -91,9 +100,10 @@ final class AgentClient {
 		}
 
 		$valid = match ( $endpoint ) {
-			'ping'    => $this->validator->validate_ping( $data ),
-			'status'  => $this->validator->validate_status( $data ),
-			'updates' => $this->validator->validate_updates( $data ),
+			'ping'        => $this->validator->validate_ping( $data ),
+			'status'      => $this->validator->validate_status( $data ),
+			'updates'     => $this->validator->validate_updates( $data ),
+			'site-health' => $this->validator->validate_site_health( $data ),
 		};
 
 		return is_wp_error( $valid ) ? $valid : $data;

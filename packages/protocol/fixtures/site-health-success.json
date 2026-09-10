@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "summary": {
+    "critical": 1,
+    "recommended": 1,
+    "good": 1
+  },
+  "tests": [
+    {
+      "id": "php_extensions",
+      "status": "good",
+      "label": "Required PHP modules are available"
+    },
+    {
+      "id": "debug_enabled",
+      "status": "recommended",
+      "label": "Debug logging is enabled"
+    },
+    {
+      "id": "scheduled_events",
+      "status": "critical",
+      "label": "A scheduled event has failed"
+    }
+  ],
+  "timestamp": "2026-09-10T03:00:00Z"
+}

@@ -47,6 +47,14 @@ final class AgentClientTest extends \WP_UnitTestCase {
 		$this->assertSame( 1, $result['summary']['total'] );
 	}
 
+	public function test_successful_site_health_request(): void {
+		$this->mock_response( 200, $this->valid_site_health() );
+		$result = $this->client->site_health( $this->site, $this->credential );
+
+		$this->assertIsArray( $result );
+		$this->assertSame( 1, $result['summary']['good'] );
+	}
+
 	public function test_request_uses_basic_authentication_and_configured_timeout(): void {
 		add_filter(
 			'pre_http_request',
@@ -201,6 +209,28 @@ final class AgentClientTest extends \WP_UnitTestCase {
 				'total'     => 1,
 			),
 			'timestamp'      => '2026-09-09T09:00:00Z',
+		);
+	}
+
+	/**
+	 * @return array<string,mixed>
+	 */
+	private function valid_site_health(): array {
+		return array(
+			'schema_version' => '1.0',
+			'summary'        => array(
+				'critical'    => 0,
+				'recommended' => 0,
+				'good'        => 1,
+			),
+			'tests'          => array(
+				array(
+					'id'     => 'php_extensions',
+					'status' => 'good',
+					'label'  => 'Required PHP modules are available',
+				),
+			),
+			'timestamp'      => '2026-09-10T03:00:00Z',
 		);
 	}
 }
