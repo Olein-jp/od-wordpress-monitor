@@ -8,11 +8,13 @@
 namespace Olein\WordPressMonitor\Scheduler;
 
 use Olein\WordPressMonitor\Monitor\CheckResult;
+use Throwable;
 use WP_Error;
 
 final class Scheduler {
 	public const HOOK               = 'odm_run_scheduled_check';
 	public const CLEANUP_HOOK       = 'odm_cleanup_checks';
+	public const CLEANUP_JOB        = 'cleanup';
 	public const CLEANUP_RECURRENCE = 'daily';
 
 	public const CHECK_SCHEDULES = array(
@@ -26,7 +28,8 @@ final class Scheduler {
 
 	public function __construct(
 		private readonly CheckRunner $runner,
-		private readonly ?CheckRetention $retention = null
+		private readonly ?CheckRetention $retention = null,
+		private readonly ?SchedulerHeartbeat $heartbeat = null
 	) {
 	}
 
@@ -102,7 +105,18 @@ final class Scheduler {
 	 * @return list<CheckResult>
 	 */
 	public function run( string $check_type ): array {
-		return $this->runner->run( $check_type );
+		$this->heartbeat?->record_started( $check_type );
+
+		try {
+			$results = $this->runner->run( $check_type );
+		} catch ( Throwable $exception ) {
+			$this->heartbeat?->record_failed( $check_type );
+			throw $exception;
+		}
+
+		$this->heartbeat?->record_completed( $check_type, count( $results ) );
+
+		return $results;
 	}
 
 	/**
@@ -111,8 +125,11 @@ final class Scheduler {
 	 * @return int|WP_Error
 	 */
 	public function cleanup(): int|WP_Error {
+		$this->heartbeat?->record_started( self::CLEANUP_JOB );
+
 		if ( null === $this->retention ) {
 			$result = new WP_Error( 'CLEANUP_UNAVAILABLE', __( 'Check cleanup is unavailable.', 'od-wordpress-monitor' ) );
+			$this->heartbeat?->record_failed( self::CLEANUP_JOB );
 			do_action( 'odm_check_cleanup_failed', $result->get_error_code() );
 
 			return $result;
@@ -121,10 +138,12 @@ final class Scheduler {
 		$result = $this->retention->cleanup();
 
 		if ( is_wp_error( $result ) ) {
+			$this->heartbeat?->record_failed( self::CLEANUP_JOB );
 			do_action( 'odm_check_cleanup_failed', $result->get_error_code() );
 			return $result;
 		}
 
+		$this->heartbeat?->record_completed( self::CLEANUP_JOB, $result );
 		do_action( 'odm_check_cleanup_completed', $result );
 
 		return $result;

@@ -20,6 +20,8 @@ use Olein\WordPressMonitor\Protocol\ResponseValidator;
 use Olein\WordPressMonitor\Site\Site;
 use Olein\WordPressMonitor\Site\SiteRepository;
 use Olein\WordPressMonitor\Site\SiteService;
+use Olein\WordPressMonitor\Scheduler\SchedulerHeartbeat;
+use Olein\WordPressMonitor\Scheduler\Scheduler;
 use Olein\WordPressMonitor\Status\SiteStatus;
 use Olein\WordPressMonitor\Status\SiteStatusRepository;
 use Olein\WordPressMonitor\Support\UUID;
@@ -28,15 +30,18 @@ final class AdminStatusPagesTest extends \WP_UnitTestCase {
 	private SiteRepository $sites;
 	private SiteStatusRepository $statuses;
 	private StatusOverview $overview;
+	private SchedulerHeartbeat $heartbeat;
 
 	public function set_up(): void {
 		parent::set_up();
 		global $wpdb;
 
 		( new DatabaseMigrator( $wpdb ) )->migrate();
-		$this->sites    = new SiteRepository( $wpdb );
-		$this->statuses = new SiteStatusRepository( $wpdb );
-		$this->overview = new StatusOverview( $this->sites, $this->statuses );
+		$this->sites     = new SiteRepository( $wpdb );
+		$this->statuses  = new SiteStatusRepository( $wpdb );
+		$this->overview  = new StatusOverview( $this->sites, $this->statuses );
+		$this->heartbeat = new SchedulerHeartbeat();
+		delete_option( SchedulerHeartbeat::OPTION );
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}odm_site_status" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}odm_sites" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 
@@ -46,6 +51,7 @@ final class AdminStatusPagesTest extends \WP_UnitTestCase {
 
 	public function tear_down(): void {
 		$_GET = array();
+		delete_option( SchedulerHeartbeat::OPTION );
 		parent::tear_down();
 	}
 
@@ -53,12 +59,13 @@ final class AdminStatusPagesTest extends \WP_UnitTestCase {
 		$this->create_site( 'Problem Site', 'critical' );
 		$this->create_site( 'Unknown Site' );
 
-		$output = $this->render( new DashboardPage( $this->overview ) );
+		$output = $this->render( new DashboardPage( $this->overview, $this->heartbeat ) );
 
 		$this->assertStringContainsString( '<caption class="screen-reader-text">Monitoring status summary</caption>', $output );
-		$this->assertSame( 5, substr_count( $output, '<th scope="col">' ) );
+		$this->assertSame( 12, substr_count( $output, '<th scope="col">' ) );
 		$this->assertMatchesRegularExpression( '/>\s*2\s*<span class="screen-reader-text">Sites<\/span>/', $output );
 		$this->assertStringContainsString( 'status=critical', $output );
+		$this->assertStringContainsString( 'Scheduler job health and latest execution', $output );
 	}
 
 	public function test_sites_page_renders_required_columns_text_status_and_problem_first(): void {
@@ -75,6 +82,29 @@ final class AdminStatusPagesTest extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'page=od-wordpress-monitor-site&#038;site_id=', $output );
 		$this->assertStringContainsString( 'aria-current="page"', $output );
 		$this->assertStringContainsString( 'Filter sites by status', $output );
+	}
+
+	public function test_dashboard_renders_stale_scheduler_state_without_stored_secrets(): void {
+		Scheduler::clear_scheduled();
+		update_option(
+			SchedulerHeartbeat::OPTION,
+			array(
+				'http' => array(
+					'last_started_at'   => time() - HOUR_IN_SECONDS,
+					'last_completed_at' => time() - HOUR_IN_SECONDS,
+					'result'            => SchedulerHeartbeat::RESULT_SUCCESS,
+					'processed'         => 3,
+					'secret'            => 'must-not-be-rendered',
+				),
+			)
+		);
+
+		$output = $this->render( new DashboardPage( $this->overview, $this->heartbeat ) );
+		Scheduler::ensure_scheduled();
+
+		$this->assertStringContainsString( '<strong>Stale</strong>', $output );
+		$this->assertStringContainsString( '>Succeeded</td>', $output );
+		$this->assertStringNotContainsString( 'must-not-be-rendered', $output );
 	}
 
 	public function test_sites_page_filters_and_escapes_saved_site_content(): void {
@@ -104,7 +134,7 @@ final class AdminStatusPagesTest extends \WP_UnitTestCase {
 		$this->expectException( \WPDieException::class );
 
 		if ( 'dashboard' === $page ) {
-			( new DashboardPage( $this->overview ) )->render();
+			( new DashboardPage( $this->overview, $this->heartbeat ) )->render();
 			return;
 		}
 

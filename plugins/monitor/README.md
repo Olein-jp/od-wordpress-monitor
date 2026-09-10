@@ -27,7 +27,7 @@ OD Monitor Agent を導入したWordPressサイトを登録し、接続状況、
 - WordPress Site Health：60分
 - SSL証明書の検証と期限確認：24時間
 
-同一サイト・監視種別の重複実行は期限付きlockで防止します。system cronからWordPress cronを起動する場合も同じ実行経路を使用します。
+同一サイト・監視種別の重複実行は期限付きlockで防止します。各ジョブの最終実行結果と次回予定はDashboardで確認できます。system cronからWordPress cronを起動する場合も同じ実行経路を使用します。設定と障害調査は[Schedulerの運用手順](https://github.com/Olein-jp/od-wordpress-monitor/blob/main/docs/runbook.md)を参照してください。
 
 監視結果は履歴と現在状態として保存され、稼働停止、復旧、更新あり、Site Healthのcritical、SSL証明書の警告など、意味のある状態変化はイベントとして記録されます。Site Healthのrecommendedのみの状態は履歴へ保存しますが、イベントと通知は生成しません。チェック履歴は90日間保持され、それより古い履歴だけを日次で削除します。現在状態とイベント履歴はこの定期削除の対象外です。
 

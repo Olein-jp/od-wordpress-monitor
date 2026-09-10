@@ -41,6 +41,7 @@ use Olein\WordPressMonitor\Scheduler\CheckLock;
 use Olein\WordPressMonitor\Scheduler\CheckRetention;
 use Olein\WordPressMonitor\Scheduler\CheckRunner;
 use Olein\WordPressMonitor\Scheduler\Scheduler;
+use Olein\WordPressMonitor\Scheduler\SchedulerHeartbeat;
 use Olein\WordPressMonitor\Site\SiteRepository;
 use Olein\WordPressMonitor\Site\SiteService;
 use Olein\WordPressMonitor\Status\SiteStatusRepository;
@@ -86,6 +87,7 @@ final class Plugin {
 				new StateTransition(),
 				$notifications
 			);
+			$heartbeat             = new SchedulerHeartbeat();
 			$scheduler             = new Scheduler(
 				new CheckRunner(
 					$sites,
@@ -100,7 +102,8 @@ final class Plugin {
 					),
 					$recorder
 				),
-				new CheckRetention( $checks )
+				new CheckRetention( $checks ),
+				$heartbeat
 			);
 			$scheduler->register_hooks();
 
@@ -118,7 +121,7 @@ final class Plugin {
 			$overview = new StatusOverview( $sites, $statuses );
 
 			( new Admin(
-				new DashboardPage( $overview ),
+				new DashboardPage( $overview, $heartbeat ),
 				new SitesPage( $overview, $service ),
 				new SiteDetailPage( $sites, $statuses, $checks, $events, $service ),
 				new AddSitePage( $service ),

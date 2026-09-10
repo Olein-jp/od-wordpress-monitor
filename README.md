@@ -138,7 +138,7 @@ Application Passwordはlibsodiumで暗号化して保存され、登録後の画
 
 Site Healthは安全な同期テストだけを対象とし、criticalがある場合は異常、recommendedのみの場合は警告として判定します。recommendedのみでは通知せず、criticalへの変化と復旧を重複なく通知します。SSL証明書は信頼チェーンとホスト名を検証し、有効期限まで30日以内になると警告として判定します。同一サイト・同一監視種別の重複実行は、期限付きロックで防止されます。
 
-WP-Cronは通常、サイトへのアクセスをきっかけに実行されます。Monitorサイトへのアクセスが少ない場合は、ホスティング環境のcronから `wp-cron.php` を定期実行する構成を検討してください。
+WP-Cronは通常、サイトへのアクセスをきっかけに実行されます。各ジョブの最終実行結果と次回予定はDashboardで確認できます。Monitorサイトへのアクセスが少ない場合やWP-Cronを無効化する場合は、[Schedulerの運用手順](docs/runbook.md)に従ってsystem cronを設定してください。
 
 ## Agentが公開する情報
 
