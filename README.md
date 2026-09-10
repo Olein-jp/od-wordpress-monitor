@@ -212,6 +212,7 @@ npm run test:php
 - [アーキテクチャ](docs/architecture.md)
 - [通信プロトコル](docs/protocol.md)
 - [セキュリティ](docs/security.md)
+- [Site Health API 安全利用調査](docs/site-health-investigation.md)
 - [リリース手順](docs/releases.md)
 - [Monitor固有のREADME](plugins/monitor/README.md)
 - [Agent固有のREADME](plugins/agent/README.md)
