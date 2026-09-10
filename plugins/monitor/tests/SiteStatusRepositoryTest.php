@@ -70,4 +70,15 @@ final class SiteStatusRepositoryTest extends \WP_UnitTestCase {
 
 		$this->assertSame( array(), $this->repository->find( 10 )->metadata() );
 	}
+
+	public function test_all_returns_every_current_status(): void {
+		$this->assertTrue( $this->repository->upsert( new SiteStatus( site_id: 21, overall_status: 'healthy' ) ) );
+		$this->assertTrue( $this->repository->upsert( new SiteStatus( site_id: 22, overall_status: 'warning' ) ) );
+
+		$statuses = $this->repository->all();
+		$site_ids = array_map( static fn ( SiteStatus $status ): int => $status->site_id(), $statuses );
+		sort( $site_ids );
+
+		$this->assertSame( array( 21, 22 ), $site_ids );
+	}
 }

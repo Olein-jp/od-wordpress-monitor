@@ -9,6 +9,7 @@ namespace Olein\WordPressMonitor\Admin;
 
 final class Admin {
 	public function __construct(
+		private readonly DashboardPage $dashboard_page,
 		private readonly SitesPage $sites_page,
 		private readonly AddSitePage $add_site_page,
 		private readonly NotificationSettingsPage $notification_settings_page
@@ -28,8 +29,17 @@ final class Admin {
 			__( 'WordPress Monitor', 'od-wordpress-monitor' ),
 			'manage_options',
 			'od-wordpress-monitor',
-			array( $this->sites_page, 'render' ),
+			array( $this->dashboard_page, 'render' ),
 			'dashicons-visibility'
+		);
+
+		add_submenu_page(
+			'od-wordpress-monitor',
+			__( 'Dashboard', 'od-wordpress-monitor' ),
+			__( 'Dashboard', 'od-wordpress-monitor' ),
+			'manage_options',
+			'od-wordpress-monitor',
+			array( $this->dashboard_page, 'render' )
 		);
 
 		add_submenu_page(
@@ -37,7 +47,7 @@ final class Admin {
 			__( 'Sites', 'od-wordpress-monitor' ),
 			__( 'Sites', 'od-wordpress-monitor' ),
 			'manage_options',
-			'od-wordpress-monitor',
+			SitesPage::SLUG,
 			array( $this->sites_page, 'render' )
 		);
 

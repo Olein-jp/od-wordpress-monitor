@@ -81,7 +81,7 @@ final class AddSitePage {
 				$status['agent']['version']
 			)
 		);
-		wp_safe_redirect( admin_url( 'admin.php?page=od-wordpress-monitor' ) );
+		wp_safe_redirect( admin_url( 'admin.php?page=' . SitesPage::SLUG ) );
 		exit;
 	}
 

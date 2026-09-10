@@ -77,6 +77,18 @@ final class SiteStatusRepository {
 	}
 
 	/**
+	 * Return the current status rows for all sites.
+	 *
+	 * @return list<SiteStatus>
+	 */
+	public function all(): array {
+		$sql  = "SELECT * FROM {$this->table}"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $this->database->get_results( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+
+		return array_map( array( $this, 'hydrate' ), $rows );
+	}
+
+	/**
 	 * Find and lock a site's current row during a persistence transaction.
 	 */
 	public function find_for_update( int $site_id ): ?SiteStatus {
