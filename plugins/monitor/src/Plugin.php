@@ -41,6 +41,7 @@ use Olein\WordPressMonitor\Protocol\ResponseValidator;
 use Olein\WordPressMonitor\Scheduler\CheckLock;
 use Olein\WordPressMonitor\Scheduler\CheckRetention;
 use Olein\WordPressMonitor\Scheduler\CheckRunner;
+use Olein\WordPressMonitor\Scheduler\OptionCleanupRepository;
 use Olein\WordPressMonitor\Scheduler\Scheduler;
 use Olein\WordPressMonitor\Scheduler\SchedulerHeartbeat;
 use Olein\WordPressMonitor\Site\SiteRepository;
@@ -104,7 +105,7 @@ final class Plugin {
 					),
 					$recorder
 				),
-				new CheckRetention( $checks ),
+				new CheckRetention( $checks, null, new OptionCleanupRepository( $wpdb ) ),
 				$heartbeat
 			);
 			$scheduler->register_hooks();

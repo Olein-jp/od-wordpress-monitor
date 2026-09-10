@@ -66,9 +66,9 @@ final class CheckRepository {
 	 *
 	 * @return int|WP_Error Number of deleted rows or a safe failure.
 	 */
-	public function delete_before( DateTimeImmutable $cutoff ): int|WP_Error {
+	public function delete_before( DateTimeImmutable $cutoff, int $limit = 100 ): int|WP_Error {
 		$cutoff = $this->format_date( $cutoff );
-		$sql    = $this->database->prepare( "DELETE FROM {$this->table} WHERE checked_at < %s", $cutoff ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$sql    = $this->database->prepare( "DELETE FROM {$this->table} WHERE checked_at < %s ORDER BY checked_at ASC, id ASC LIMIT %d", $cutoff, max( 1, $limit ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$result = $this->database->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		if ( false === $result ) {

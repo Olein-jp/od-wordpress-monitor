@@ -35,8 +35,8 @@ Agent WordPress
 
 サイト登録では、入力検証、`/ping`、`/status`、UUID生成、credential暗号化、site保存、credential保存の順に処理します。接続確認に成功しない限り永続化しません。credential保存が失敗した場合は、直前に作成したsite行を削除します。
 
-`Scheduler` はcheck typeごとに5つのWP-Cron eventだけを管理します。HTTPとAgent Pingは5分、Agent Statusは15分、Updatesは60分、SSLは24時間です。eventとsystem cronからの直接起動は同じ `CheckRunner::run()` を通り、enabled siteだけを処理します。実行結果は呼び出し元へ返し、`odm_check_result` actionにも渡すため、Phase 3の履歴保存を後付けできます。
+`Scheduler` はcheck typeごとに6つのWP-Cron eventと、日次cleanup eventを管理します。HTTPとAgent Pingは5分、Agent Statusは15分、UpdatesとSite Healthは60分、SSLは24時間です。eventとsystem cronからの直接起動は同じ `CheckRunner::run()` を通り、enabled siteだけを処理します。
 
 `CheckRunner` はsite UUIDとcheck typeの組み合わせで5分の期限付きlockを取得します。並行実行はskipし、処理終了時は所有tokenが一致するlockだけを解除します。異常終了はsecretを含まないunknown resultへ正規化し、他siteの処理を継続します。
 
-Phase 1は手動登録と手動接続確認だけを提供します。スケジューラー、履歴、通知、更新操作は含みません。
+日次cleanupは1回の処理件数を制限し、90日を超えたcheck履歴、期限切れexecution lock、期限切れのプラグイン固有transientを段階的に削除します。eventsとsite statusは保持し、現在有効なlockや実行中に更新されたoptionは観測済みの値との一致確認で保護します。
