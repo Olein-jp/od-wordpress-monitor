@@ -76,6 +76,22 @@ final class SiteRepository {
 		return array_map( array( $this, 'hydrate' ), $rows );
 	}
 
+	/**
+	 * Return a bounded keyset page of enabled sites in stable ID order.
+	 *
+	 * @return list<Site>
+	 */
+	public function enabled_after( int $cursor, int $limit ): array {
+		$sql  = $this->database->prepare(
+			"SELECT * FROM {$this->table} WHERE enabled = 1 AND id > %d ORDER BY id ASC LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			max( 0, $cursor ),
+			max( 1, $limit )
+		);
+		$rows = $this->database->get_results( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+
+		return array_map( array( $this, 'hydrate' ), $rows );
+	}
+
 	public function update( Site $site ): bool {
 		if ( null === $site->id() ) {
 			return false;

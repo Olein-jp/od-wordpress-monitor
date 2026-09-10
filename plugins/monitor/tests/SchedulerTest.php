@@ -10,6 +10,7 @@ namespace Olein\WordPressMonitor\Tests;
 use Olein\WordPressMonitor\Activation\Activator;
 use Olein\WordPressMonitor\Activation\DatabaseMigrator;
 use Olein\WordPressMonitor\Check\CheckRepository;
+use Olein\WordPressMonitor\Scheduler\BatchScheduler;
 use Olein\WordPressMonitor\Scheduler\CheckLockInterface;
 use Olein\WordPressMonitor\Scheduler\CheckRetention;
 use Olein\WordPressMonitor\Scheduler\CheckRunner;
@@ -66,6 +67,8 @@ final class SchedulerTest extends \WP_UnitTestCase {
 
 	public function test_activation_schedules_and_deactivation_clears_plugin_events(): void {
 		wp_schedule_single_event( time() + MINUTE_IN_SECONDS, RetryScheduler::HOOK, array( 1, 'site-uuid', 'http', 2 ) );
+		$generation = wp_generate_uuid4();
+		wp_schedule_single_event( time() + MINUTE_IN_SECONDS, BatchScheduler::HOOK, array( 'http', $generation ) );
 		Activator::activate();
 
 		foreach ( array_keys( Scheduler::CHECK_SCHEDULES ) as $check_type ) {
@@ -73,6 +76,7 @@ final class SchedulerTest extends \WP_UnitTestCase {
 		}
 		$this->assertIsInt( wp_next_scheduled( Scheduler::CLEANUP_HOOK ) );
 		$this->assertIsInt( wp_next_scheduled( RetryScheduler::HOOK, array( 1, 'site-uuid', 'http', 2 ) ) );
+		$this->assertIsInt( wp_next_scheduled( BatchScheduler::HOOK, array( 'http', $generation ) ) );
 
 		Activator::deactivate();
 
@@ -81,6 +85,7 @@ final class SchedulerTest extends \WP_UnitTestCase {
 		}
 		$this->assertFalse( wp_next_scheduled( Scheduler::CLEANUP_HOOK ) );
 		$this->assertFalse( wp_next_scheduled( RetryScheduler::HOOK, array( 1, 'site-uuid', 'http', 2 ) ) );
+		$this->assertFalse( wp_next_scheduled( BatchScheduler::HOOK, array( 'http', $generation ) ) );
 	}
 
 	public function test_registered_cron_callback_and_direct_call_share_runner(): void {
@@ -103,6 +108,7 @@ final class SchedulerTest extends \WP_UnitTestCase {
 
 		$this->assertSame( 10, has_action( Scheduler::HOOK, array( $scheduler, 'run' ) ) );
 		$this->assertSame( 10, has_action( RetryScheduler::HOOK, array( $scheduler, 'retry' ) ) );
+		$this->assertSame( 10, has_action( BatchScheduler::HOOK, array( $scheduler, 'continue_batch' ) ) );
 		$this->assertFalse( has_action( Scheduler::CLEANUP_HOOK, array( $scheduler, 'cleanup' ) ) );
 	}
 

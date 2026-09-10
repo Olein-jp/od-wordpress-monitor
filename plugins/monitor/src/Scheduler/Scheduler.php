@@ -37,6 +37,7 @@ final class Scheduler {
 		add_filter( 'cron_schedules', array( self::class, 'add_schedules' ) ); // phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval -- Five minutes is the explicit monitoring requirement.
 		add_action( self::HOOK, array( $this, 'run' ) );
 		add_action( RetryScheduler::HOOK, array( $this, 'retry' ), 10, 4 );
+		add_action( BatchScheduler::HOOK, array( $this, 'continue_batch' ), 10, 2 );
 
 		if ( null !== $this->retention ) {
 			add_action( self::CLEANUP_HOOK, array( $this, 'cleanup' ) );
@@ -99,6 +100,7 @@ final class Scheduler {
 
 		wp_clear_scheduled_hook( self::CLEANUP_HOOK );
 		wp_unschedule_hook( RetryScheduler::HOOK );
+		wp_unschedule_hook( BatchScheduler::HOOK );
 	}
 
 	/**
@@ -130,6 +132,19 @@ final class Scheduler {
 		$this->heartbeat?->record_completed( $check_type, null === $result ? 0 : 1 );
 
 		return $result;
+	}
+
+	/**
+	 * Continue a bounded site traversal through the same runner path.
+	 *
+	 * @return list<CheckResult>
+	 */
+	public function continue_batch( string $check_type, string $generation ): array {
+		$this->heartbeat?->record_started( $check_type );
+		$results = $this->runner->continue_batch( $check_type, $generation );
+		$this->heartbeat?->record_completed( $check_type, count( $results ) );
+
+		return $results;
 	}
 
 	/**

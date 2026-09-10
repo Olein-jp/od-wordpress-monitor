@@ -38,6 +38,7 @@ use Olein\WordPressMonitor\Notification\NotificationManager;
 use Olein\WordPressMonitor\Notification\NotificationRule;
 use Olein\WordPressMonitor\Notification\NotificationSettings;
 use Olein\WordPressMonitor\Protocol\ResponseValidator;
+use Olein\WordPressMonitor\Scheduler\BatchScheduler;
 use Olein\WordPressMonitor\Scheduler\CheckLock;
 use Olein\WordPressMonitor\Scheduler\CheckRetention;
 use Olein\WordPressMonitor\Scheduler\CheckRunner;
@@ -93,6 +94,7 @@ final class Plugin {
 			);
 			$heartbeat             = new SchedulerHeartbeat();
 			$retry_scheduler       = new RetryScheduler();
+			$batch_limit           = min( CheckRunner::MAX_BATCH_LIMIT, max( 1, (int) apply_filters( 'odm_check_batch_limit', CheckRunner::DEFAULT_BATCH_LIMIT ) ) );
 			$scheduler             = new Scheduler(
 				new CheckRunner(
 					$sites,
@@ -106,7 +108,9 @@ final class Plugin {
 						new SslMonitor( new SslCertificateClient(), url_validator: $url_validator ),
 					),
 					$recorder,
-					$retry_scheduler
+					$retry_scheduler,
+					new BatchScheduler( $wpdb ),
+					$batch_limit
 				),
 				new CheckRetention( $checks, null, new OptionCleanupRepository( $wpdb ) ),
 				$heartbeat

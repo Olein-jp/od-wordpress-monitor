@@ -24,6 +24,7 @@ wp cron event list --path=/var/www/example --url=https://monitor.example.com --f
 
 - `odm_run_scheduled_check`
 - `odm_retry_scheduled_check`（再試行待ちがある場合のみ）
+- `odm_continue_scheduled_check`（次のバッチがある場合のみ）
 - `odm_cleanup_checks`
 
 ## 手動実行
@@ -31,7 +32,7 @@ wp cron event list --path=/var/www/example --url=https://monitor.example.com --f
 調査時は、すべての WordPress Cron を無条件に実行せず、このプラグインの期限到来済みフックだけを対象にします。
 
 ```bash
-wp cron event run odm_run_scheduled_check odm_retry_scheduled_check odm_cleanup_checks --due-now --path=/var/www/example --url=https://monitor.example.com
+wp cron event run odm_run_scheduled_check odm_retry_scheduled_check odm_continue_scheduled_check odm_cleanup_checks --due-now --path=/var/www/example --url=https://monitor.example.com
 ```
 
 コマンドの引数と `--due-now` の動作は、[WP-CLI の公式コマンドリファレンス](https://developer.wordpress.org/cli/commands/cron/event/run/)で確認できます。
@@ -53,6 +54,27 @@ wp cron event run odm_run_scheduled_check odm_retry_scheduled_check odm_cleanup_
 ```bash
 wp cron event list --hook=odm_retry_scheduled_check --path=/var/www/example --url=https://monitor.example.com
 wp cron event run odm_retry_scheduled_check --due-now --path=/var/www/example --url=https://monitor.example.com
+```
+
+## 定期チェックのバッチ処理
+
+各check typeは、有効なサイトをsite ID順で1回あたり最大20件処理します。残りがある場合は、5秒後を期限とする `odm_continue_scheduled_check` の単発イベントへ同じcheck typeとバッチ世代を引き継ぎます。各回の処理件数は上限を超えません。
+
+カーソルはcheck typeごとに、バッチ世代と最後に処理したsite IDだけをautoloadしないoptionへ保存します。URL、credential、監視結果は含みません。各サイトの処理後にカーソルを進めるため、中断時は直前に完了した位置から再開します。カーソル更新前にプロセスが停止した場合は同じサイトを再確認する可能性がありますが、欠落を避け、期限付きlockで並行実行を防ぎます。
+
+同じcheck typeのバッチ実行は15分の期限付きlockで直列化し、各サイトでは既存のsite/check type lockも取得します。lock競合や再試行待ちのサイトは別の実行経路で処理中または処理予定として現在のバッチを進めます。サイトが処理中に削除または無効化された場合は実行せず、新しく追加された有効サイトは現在のカーソルより後であれば次のバッチへ含めます。
+
+1回の上限は `odm_check_batch_limit` filterで1〜100件に変更できます。範囲外は安全な範囲へ補正されます。実行時間、対象サイトの応答時間、PHPとサーバーの制限を確認し、必要最小限の値を設定してください。
+
+```php
+add_filter( 'odm_check_batch_limit', static fn(): int => 10 );
+```
+
+保留中のバッチは次のコマンドで確認・実行できます。単発イベントの登録に失敗してもカーソルは保持され、次回の通常scheduleで続きから再開します。古い世代の単発イベントは現在の世代と一致しなければ何も処理しません。
+
+```bash
+wp cron event list --hook=odm_continue_scheduled_check --path=/var/www/example --url=https://monitor.example.com
+wp cron event run odm_continue_scheduled_check --due-now --path=/var/www/example --url=https://monitor.example.com
 ```
 
 ## Retention cleanup
@@ -78,7 +100,7 @@ wp cron event run odm_cleanup_checks --path=/var/www/example --url=https://monit
 アクセス数が少ない環境や、`DISABLE_WP_CRON` を `true` にしている環境では、OS の system cron から WP-CLI を5分ごとに実行します。パス、URL、WP-CLI の絶対パスは環境に合わせて変更してください。
 
 ```cron
-*/5 * * * * cd /var/www/example && /usr/local/bin/wp cron event run odm_run_scheduled_check odm_retry_scheduled_check odm_cleanup_checks --due-now --path=/var/www/example --url=https://monitor.example.com --quiet
+*/5 * * * * cd /var/www/example && /usr/local/bin/wp cron event run odm_run_scheduled_check odm_retry_scheduled_check odm_continue_scheduled_check odm_cleanup_checks --due-now --path=/var/www/example --url=https://monitor.example.com --quiet
 ```
 
 設定手順は次のとおりです。
