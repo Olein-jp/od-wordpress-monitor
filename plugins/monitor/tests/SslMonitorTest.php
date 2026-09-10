@@ -9,6 +9,7 @@ namespace Olein\WordPressMonitor\Tests;
 
 use DateTimeImmutable;
 use InvalidArgumentException;
+use Olein\WordPressMonitor\Http\UrlValidator;
 use Olein\WordPressMonitor\Monitor\CheckResult;
 use Olein\WordPressMonitor\Monitor\Monitoring\SslCertificateClientInterface;
 use Olein\WordPressMonitor\Monitor\Monitoring\SslMonitor;
@@ -216,7 +217,8 @@ final class SslMonitorTest extends \WP_UnitTestCase {
 			static function () use ( &$times ): float {
 				return array_shift( $times );
 			},
-			static fn(): DateTimeImmutable => ( new DateTimeImmutable( '@' . self::NOW ) )->setTimezone( new \DateTimeZone( 'Asia/Tokyo' ) )
+			static fn(): DateTimeImmutable => ( new DateTimeImmutable( '@' . self::NOW ) )->setTimezone( new \DateTimeZone( 'Asia/Tokyo' ) ),
+			new UrlValidator( static fn(): array => array( '93.184.216.34' ) )
 		);
 	}
 }

@@ -9,6 +9,7 @@ namespace Olein\WordPressMonitor\Tests;
 
 use InvalidArgumentException;
 use Olein\WordPressMonitor\Http\HttpClient;
+use Olein\WordPressMonitor\Http\UrlValidator;
 use Olein\WordPressMonitor\Monitor\CheckResult;
 use Olein\WordPressMonitor\Monitor\Monitoring\HttpMonitor;
 use Olein\WordPressMonitor\Site\Site;
@@ -45,7 +46,7 @@ final class HttpMonitorTest extends \WP_UnitTestCase {
 
 		$times   = array( 100.0, 100.125 );
 		$monitor = new HttpMonitor(
-			new HttpClient(),
+			$this->http_client(),
 			static function () use ( &$times ): float {
 				return array_shift( $times );
 			}
@@ -67,7 +68,7 @@ final class HttpMonitorTest extends \WP_UnitTestCase {
 	 */
 	public function test_non_success_status_is_critical( int $status_code ): void {
 		add_filter( 'pre_http_request', fn() => $this->response( $status_code ) );
-		$result = ( new HttpMonitor( new HttpClient() ) )->check( $this->site );
+		$result = ( new HttpMonitor( $this->http_client() ) )->check( $this->site );
 
 		$this->assertSame( CheckResult::STATUS_CRITICAL, $result->status() );
 		$this->assertSame( 'HTTP_STATUS', $result->error_code() );
@@ -89,7 +90,7 @@ final class HttpMonitorTest extends \WP_UnitTestCase {
 	 */
 	public function test_transport_errors_are_classified( string $message, string $expected_code ): void {
 		add_filter( 'pre_http_request', static fn() => new WP_Error( 'http_request_failed', $message ) );
-		$result = ( new HttpMonitor( new HttpClient() ) )->check( $this->site );
+		$result = ( new HttpMonitor( $this->http_client() ) )->check( $this->site );
 
 		$this->assertSame( CheckResult::STATUS_CRITICAL, $result->status() );
 		$this->assertSame( $expected_code, $result->error_code() );
@@ -119,7 +120,7 @@ final class HttpMonitorTest extends \WP_UnitTestCase {
 			}
 		);
 
-		$result = ( new HttpMonitor( new HttpClient() ) )->check( $this->site );
+		$result = ( new HttpMonitor( $this->http_client() ) )->check( $this->site );
 
 		$this->assertSame( CheckResult::STATUS_HEALTHY, $result->status() );
 		$this->assertSame( 1, $result->data()['redirect_count'] );
@@ -137,7 +138,7 @@ final class HttpMonitorTest extends \WP_UnitTestCase {
 			}
 		);
 
-		$result = ( new HttpMonitor( new HttpClient() ) )->check( $this->site );
+		$result = ( new HttpMonitor( $this->http_client() ) )->check( $this->site );
 
 		$this->assertSame( 'UNSAFE_REDIRECT', $result->error_code() );
 		$this->assertSame( 1, $calls );
@@ -153,7 +154,7 @@ final class HttpMonitorTest extends \WP_UnitTestCase {
 			}
 		);
 
-		$result = ( new HttpMonitor( new HttpClient() ) )->check( $this->site );
+		$result = ( new HttpMonitor( $this->http_client() ) )->check( $this->site );
 
 		$this->assertSame( 'REDIRECT_LIMIT', $result->error_code() );
 		$this->assertSame( HttpMonitor::MAX_REDIRECTS, $result->data()['redirect_count'] );
@@ -171,7 +172,7 @@ final class HttpMonitorTest extends \WP_UnitTestCase {
 			}
 		);
 		$site   = new Site( 12, wp_generate_uuid4(), 'Invalid', $url, 'https://example.com/wp-json/od-monitor-agent/v1' );
-		$result = ( new HttpMonitor( new HttpClient() ) )->check( $site );
+		$result = ( new HttpMonitor( $this->http_client() ) )->check( $site );
 
 		$this->assertSame( 'INVALID_URL', $result->error_code() );
 		$this->assertArrayNotHasKey( 'final_url', $result->data() );
@@ -184,6 +185,7 @@ final class HttpMonitorTest extends \WP_UnitTestCase {
 		return array(
 			array( 'not-a-url' ),
 			array( 'ftp://example.com/file' ),
+			array( 'http://example.com' ),
 			array( 'http://127.0.0.1/admin' ),
 		);
 	}
@@ -192,7 +194,7 @@ final class HttpMonitorTest extends \WP_UnitTestCase {
 		$site = new Site( null, wp_generate_uuid4(), 'Unsaved', 'https://example.com', 'https://example.com/wp-json/od-monitor-agent/v1' );
 
 		$this->expectException( InvalidArgumentException::class );
-		( new HttpMonitor( new HttpClient() ) )->check( $site );
+		( new HttpMonitor( $this->http_client() ) )->check( $site );
 	}
 
 	/**
@@ -212,5 +214,9 @@ final class HttpMonitorTest extends \WP_UnitTestCase {
 			'cookies'  => array(),
 			'filename' => null,
 		);
+	}
+
+	private function http_client(): HttpClient {
+		return new HttpClient( new UrlValidator( static fn(): array => array( '93.184.216.34' ) ) );
 	}
 }

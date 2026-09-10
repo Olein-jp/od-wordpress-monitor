@@ -150,6 +150,10 @@ final class HttpMonitor implements MonitorInterface {
 	 * Normalize a WordPress HTTP API error without retaining its raw message.
 	 */
 	private function transport_error_result( Site $site, DateTimeImmutable $started_at, float $started, WP_Error $error, string $url, int $redirect_count ): CheckResult {
+		$error_code    = $error->get_error_code();
+		$security_code = is_string( $error_code ) && in_array( $error_code, array( ErrorCode::HTTPS_REQUIRED, ErrorCode::INVALID_URL, ErrorCode::REDIRECT_LIMIT, ErrorCode::UNSAFE_REDIRECT ), true )
+			? $error_code
+			: null;
 		$error_message = strtolower( $error->get_error_message() );
 		$is_timeout    = str_contains( $error_message, 'timed out' ) || str_contains( $error_message, 'timeout' );
 
@@ -157,10 +161,12 @@ final class HttpMonitor implements MonitorInterface {
 			$site,
 			$started_at,
 			$started,
-			$is_timeout ? ErrorCode::TIMEOUT : ErrorCode::CONNECTION_ERROR,
-			$is_timeout
+			$security_code ?? ( $is_timeout ? ErrorCode::TIMEOUT : ErrorCode::CONNECTION_ERROR ),
+			null !== $security_code
+				? __( 'The site request was blocked by the outbound URL policy.', 'od-wordpress-monitor' )
+				: ( $is_timeout
 				? __( 'The site request timed out.', 'od-wordpress-monitor' )
-				: __( 'The site could not be reached.', 'od-wordpress-monitor' ),
+				: __( 'The site could not be reached.', 'od-wordpress-monitor' ) ),
 			null,
 			$url,
 			$redirect_count
@@ -233,9 +239,7 @@ final class HttpMonitor implements MonitorInterface {
 	}
 
 	private function is_safe_url( string $url ): bool {
-		$scheme = wp_parse_url( $url, PHP_URL_SCHEME );
-
-		return in_array( $scheme, array( 'http', 'https' ), true ) && false !== wp_http_validate_url( $url );
+		return ! is_wp_error( $this->http_client->validate_url( $url ) );
 	}
 
 	/**

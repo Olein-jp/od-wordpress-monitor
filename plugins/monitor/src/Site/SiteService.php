@@ -10,17 +10,22 @@ namespace Olein\WordPressMonitor\Site;
 use Olein\WordPressMonitor\Credential\Credential;
 use Olein\WordPressMonitor\Credential\CredentialService;
 use Olein\WordPressMonitor\Http\AgentClient;
+use Olein\WordPressMonitor\Http\UrlValidator;
 use Olein\WordPressMonitor\Support\ErrorCode;
 use Olein\WordPressMonitor\Support\UUID;
 use WP_Error;
 
 final class SiteService {
+	private readonly UrlValidator $url_validator;
+
 	public function __construct(
 		private readonly SiteRepository $sites,
 		private readonly CredentialService $credentials,
 		private readonly AgentClient $agent,
-		private readonly UUID $uuid
+		private readonly UUID $uuid,
+		?UrlValidator $url_validator = null
 	) {
+		$this->url_validator = $url_validator ?? new UrlValidator();
 	}
 
 	/**
@@ -126,17 +131,13 @@ final class SiteService {
 	 * @return string|WP_Error
 	 */
 	private function normalize_url( string $url ) {
-		$url = untrailingslashit( esc_url_raw( trim( $url ) ) );
+		$validated = $this->url_validator->validate( $url );
 
-		if ( ! wp_http_validate_url( $url ) || ! wp_parse_url( $url, PHP_URL_HOST ) ) {
-			return new WP_Error( ErrorCode::INVALID_URL, __( 'Enter a valid public site URL.', 'od-wordpress-monitor' ) );
+		if ( is_wp_error( $validated ) ) {
+			return $validated;
 		}
 
-		if ( 'https' !== wp_parse_url( $url, PHP_URL_SCHEME ) ) {
-			return new WP_Error( ErrorCode::HTTPS_REQUIRED, __( 'The site URL must use HTTPS.', 'od-wordpress-monitor' ) );
-		}
-
-		return $url;
+		return untrailingslashit( $validated );
 	}
 
 	/**

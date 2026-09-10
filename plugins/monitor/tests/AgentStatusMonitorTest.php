@@ -14,6 +14,7 @@ use Olein\WordPressMonitor\Credential\CredentialRepository;
 use Olein\WordPressMonitor\Credential\CredentialService;
 use Olein\WordPressMonitor\Http\AgentClient;
 use Olein\WordPressMonitor\Http\HttpClient;
+use Olein\WordPressMonitor\Http\UrlValidator;
 use Olein\WordPressMonitor\Monitor\CheckResult;
 use Olein\WordPressMonitor\Monitor\Monitoring\AgentStatusMonitor;
 use Olein\WordPressMonitor\Protocol\ResponseValidator;
@@ -91,7 +92,7 @@ final class AgentStatusMonitorTest extends \WP_UnitTestCase {
 
 	private function monitor(): AgentStatusMonitor {
 		return new AgentStatusMonitor(
-			new AgentClient( new HttpClient(), new ResponseValidator() ),
+			new AgentClient( new HttpClient( new UrlValidator( static fn(): array => array( '93.184.216.34' ) ) ), new ResponseValidator() ),
 			$this->credentials
 		);
 	}

@@ -18,9 +18,26 @@ Agent専用roleはログインに必要な `read` とAPI用の `od_monitor_read`
 
 ログへ記録可能なのはsite UUID、endpoint、HTTP status、正規化済みerror code、durationです。Application Password、Authorization header、cookie、復号後credentialは記録禁止です。AgentはDB password、salts、API key、ユーザー一覧、投稿、フォーム送信、注文、プラグイン設定を返しません。
 
-HTTP稼働監視は登録済みsite URLだけを対象とし、WordPressの安全なHTTP APIで各接続先を検証します。redirectは自動追跡せず最大3回に制限し、private・loopbackなどの安全でない接続先を拒否します。結果にはresponse bodyを含めず、最終URLからquery、fragment、userinfoを除外します。
+## Outbound URL・SSRF対策
 
-SSL証明書監視も登録済みの公開HTTPS URLだけを対象とし、private・loopback URLとuserinfoを拒否します。TLS接続ではCA信頼チェーンとホスト名検証を有効にし、結果には公開host、port、有効期間、残存日数、適用した閾値だけを保持します。OpenSSLのrawエラーや証明書のsubject情報は保持しません。
+HTTP稼働監視、Agent API、SSL証明書確認は、すべて同じoutbound URL policyを使用します。サイト登録時に検証したURLであっても、監視実行の直前に再検証します。管理者による登録やWordPress filterを理由に、この検証を省略する例外は設けません。
+
+許可条件は次のとおりです。
+
+- `https` のみを許可し、schemeとhostを小文字化し、標準の443番portとfragmentを除いたURLへ正規化する
+- userinfoを含むURL、不正なhostname、443・8080以外のportを拒否する
+- `localhost`、`.localhost`、`.local`、`.internal`と代表的なmetadata hostnameを拒否する
+- IPv4・IPv6のliteral addressと、DNSで得たすべてのA・AAAA addressを検証する
+- loopback、private、link-local、reserved addressを1つでも含む場合は拒否する
+- DNS解決に失敗した場合や、解決結果が空・不正な場合は接続しない
+
+HTTP requestはWordPressの `wp_safe_remote_get()` と `reject_unsafe_urls` も併用します。独自検証とWordPress側の検証を実行直前に重ねることで、保存後のDNS変更や再解決時の変化を検出します。ただしDNSと接続先IPを固定する機能ではないため、信頼できるDNS resolver、egress firewall、network policyも併用してください。
+
+redirectは自動追跡せず、共通HTTP層で最大3回まで処理します。各hopを同じ基準で再検証し、禁止先、DNS検証失敗、上限超過を安全な固定error codeへ正規化します。Authorization headerを伴うAgent requestは、別originへのredirectを拒否し、credentialを転送しません。
+
+監視結果にはresponse body、Authorization header、credential、DNS解決結果、内部IPの詳細を保存しません。HTTP監視の最終URLを保存する場合もquery、fragment、userinfoを除外します。SSL監視はCA信頼チェーンとホスト名検証を有効にし、公開host、port、有効期間、残存日数、適用した閾値だけを保持します。
+
+運用上、private network内のWordPressや自己署名証明書へ接続する例外設定はありません。監視対象はpublic DNSと信頼可能なTLS証明書を持つHTTPS endpointとして公開し、接続元制限が必要な場合はMonitor serverの固定egress IPを許可してください。
 
 Agent到達性監視は保存済みcredentialを `/ping` の送信直前にだけ復号します。`CheckResult` には成功時のschema versionとAgent version、または正規化済みerror codeだけを含め、username、Application Password、Authorization header、rawエラーメッセージを含めません。
 
@@ -30,4 +47,4 @@ Agent到達性監視は保存済みcredentialを `/ping` の送信直前にだ�
 
 ## Future considerations
 
-Phase 2以降では、鍵のローテーション、外部KMS、credential再暗号化、監査ログ、SSRF対策の追加ポリシー、明示的な削除フローを検討します。Phase 1では破壊的uninstallを行いません。
+Phase 2以降では、鍵のローテーション、外部KMS、credential再暗号化、監査ログ、接続先IP固定を含む追加のegress policy、明示的な削除フローを検討します。Phase 1では破壊的uninstallを行いません。

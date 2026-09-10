@@ -25,6 +25,7 @@ use Olein\WordPressMonitor\Evaluation\StatusEvaluator;
 use Olein\WordPressMonitor\Event\EventRepository;
 use Olein\WordPressMonitor\Http\AgentClient;
 use Olein\WordPressMonitor\Http\HttpClient;
+use Olein\WordPressMonitor\Http\UrlValidator;
 use Olein\WordPressMonitor\Monitor\Monitoring\AgentPingMonitor;
 use Olein\WordPressMonitor\Monitor\Monitoring\AgentStatusMonitor;
 use Olein\WordPressMonitor\Monitor\Monitoring\HttpMonitor;
@@ -67,7 +68,8 @@ final class Plugin {
 				new CredentialRepository( $wpdb ),
 				new CredentialEncryptor()
 			);
-			$http_client           = new HttpClient();
+			$url_validator         = new UrlValidator();
+			$http_client           = new HttpClient( $url_validator );
 			$agent_client          = new AgentClient( $http_client, new ResponseValidator() );
 			$checks                = new CheckRepository( $wpdb );
 			$events                = new EventRepository( $wpdb );
@@ -98,7 +100,7 @@ final class Plugin {
 						new AgentStatusMonitor( $agent_client, $credentials ),
 						new UpdateMonitor( $agent_client, $credentials ),
 						new SiteHealthMonitor( $agent_client, $credentials ),
-						new SslMonitor( new SslCertificateClient() ),
+						new SslMonitor( new SslCertificateClient(), url_validator: $url_validator ),
 					),
 					$recorder
 				),
@@ -115,7 +117,8 @@ final class Plugin {
 				$sites,
 				$credentials,
 				$agent_client,
-				new UUID()
+				new UUID(),
+				$url_validator
 			);
 
 			$overview = new StatusOverview( $sites, $statuses );

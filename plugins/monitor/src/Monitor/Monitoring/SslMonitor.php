@@ -11,6 +11,7 @@ use Closure;
 use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
+use Olein\WordPressMonitor\Http\UrlValidator;
 use Olein\WordPressMonitor\Monitor\CheckResult;
 use Olein\WordPressMonitor\Monitor\MonitorInterface;
 use Olein\WordPressMonitor\Site\Site;
@@ -34,20 +35,23 @@ final class SslMonitor implements MonitorInterface {
 
 	private readonly Closure $clock;
 	private readonly Closure $now;
+	private readonly UrlValidator $url_validator;
 
 	public function __construct(
 		private readonly SslCertificateClientInterface $client,
 		private readonly int $warning_days = self::DEFAULT_WARNING_DAYS,
 		private readonly int $failure_days = self::DEFAULT_FAILURE_DAYS,
 		?Closure $clock = null,
-		?Closure $now = null
+		?Closure $now = null,
+		?UrlValidator $url_validator = null
 	) {
 		if ( $failure_days < 0 || $warning_days <= $failure_days ) {
 			throw new InvalidArgumentException( 'SSL thresholds must be non-negative and warning must exceed failure.' );
 		}
 
-		$this->clock = $clock ?? static fn(): float => microtime( true );
-		$this->now   = $now ?? static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
+		$this->clock         = $clock ?? static fn(): float => microtime( true );
+		$this->now           = $now ?? static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
+		$this->url_validator = $url_validator ?? new UrlValidator();
 	}
 
 	public function get_type(): string {
@@ -162,7 +166,13 @@ final class SslMonitor implements MonitorInterface {
 	 * @return array{host:string,port:int}|WP_Error
 	 */
 	private function target( string $url ): array|WP_Error {
-		$parts = wp_parse_url( $url );
+		$validated = $this->url_validator->validate( $url );
+
+		if ( is_wp_error( $validated ) ) {
+			return $validated;
+		}
+
+		$parts = wp_parse_url( $validated );
 
 		if (
 			! is_array( $parts )
@@ -170,7 +180,6 @@ final class SslMonitor implements MonitorInterface {
 			|| ! isset( $parts['host'] )
 			|| isset( $parts['user'] )
 			|| isset( $parts['pass'] )
-			|| false === wp_http_validate_url( $url )
 		) {
 			return new WP_Error( ErrorCode::INVALID_URL );
 		}

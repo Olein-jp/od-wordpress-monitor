@@ -64,10 +64,6 @@ final class AgentClient {
 	 * @return array<string,mixed>|WP_Error
 	 */
 	private function request( Site $site, Credential $credential, string $endpoint ) {
-		if ( 'https' !== wp_parse_url( $site->agent_url(), PHP_URL_SCHEME ) ) {
-			return new WP_Error( ErrorCode::HTTPS_REQUIRED, __( 'Agent connections require HTTPS.', 'od-wordpress-monitor' ) );
-		}
-
 		$response = $this->http_client->get(
 			trailingslashit( $site->agent_url() ) . $endpoint,
 			array(
@@ -81,6 +77,12 @@ final class AgentClient {
 		);
 
 		if ( is_wp_error( $response ) ) {
+			$error_code = $response->get_error_code();
+
+			if ( is_string( $error_code ) && in_array( $error_code, array( ErrorCode::HTTPS_REQUIRED, ErrorCode::INVALID_URL, ErrorCode::REDIRECT_LIMIT, ErrorCode::UNSAFE_REDIRECT ), true ) ) {
+				return new WP_Error( $error_code, __( 'The Agent request was blocked by the outbound URL policy.', 'od-wordpress-monitor' ) );
+			}
+
 			$message = strtolower( $response->get_error_message() );
 			$code    = str_contains( $message, 'timed out' ) || str_contains( $message, 'timeout' ) ? ErrorCode::TIMEOUT : ErrorCode::CONNECTION_ERROR;
 

@@ -10,6 +10,7 @@ namespace Olein\WordPressMonitor\Tests;
 use Olein\WordPressMonitor\Credential\Credential;
 use Olein\WordPressMonitor\Http\AgentClient;
 use Olein\WordPressMonitor\Http\HttpClient;
+use Olein\WordPressMonitor\Http\UrlValidator;
 use Olein\WordPressMonitor\Protocol\ResponseValidator;
 use Olein\WordPressMonitor\Site\Site;
 use WP_Error;
@@ -21,7 +22,7 @@ final class AgentClientTest extends \WP_UnitTestCase {
 
 	public function set_up(): void {
 		parent::set_up();
-		$this->client     = new AgentClient( new HttpClient(), new ResponseValidator() );
+		$this->client     = new AgentClient( $this->http_client(), new ResponseValidator() );
 		$this->site       = new Site( null, wp_generate_uuid4(), 'Example', 'https://example.com', 'https://example.com/wp-json/od-monitor-agent/v1' );
 		$this->credential = new Credential( 'agent-user', 'app password' );
 	}
@@ -87,6 +88,39 @@ final class AgentClientTest extends \WP_UnitTestCase {
 
 		$this->assertWPError( $result );
 		$this->assertSame( 'HTTPS_REQUIRED', $result->get_error_code() );
+	}
+
+	public function test_agent_redirect_to_private_network_is_blocked_without_leaking_credentials(): void {
+		$calls      = 0;
+		$validator  = new UrlValidator(
+			static fn( string $host ): array => 'private.example.com' === $host ? array( '192.168.1.20' ) : array( '93.184.216.34' )
+		);
+		$client     = new AgentClient( new HttpClient( $validator ), new ResponseValidator() );
+		$credential = new Credential( 'private-user', 'must-not-leak' );
+		add_filter(
+			'pre_http_request',
+			function () use ( &$calls ): array {
+				++$calls;
+				return array(
+					'headers'  => array( 'location' => 'https://private.example.com/metadata' ),
+					'body'     => '',
+					'response' => array(
+						'code'    => 302,
+						'message' => '',
+					),
+					'cookies'  => array(),
+					'filename' => null,
+				);
+			}
+		);
+
+		$result = $client->ping( $this->site, $credential );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'UNSAFE_REDIRECT', $result->get_error_code() );
+		$this->assertSame( 1, $calls );
+		$this->assertStringNotContainsString( 'must-not-leak', $result->get_error_message() );
+		$this->assertStringNotContainsString( '192.168.1.20', $result->get_error_message() );
 	}
 
 	/**
@@ -172,6 +206,10 @@ final class AgentClientTest extends \WP_UnitTestCase {
 				'filename' => null,
 			)
 		);
+	}
+
+	private function http_client(): HttpClient {
+		return new HttpClient( new UrlValidator( static fn(): array => array( '93.184.216.34' ) ) );
 	}
 
 	/**

@@ -19,7 +19,7 @@ Agent WordPress
   Application Password auth → od_monitor_read → /ping, /status → Collectors
 ```
 
-`HttpMonitor` は保存済み `Site` の公開HTTP URLだけをWordPressの安全なHTTP APIで取得し、2xx、非成功status、timeout、接続失敗を共通の `CheckResult` に正規化します。response bodyは保持せず、redirectは最大3回まで接続先を個別検証します。
+`HttpMonitor` は保存済み `Site` の公開HTTPS URLだけを共通のoutbound URL policyとWordPressの安全なHTTP APIで取得し、2xx、非成功status、timeout、接続失敗を共通の `CheckResult` に正規化します。response bodyは保持せず、redirectは最大3回まで接続先と解決後のIPを個別検証します。
 
 `SslMonitor` は保存済み `Site` の公開HTTPS URLに対して、CA信頼チェーンとホスト名を検証したTLS接続を行い、証明書の有効期間を共通の `CheckResult` に正規化します。警告日数と失敗日数は生成時に設定でき、期限判定はWordPressのtimezoneに依存しないUTCの基準時刻で行います。
 

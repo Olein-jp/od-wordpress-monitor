@@ -31,8 +31,11 @@ final class AgentStatusMonitor implements MonitorInterface {
 		ErrorCode::HTTPS_REQUIRED,
 		ErrorCode::INVALID_JSON,
 		ErrorCode::INVALID_RESPONSE,
+		ErrorCode::INVALID_URL,
 		ErrorCode::PERMISSION_DENIED,
+		ErrorCode::REDIRECT_LIMIT,
 		ErrorCode::TIMEOUT,
+		ErrorCode::UNSAFE_REDIRECT,
 		ErrorCode::UNSUPPORTED_SCHEMA,
 	);
 
@@ -99,6 +102,9 @@ final class AgentStatusMonitor implements MonitorInterface {
 			ErrorCode::CONNECTION_ERROR                              => __( 'The Agent could not be reached.', 'od-wordpress-monitor' ),
 			ErrorCode::AGENT_NOT_FOUND                               => __( 'The Agent endpoint was not found.', 'od-wordpress-monitor' ),
 			ErrorCode::HTTPS_REQUIRED                                => __( 'The Agent URL must use HTTPS.', 'od-wordpress-monitor' ),
+			ErrorCode::INVALID_URL,
+			ErrorCode::REDIRECT_LIMIT,
+			ErrorCode::UNSAFE_REDIRECT                               => __( 'The Agent URL was blocked by the outbound security policy.', 'od-wordpress-monitor' ),
 			ErrorCode::CREDENTIAL_NOT_FOUND,
 			ErrorCode::CREDENTIAL_DECRYPTION_FAILED                  => __( 'The stored Agent credential is unavailable.', 'od-wordpress-monitor' ),
 			ErrorCode::INVALID_JSON,
