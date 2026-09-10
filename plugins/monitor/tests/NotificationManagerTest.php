@@ -67,7 +67,7 @@ final class NotificationManagerTest extends \WP_UnitTestCase {
 		$sender  = $this->sender();
 		$manager = new NotificationManager( $this->settings, new NotificationRule(), $sender );
 
-		$this->assertFalse( $manager->notify( $this->event( 'critical', 'critical' ) ) );
+		$this->assertNull( $manager->notify( $this->event( 'critical', 'critical' ) ) );
 		$this->assertSame( 0, $sender->calls );
 	}
 
@@ -85,8 +85,27 @@ final class NotificationManagerTest extends \WP_UnitTestCase {
 		$sender  = $this->sender();
 		$manager = new NotificationManager( $this->settings, new NotificationRule(), $sender );
 
-		$this->assertFalse( $manager->notify( $this->event( 'healthy', 'critical' ) ) );
+		$this->assertNull( $manager->notify( $this->event( 'healthy', 'critical' ) ) );
 		$this->assertSame( 0, $sender->calls );
+	}
+
+	public function test_sender_exception_becomes_a_safe_failure(): void {
+		update_option(
+			NotificationSettings::OPTION,
+			array(
+				'enabled' => '1',
+				'email'   => 'alerts@example.com',
+			)
+		);
+		$sender  = new class() implements NotificationSenderInterface {
+			public function send( string $recipient, MonitoringEvent $event, string $notification_type ): bool {
+				unset( $recipient, $event, $notification_type );
+				throw new \RuntimeException( 'Internal transport detail.' );
+			}
+		};
+		$manager = new NotificationManager( $this->settings, new NotificationRule(), $sender );
+
+		$this->assertFalse( $manager->notify( $this->event( 'healthy', 'critical' ) ) );
 	}
 
 	/**

@@ -28,6 +28,9 @@ use Olein\WordPressMonitor\Monitor\Monitoring\HttpMonitor;
 use Olein\WordPressMonitor\Monitor\Monitoring\SslCertificateClient;
 use Olein\WordPressMonitor\Monitor\Monitoring\SslMonitor;
 use Olein\WordPressMonitor\Monitor\Monitoring\UpdateMonitor;
+use Olein\WordPressMonitor\Notification\EmailNotifier;
+use Olein\WordPressMonitor\Notification\NotificationManager;
+use Olein\WordPressMonitor\Notification\NotificationRule;
 use Olein\WordPressMonitor\Notification\NotificationSettings;
 use Olein\WordPressMonitor\Protocol\ResponseValidator;
 use Olein\WordPressMonitor\Scheduler\CheckLock;
@@ -54,23 +57,31 @@ final class Plugin {
 		try {
 			global $wpdb;
 
-			$sites        = new SiteRepository( $wpdb );
-			$credentials  = new CredentialService(
+			$sites                 = new SiteRepository( $wpdb );
+			$credentials           = new CredentialService(
 				new CredentialRepository( $wpdb ),
 				new CredentialEncryptor()
 			);
-			$http_client  = new HttpClient();
-			$agent_client = new AgentClient( $http_client, new ResponseValidator() );
-			$checks       = new CheckRepository( $wpdb );
-			$recorder     = new CheckResultRecorder(
+			$http_client           = new HttpClient();
+			$agent_client          = new AgentClient( $http_client, new ResponseValidator() );
+			$checks                = new CheckRepository( $wpdb );
+			$events                = new EventRepository( $wpdb );
+			$notification_settings = new NotificationSettings();
+			$notifications         = new NotificationManager(
+				$notification_settings,
+				new NotificationRule(),
+				new EmailNotifier( $sites )
+			);
+			$recorder              = new CheckResultRecorder(
 				$wpdb,
 				$checks,
 				new SiteStatusRepository( $wpdb ),
-				new EventRepository( $wpdb ),
+				$events,
 				new StatusEvaluator(),
-				new StateTransition()
+				new StateTransition(),
+				$notifications
 			);
-			$scheduler    = new Scheduler(
+			$scheduler             = new Scheduler(
 				new CheckRunner(
 					$sites,
 					new CheckLock( $wpdb ),
@@ -101,7 +112,7 @@ final class Plugin {
 			( new Admin(
 				new SitesPage( $sites, $service ),
 				new AddSitePage( $service ),
-				new NotificationSettingsPage( new NotificationSettings() )
+				new NotificationSettingsPage( $notification_settings )
 			) )->register_hooks();
 		} catch ( RuntimeException $exception ) {
 			add_action(

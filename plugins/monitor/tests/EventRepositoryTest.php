@@ -52,6 +52,29 @@ final class EventRepositoryTest extends \WP_UnitTestCase {
 		$this->assertWPError( $this->repository->create( $event ) );
 	}
 
+	public function test_records_only_notification_status_and_utc_timestamp(): void {
+		$id = $this->repository->create( $this->event( 'SITE_DOWN', 'healthy', 'critical', '2026-09-09T00:00:00Z' ) );
+
+		$this->assertIsInt( $id );
+		$this->assertTrue(
+			$this->repository->record_notification_result(
+				$id,
+				false,
+				new DateTimeImmutable( '2026-09-10T09:30:00+09:00' )
+			)
+		);
+		$this->assertSame(
+			array(
+				'source'       => 'http',
+				'notification' => array(
+					'status'    => 'failed',
+					'timestamp' => '2026-09-10T00:30:00Z',
+				),
+			),
+			$this->repository->find( $id )->metadata()
+		);
+	}
+
 	private function event( string $type, string $previous_status, string $current_status, string $time ): MonitoringEvent {
 		return new MonitoringEvent(
 			null,

@@ -65,6 +65,46 @@ final class EventRepository {
 	}
 
 	/**
+	 * Record a secret-free notification attempt on an existing event.
+	 *
+	 * @return bool|WP_Error
+	 */
+	public function record_notification_result( int $id, bool $sent, ?DateTimeImmutable $attempted_at = null ) {
+		$event = $this->find( $id );
+
+		if ( null === $event ) {
+			return new WP_Error( 'EVENT_NOT_FOUND', __( 'The notification event could not be found.', 'od-wordpress-monitor' ) );
+		}
+
+		$metadata                 = $event->metadata();
+		$metadata['notification'] = array(
+			'status'    => $sent ? 'sent' : 'failed',
+			'timestamp' => ( $attempted_at ?? new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ) )
+				->setTimezone( new DateTimeZone( 'UTC' ) )
+				->format( 'Y-m-d\TH:i:s\Z' ),
+		);
+		$encoded                  = $this->metadata_codec->encode( $metadata );
+
+		if ( is_wp_error( $encoded ) ) {
+			return $encoded;
+		}
+
+		$result = $this->database->update(
+			$this->table,
+			array( 'metadata' => $encoded ),
+			array( 'id' => $id ),
+			array( '%s' ),
+			array( '%d' )
+		);
+
+		if ( false === $result ) {
+			return new WP_Error( 'DATABASE_ERROR', __( 'The notification result could not be saved.', 'od-wordpress-monitor' ) );
+		}
+
+		return true;
+	}
+
+	/**
 	 * Return a site's newest events first.
 	 *
 	 * @return list<MonitoringEvent>

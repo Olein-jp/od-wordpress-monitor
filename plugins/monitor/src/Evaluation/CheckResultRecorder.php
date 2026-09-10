@@ -9,7 +9,9 @@ namespace Olein\WordPressMonitor\Evaluation;
 
 use Olein\WordPressMonitor\Check\CheckRepository;
 use Olein\WordPressMonitor\Event\EventRepository;
+use Olein\WordPressMonitor\Event\MonitoringEvent;
 use Olein\WordPressMonitor\Monitor\CheckResult;
+use Olein\WordPressMonitor\Notification\NotificationManager;
 use Olein\WordPressMonitor\Status\SiteStatus;
 use Olein\WordPressMonitor\Status\SiteStatusRepository;
 use Throwable;
@@ -23,7 +25,8 @@ final class CheckResultRecorder {
 		private readonly SiteStatusRepository $statuses,
 		private readonly EventRepository $events,
 		private readonly StatusEvaluator $evaluator,
-		private readonly StateTransition $transition
+		private readonly StateTransition $transition,
+		private readonly ?NotificationManager $notifications = null
 	) {
 	}
 
@@ -38,6 +41,8 @@ final class CheckResultRecorder {
 		}
 
 		try {
+			$event    = null;
+			$event_id = null;
 			$previous = $this->statuses->find_for_update( $result->site_id() ) ?? new SiteStatus( $result->site_id() );
 			$check_id = $this->checks->create( $result );
 
@@ -66,11 +71,29 @@ final class CheckResultRecorder {
 				return $this->rollback( $this->database_error() );
 			}
 
+			$this->notify( $event, $event_id );
+
 			return true;
 		} catch ( Throwable $exception ) {
 			unset( $exception );
 
 			return $this->rollback( $this->database_error() );
+		}
+	}
+
+	private function notify( ?MonitoringEvent $event, ?int $event_id ): void {
+		if ( null === $event || null === $event_id || null === $this->notifications ) {
+			return;
+		}
+
+		try {
+			$sent = $this->notifications->notify( $event );
+
+			if ( null !== $sent ) {
+				$this->events->record_notification_result( $event_id, $sent );
+			}
+		} catch ( Throwable $exception ) {
+			unset( $exception );
 		}
 	}
 

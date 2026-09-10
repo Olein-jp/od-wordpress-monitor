@@ -8,6 +8,7 @@
 namespace Olein\WordPressMonitor\Notification;
 
 use Olein\WordPressMonitor\Event\MonitoringEvent;
+use Throwable;
 
 final class NotificationManager {
 	public function __construct(
@@ -19,24 +20,32 @@ final class NotificationManager {
 
 	/**
 	 * Dispatch only an allowed transition with a valid enabled recipient.
+	 *
+	 * @return bool|null True when sent, false on delivery failure, or null when suppressed.
 	 */
-	public function notify( MonitoringEvent $event ): bool {
+	public function notify( MonitoringEvent $event ): ?bool {
 		if ( ! $this->settings->enabled() ) {
-			return false;
+			return null;
 		}
 
 		$recipient = $this->settings->email();
 
 		if ( '' === $recipient ) {
-			return false;
+			return null;
 		}
 
 		$notification_type = $this->rule->classify( $event );
 
 		if ( null === $notification_type ) {
-			return false;
+			return null;
 		}
 
-		return $this->sender->send( $recipient, $event, $notification_type );
+		try {
+			return $this->sender->send( $recipient, $event, $notification_type );
+		} catch ( Throwable $exception ) {
+			unset( $exception );
+
+			return false;
+		}
 	}
 }
