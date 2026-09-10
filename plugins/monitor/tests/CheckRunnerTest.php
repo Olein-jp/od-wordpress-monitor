@@ -21,9 +21,11 @@ use Olein\WordPressMonitor\Monitor\MonitorInterface;
 use Olein\WordPressMonitor\Monitor\Status;
 use Olein\WordPressMonitor\Scheduler\CheckLockInterface;
 use Olein\WordPressMonitor\Scheduler\CheckRunner;
+use Olein\WordPressMonitor\Scheduler\RetryScheduler;
 use Olein\WordPressMonitor\Site\Site;
 use Olein\WordPressMonitor\Site\SiteRepository;
 use Olein\WordPressMonitor\Status\SiteStatusRepository;
+use Olein\WordPressMonitor\Support\ErrorCode;
 
 final class CheckRunnerTest extends \WP_UnitTestCase {
 	private SiteRepository $sites;
@@ -35,6 +37,12 @@ final class CheckRunnerTest extends \WP_UnitTestCase {
 		( new DatabaseMigrator( $wpdb ) )->migrate();
 		$this->sites = new SiteRepository( $wpdb );
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}odm_sites" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		wp_unschedule_hook( RetryScheduler::HOOK );
+	}
+
+	public function tear_down(): void {
+		wp_unschedule_hook( RetryScheduler::HOOK );
+		parent::tear_down();
 	}
 
 	public function test_only_enabled_sites_are_run_and_results_reach_boundary_hook(): void {
@@ -187,6 +195,121 @@ final class CheckRunnerTest extends \WP_UnitTestCase {
 		$this->assertSame( EventType::SITE_DOWN, $events->for_site( $site_id )[0]->type() );
 	}
 
+	public function test_transient_failure_is_retried_and_only_success_is_published(): void {
+		$site_id   = $this->create_site( 'RetrySuccess', true );
+		$site      = $this->sites->find( $site_id );
+		$calls     = 0;
+		$published = array();
+		$monitor   = $this->sequence_monitor( array( ErrorCode::TIMEOUT, null ), $calls );
+		$retries   = new RetryScheduler();
+		$runner    = new CheckRunner( $this->sites, $this->open_lock(), array( $monitor ), null, $retries );
+		$observer  = static function ( CheckResult $result ) use ( &$published ): void {
+			$published[] = $result;
+		};
+		$this->assertInstanceOf( Site::class, $site );
+		add_action( 'odm_check_result', $observer );
+
+		$before = time();
+		$this->assertSame( array(), $runner->run( 'http' ) );
+		$this->assertTrue( $retries->has_pending( $site, 'http' ) );
+		$event = wp_get_scheduled_event( RetryScheduler::HOOK, array( $site_id, $site->uuid(), 'http', 2 ) );
+		$this->assertIsObject( $event );
+		$this->assertSame( array( $site_id, $site->uuid(), 'http', 2 ), $event->args );
+		$this->assertGreaterThanOrEqual( $before + 60, $event->timestamp );
+		$this->assertLessThanOrEqual( time() + 60, $event->timestamp );
+		$result = $runner->retry( $site_id, $site->uuid(), 'http', 2 );
+
+		remove_action( 'odm_check_result', $observer );
+		$this->assertInstanceOf( CheckResult::class, $result );
+		$this->assertSame( Status::HEALTHY, $result->status() );
+		$this->assertSame( 2, $calls );
+		$this->assertSame( array( $result ), $published );
+		$this->assertFalse( $retries->has_pending( $site, 'http' ) );
+	}
+
+	public function test_retry_stops_at_configured_attempt_limit(): void {
+		$site_id = $this->create_site( 'RetryLimit', true );
+		$site    = $this->sites->find( $site_id );
+		$calls   = 0;
+		$monitor = $this->sequence_monitor( array( ErrorCode::CONNECTION_ERROR, ErrorCode::CONNECTION_ERROR, ErrorCode::CONNECTION_ERROR ), $calls );
+		$retries = new RetryScheduler();
+		$runner  = new CheckRunner( $this->sites, $this->open_lock(), array( $monitor ), null, $retries );
+		$this->assertInstanceOf( Site::class, $site );
+
+		$this->assertSame( array(), $runner->run( 'http' ) );
+		$before = time();
+		$this->assertNull( $runner->retry( $site_id, $site->uuid(), 'http', 2 ) );
+		$event = wp_get_scheduled_event( RetryScheduler::HOOK, array( $site_id, $site->uuid(), 'http', 3 ) );
+		$this->assertIsObject( $event );
+		$this->assertGreaterThanOrEqual( $before + 300, $event->timestamp );
+		$this->assertLessThanOrEqual( time() + 300, $event->timestamp );
+		$result = $runner->retry( $site_id, $site->uuid(), 'http', 3 );
+
+		$this->assertInstanceOf( CheckResult::class, $result );
+		$this->assertSame( ErrorCode::CONNECTION_ERROR, $result->error_code() );
+		$this->assertSame( RetryScheduler::MAX_ATTEMPTS, $calls );
+		$this->assertFalse( $retries->has_pending( $site, 'http' ) );
+	}
+
+	public function test_authentication_failure_is_not_retried(): void {
+		$site_id = $this->create_site( 'NoRetry', true );
+		$site    = $this->sites->find( $site_id );
+		$calls   = 0;
+		$retries = new RetryScheduler();
+		$runner  = new CheckRunner(
+			$this->sites,
+			$this->open_lock(),
+			array( $this->sequence_monitor( array( ErrorCode::AUTHENTICATION_FAILED ), $calls ) ),
+			null,
+			$retries
+		);
+		$this->assertInstanceOf( Site::class, $site );
+
+		$results = $runner->run( 'http' );
+
+		$this->assertCount( 1, $results );
+		$this->assertSame( ErrorCode::AUTHENTICATION_FAILED, $results[0]->error_code() );
+		$this->assertSame( 1, $calls );
+		$this->assertFalse( $retries->has_pending( $site, 'http' ) );
+	}
+
+	public function test_pending_retry_blocks_recurring_run_and_lock_conflict_reschedules_retry(): void {
+		$site_id = $this->create_site( 'RetryLock', true );
+		$site    = $this->sites->find( $site_id );
+		$calls   = 0;
+		$retries = new RetryScheduler();
+		$open    = true;
+		$lock    = new class( $open ) implements CheckLockInterface {
+			public function __construct( private bool &$open ) {
+			}
+
+			public function acquire( Site $site, string $check_type ): ?string {
+				unset( $site, $check_type );
+				return $this->open ? 'owner' : null;
+			}
+
+			public function release( Site $site, string $check_type, string $token ): void {
+				unset( $site, $check_type, $token );
+			}
+		};
+		$runner  = new CheckRunner(
+			$this->sites,
+			$lock,
+			array( $this->sequence_monitor( array( ErrorCode::TIMEOUT, null ), $calls ) ),
+			null,
+			$retries
+		);
+		$this->assertInstanceOf( Site::class, $site );
+
+		$this->assertSame( array(), $runner->run( 'http' ) );
+		$this->assertSame( array(), $runner->run( 'http' ) );
+		$this->assertSame( 1, $calls );
+		$open = false;
+		$this->assertNull( $runner->retry( $site_id, $site->uuid(), 'http', 2 ) );
+		$this->assertTrue( $retries->has_pending( $site, 'http' ) );
+		$this->assertSame( 1, $calls );
+	}
+
 	public function test_duplicate_monitor_types_are_rejected(): void {
 		$monitor = $this->monitor( 'http' );
 
@@ -230,6 +353,40 @@ final class CheckRunnerTest extends \WP_UnitTestCase {
 				$now           = new DateTimeImmutable( '2026-09-09T00:00:00Z' );
 
 				return new CheckResult( (int) $site->id(), $this->type, $this->status, null, 'Passed.', $now, $now, 0 );
+			}
+		};
+	}
+
+	/**
+	 * @param list<?string> $errors Error code per invocation; null means success.
+	 */
+	private function sequence_monitor( array $errors, int &$calls ): MonitorInterface {
+		return new class( $errors, $calls ) implements MonitorInterface {
+			/**
+			 * @param list<?string> $errors Error code per invocation; null means success.
+			 */
+			public function __construct( private readonly array $errors, private int &$calls ) {
+			}
+
+			public function get_type(): string {
+				return 'http';
+			}
+
+			public function check( Site $site ): CheckResult {
+				$error = $this->errors[ $this->calls ] ?? null;
+				++$this->calls;
+				$now = new DateTimeImmutable( '2026-09-11T00:00:00Z' );
+
+				return new CheckResult(
+					(int) $site->id(),
+					'http',
+					null === $error ? Status::HEALTHY : Status::CRITICAL,
+					$error,
+					null === $error ? 'Passed.' : 'Failed safely.',
+					$now,
+					$now,
+					0
+				);
 			}
 		};
 	}

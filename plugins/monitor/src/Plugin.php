@@ -42,6 +42,7 @@ use Olein\WordPressMonitor\Scheduler\CheckLock;
 use Olein\WordPressMonitor\Scheduler\CheckRetention;
 use Olein\WordPressMonitor\Scheduler\CheckRunner;
 use Olein\WordPressMonitor\Scheduler\OptionCleanupRepository;
+use Olein\WordPressMonitor\Scheduler\RetryScheduler;
 use Olein\WordPressMonitor\Scheduler\Scheduler;
 use Olein\WordPressMonitor\Scheduler\SchedulerHeartbeat;
 use Olein\WordPressMonitor\Site\SiteRepository;
@@ -91,6 +92,7 @@ final class Plugin {
 				$notifications
 			);
 			$heartbeat             = new SchedulerHeartbeat();
+			$retry_scheduler       = new RetryScheduler();
 			$scheduler             = new Scheduler(
 				new CheckRunner(
 					$sites,
@@ -103,7 +105,8 @@ final class Plugin {
 						new SiteHealthMonitor( $agent_client, $credentials ),
 						new SslMonitor( new SslCertificateClient(), url_validator: $url_validator ),
 					),
-					$recorder
+					$recorder,
+					$retry_scheduler
 				),
 				new CheckRetention( $checks, null, new OptionCleanupRepository( $wpdb ) ),
 				$heartbeat

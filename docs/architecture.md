@@ -35,8 +35,10 @@ Agent WordPress
 
 サイト登録では、入力検証、`/ping`、`/status`、UUID生成、credential暗号化、site保存、credential保存の順に処理します。接続確認に成功しない限り永続化しません。credential保存が失敗した場合は、直前に作成したsite行を削除します。
 
-`Scheduler` はcheck typeごとに6つのWP-Cron eventと、日次cleanup eventを管理します。HTTPとAgent Pingは5分、Agent Statusは15分、UpdatesとSite Healthは60分、SSLは24時間です。eventとsystem cronからの直接起動は同じ `CheckRunner::run()` を通り、enabled siteだけを処理します。
+`Scheduler` はcheck typeごとに6つのWP-Cron event、単発のretry event、日次cleanup eventを管理します。HTTPとAgent Pingは5分、Agent Statusは15分、UpdatesとSite Healthは60分、SSLは24時間です。eventとsystem cronからの直接起動は同じ `CheckRunner` を通り、enabled siteだけを処理します。
 
 `CheckRunner` はsite UUIDとcheck typeの組み合わせで5分の期限付きlockを取得します。並行実行はskipし、処理終了時は所有tokenが一致するlockだけを解除します。異常終了はsecretを含まないunknown resultへ正規化し、他siteの処理を継続します。
+
+`RetryScheduler` はtimeout、接続失敗、一時的なHTTP statusだけを60秒・300秒の間隔で最大3回まで実行します。再試行待ちはsite ID、site UUID、check type、試行回数だけを単発WP-Cron eventへ保存します。中間失敗は永続化せず、通常scheduleは保留中の同一チェックをskipし、retryも共通lockを必ず経由します。成功、対象外エラー、上限到達の結果だけが履歴・状態遷移・通知へ渡ります。
 
 日次cleanupは1回の処理件数を制限し、90日を超えたcheck履歴、期限切れexecution lock、期限切れのプラグイン固有transientを段階的に削除します。eventsとsite statusは保持し、現在有効なlockや実行中に更新されたoptionは観測済みの値との一致確認で保護します。

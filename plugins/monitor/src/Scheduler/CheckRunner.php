@@ -29,7 +29,8 @@ final class CheckRunner {
 		private readonly SiteRepository $sites,
 		private readonly CheckLockInterface $lock,
 		array $monitors,
-		private readonly ?CheckResultRecorder $recorder = null
+		private readonly ?CheckResultRecorder $recorder = null,
+		private readonly ?RetryScheduler $retries = null
 	) {
 		$registry = array();
 
@@ -60,34 +61,81 @@ final class CheckRunner {
 		$results = array();
 
 		foreach ( $this->sites->enabled() as $site ) {
-			$token = $this->lock->acquire( $site, $check_type );
-
-			if ( null === $token ) {
+			if ( null !== $this->retries && $this->retries->has_pending( $site, $check_type ) ) {
 				continue;
 			}
 
+			$result = $this->execute( $site, $monitor, $check_type, 1 );
+
+			if ( null !== $result ) {
+				$results[] = $result;
+			}
+		}
+
+		return $results;
+	}
+
+	/**
+	 * Run one retry event after validating its persisted, non-sensitive identity.
+	 */
+	public function retry( int $site_id, string $site_uuid, string $check_type, int $attempt ): ?CheckResult {
+		if ( null === $this->retries || ! isset( $this->monitors[ $check_type ] ) || $attempt < 2 || $attempt > RetryScheduler::MAX_ATTEMPTS ) {
+			return null;
+		}
+
+		$site = $this->sites->find( $site_id );
+
+		if ( null === $site || ! $site->enabled() || ! hash_equals( $site->uuid(), $site_uuid ) ) {
+			return null;
+		}
+
+		$this->retries?->clear_attempt( $site, $check_type, $attempt );
+
+		return $this->execute( $site, $this->monitors[ $check_type ], $check_type, $attempt );
+	}
+
+	private function execute( Site $site, MonitorInterface $monitor, string $check_type, int $attempt ): ?CheckResult {
+		$token = $this->lock->acquire( $site, $check_type );
+
+		if ( null === $token ) {
+			if ( $attempt > 1 ) {
+				$this->retries?->reschedule_locked( $site, $check_type, $attempt );
+			}
+
+			return null;
+		}
+
+		try {
 			try {
 				$result = $monitor->check( $site );
 			} catch ( Throwable $exception ) {
 				unset( $exception );
 				$result = $this->failed_result( $site, $check_type );
-			} finally {
-				$this->lock->release( $site, $check_type, $token );
 			}
 
-			if ( null !== $this->recorder ) {
-				$recorded = $this->recorder->record( $result );
-
-				if ( is_wp_error( $recorded ) ) {
-					do_action( 'odm_check_persistence_error', $recorded->get_error_code(), $result, $site );
-				}
+			if ( null !== $this->retries && $this->retries->schedule_next( $site, $result, $attempt ) ) {
+				return null;
 			}
 
-			$results[] = $result;
-			do_action( 'odm_check_result', $result, $site );
+			$this->retries?->clear( $site, $check_type );
+			$this->publish( $result, $site );
+
+			return $result;
+		} finally {
+			$this->lock->release( $site, $check_type, $token );
+		}
+	}
+
+	private function publish( CheckResult $result, Site $site ): void {
+		if ( null !== $this->recorder ) {
+			$recorded = $this->recorder->record( $result );
+
+			if ( is_wp_error( $recorded ) ) {
+				do_action( 'odm_check_persistence_error', $recorded->get_error_code(), $result, $site );
+			}
 		}
 
-		return $results;
+		do_action( 'odm_check_result', $result, $site );
 	}
 
 	private function failed_result( Site $site, string $check_type ): CheckResult {

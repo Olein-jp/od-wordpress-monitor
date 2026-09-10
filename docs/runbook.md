@@ -23,6 +23,7 @@ wp cron event list --path=/var/www/example --url=https://monitor.example.com --f
 一覧に次のフックがない場合でも、プラグインが有効であれば通常の WordPress リクエスト時に再登録されます。再登録されない場合は、プラグインの有効状態と PHP エラーログを確認してください。
 
 - `odm_run_scheduled_check`
+- `odm_retry_scheduled_check`（再試行待ちがある場合のみ）
 - `odm_cleanup_checks`
 
 ## 手動実行
@@ -30,12 +31,29 @@ wp cron event list --path=/var/www/example --url=https://monitor.example.com --f
 調査時は、すべての WordPress Cron を無条件に実行せず、このプラグインの期限到来済みフックだけを対象にします。
 
 ```bash
-wp cron event run odm_run_scheduled_check odm_cleanup_checks --due-now --path=/var/www/example --url=https://monitor.example.com
+wp cron event run odm_run_scheduled_check odm_retry_scheduled_check odm_cleanup_checks --due-now --path=/var/www/example --url=https://monitor.example.com
 ```
 
 コマンドの引数と `--due-now` の動作は、[WP-CLI の公式コマンドリファレンス](https://developer.wordpress.org/cli/commands/cron/event/run/)で確認できます。
 
 実行後、Dashboard の最終開始・完了・結果・次回予定が更新されたことを確認します。
+
+## 一時的な監視失敗の再試行
+
+通信の一時障害は初回を含めて最大3回まで実行します。1回目の失敗から60秒後、2回目の失敗から300秒後に `odm_retry_scheduled_check` の単発イベントを登録します。
+
+再試行する失敗は、通信timeout、接続失敗、およびHTTP 408・425・429・5xxです。認証・権限・credential、URL安全性、redirect、JSON・schema・応答検証、証明書の期限・検証、runner内部の失敗は再試行しません。
+
+再試行待ちにはsite ID、site UUID、check type、試行回数だけをWP-Cronへ保存し、URL、credential、応答内容、例外メッセージは保存しません。一時失敗は再試行中に履歴・現在状態・イベント・通知へ確定せず、成功、対象外エラー、または3回目の結果だけを確定します。
+
+同じsiteとcheck typeに再試行待ちがある間、通常の定期実行はそのチェックをskipします。再試行時にも通常と同じ期限付きlockを取得し、競合した場合は実行せず60秒後へ再登録します。プラグインの通常初期化によるschedule再登録は保留中の再試行を重複登録せず、プラグイン無効化時には再試行イベントも解除します。
+
+保留中の再試行は次のコマンドで確認できます。system cronを利用する場合も、下記の再試行hookを実行対象に含めてください。
+
+```bash
+wp cron event list --hook=odm_retry_scheduled_check --path=/var/www/example --url=https://monitor.example.com
+wp cron event run odm_retry_scheduled_check --due-now --path=/var/www/example --url=https://monitor.example.com
+```
 
 ## Retention cleanup
 
@@ -60,7 +78,7 @@ wp cron event run odm_cleanup_checks --path=/var/www/example --url=https://monit
 アクセス数が少ない環境や、`DISABLE_WP_CRON` を `true` にしている環境では、OS の system cron から WP-CLI を5分ごとに実行します。パス、URL、WP-CLI の絶対パスは環境に合わせて変更してください。
 
 ```cron
-*/5 * * * * cd /var/www/example && /usr/local/bin/wp cron event run odm_run_scheduled_check odm_cleanup_checks --due-now --path=/var/www/example --url=https://monitor.example.com --quiet
+*/5 * * * * cd /var/www/example && /usr/local/bin/wp cron event run odm_run_scheduled_check odm_retry_scheduled_check odm_cleanup_checks --due-now --path=/var/www/example --url=https://monitor.example.com --quiet
 ```
 
 設定手順は次のとおりです。

@@ -13,6 +13,7 @@ use Olein\WordPressMonitor\Check\CheckRepository;
 use Olein\WordPressMonitor\Scheduler\CheckLockInterface;
 use Olein\WordPressMonitor\Scheduler\CheckRetention;
 use Olein\WordPressMonitor\Scheduler\CheckRunner;
+use Olein\WordPressMonitor\Scheduler\RetryScheduler;
 use Olein\WordPressMonitor\Scheduler\Scheduler;
 use Olein\WordPressMonitor\Site\Site;
 use Olein\WordPressMonitor\Site\SiteRepository;
@@ -64,12 +65,14 @@ final class SchedulerTest extends \WP_UnitTestCase {
 	}
 
 	public function test_activation_schedules_and_deactivation_clears_plugin_events(): void {
+		wp_schedule_single_event( time() + MINUTE_IN_SECONDS, RetryScheduler::HOOK, array( 1, 'site-uuid', 'http', 2 ) );
 		Activator::activate();
 
 		foreach ( array_keys( Scheduler::CHECK_SCHEDULES ) as $check_type ) {
 			$this->assertIsInt( wp_next_scheduled( Scheduler::HOOK, array( $check_type ) ) );
 		}
 		$this->assertIsInt( wp_next_scheduled( Scheduler::CLEANUP_HOOK ) );
+		$this->assertIsInt( wp_next_scheduled( RetryScheduler::HOOK, array( 1, 'site-uuid', 'http', 2 ) ) );
 
 		Activator::deactivate();
 
@@ -77,6 +80,7 @@ final class SchedulerTest extends \WP_UnitTestCase {
 			$this->assertFalse( wp_next_scheduled( Scheduler::HOOK, array( $check_type ) ) );
 		}
 		$this->assertFalse( wp_next_scheduled( Scheduler::CLEANUP_HOOK ) );
+		$this->assertFalse( wp_next_scheduled( RetryScheduler::HOOK, array( 1, 'site-uuid', 'http', 2 ) ) );
 	}
 
 	public function test_registered_cron_callback_and_direct_call_share_runner(): void {
@@ -98,6 +102,7 @@ final class SchedulerTest extends \WP_UnitTestCase {
 		$scheduler->register_hooks();
 
 		$this->assertSame( 10, has_action( Scheduler::HOOK, array( $scheduler, 'run' ) ) );
+		$this->assertSame( 10, has_action( RetryScheduler::HOOK, array( $scheduler, 'retry' ) ) );
 		$this->assertFalse( has_action( Scheduler::CLEANUP_HOOK, array( $scheduler, 'cleanup' ) ) );
 	}
 

@@ -36,6 +36,7 @@ final class Scheduler {
 	public function register_hooks(): void {
 		add_filter( 'cron_schedules', array( self::class, 'add_schedules' ) ); // phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval -- Five minutes is the explicit monitoring requirement.
 		add_action( self::HOOK, array( $this, 'run' ) );
+		add_action( RetryScheduler::HOOK, array( $this, 'retry' ), 10, 4 );
 
 		if ( null !== $this->retention ) {
 			add_action( self::CLEANUP_HOOK, array( $this, 'cleanup' ) );
@@ -97,6 +98,7 @@ final class Scheduler {
 		}
 
 		wp_clear_scheduled_hook( self::CLEANUP_HOOK );
+		wp_unschedule_hook( RetryScheduler::HOOK );
 	}
 
 	/**
@@ -117,6 +119,17 @@ final class Scheduler {
 		$this->heartbeat?->record_completed( $check_type, count( $results ) );
 
 		return $results;
+	}
+
+	/**
+	 * Run a single retry through the same runner and lock path as recurring checks.
+	 */
+	public function retry( int $site_id, string $site_uuid, string $check_type, int $attempt ): ?CheckResult {
+		$this->heartbeat?->record_started( $check_type );
+		$result = $this->runner->retry( $site_id, $site_uuid, $check_type, $attempt );
+		$this->heartbeat?->record_completed( $check_type, null === $result ? 0 : 1 );
+
+		return $result;
 	}
 
 	/**
