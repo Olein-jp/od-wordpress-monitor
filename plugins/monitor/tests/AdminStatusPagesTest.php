@@ -72,6 +72,7 @@ final class AdminStatusPagesTest extends \WP_UnitTestCase {
 		}
 		$this->assertLessThan( strpos( $output, 'Healthy Site' ), strpos( $output, 'Problem Site' ) );
 		$this->assertStringContainsString( '<strong>Problem</strong>', $output );
+		$this->assertStringContainsString( 'page=od-wordpress-monitor-site&#038;site_id=', $output );
 		$this->assertStringContainsString( 'aria-current="page"', $output );
 		$this->assertStringContainsString( 'Filter sites by status', $output );
 	}

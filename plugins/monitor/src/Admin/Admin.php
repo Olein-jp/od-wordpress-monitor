@@ -11,6 +11,7 @@ final class Admin {
 	public function __construct(
 		private readonly DashboardPage $dashboard_page,
 		private readonly SitesPage $sites_page,
+		private readonly SiteDetailPage $site_detail_page,
 		private readonly AddSitePage $add_site_page,
 		private readonly NotificationSettingsPage $notification_settings_page
 	) {
@@ -49,6 +50,15 @@ final class Admin {
 			'manage_options',
 			SitesPage::SLUG,
 			array( $this->sites_page, 'render' )
+		);
+
+		add_submenu_page(
+			null,
+			__( 'Site Details', 'od-wordpress-monitor' ),
+			__( 'Site Details', 'od-wordpress-monitor' ),
+			'manage_options',
+			SiteDetailPage::SLUG,
+			array( $this->site_detail_page, 'render' )
 		);
 
 		add_submenu_page(

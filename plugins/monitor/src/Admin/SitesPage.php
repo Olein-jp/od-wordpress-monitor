@@ -126,8 +126,8 @@ final class SitesPage {
 		?>
 		<tr>
 			<td>
-				<strong><a href="<?php echo esc_url( $site->site_url() ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $site->name() ); ?></a></strong>
-				<br><span><?php echo esc_html( $site->site_url() ); ?></span>
+				<strong><a href="<?php echo esc_url( $this->detail_url( $site ) ); ?>"><?php echo esc_html( $site->name() ); ?></a></strong>
+				<br><a href="<?php echo esc_url( $site->site_url() ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $site->site_url() ); ?></a>
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 					<input type="hidden" name="action" value="odm_test_connection">
 					<input type="hidden" name="site_id" value="<?php echo esc_attr( (string) $site->id() ); ?>">
@@ -144,6 +144,16 @@ final class SitesPage {
 			<td><?php $this->render_date( null === $status ? null : $status->last_checked_at() ); ?></td>
 		</tr>
 		<?php
+	}
+
+	private function detail_url( Site $site ): string {
+		return add_query_arg(
+			array(
+				'page'    => SiteDetailPage::SLUG,
+				'site_id' => $site->id(),
+			),
+			admin_url( 'admin.php' )
+		);
 	}
 
 	private function render_date( ?DateTimeImmutable $date ): void {

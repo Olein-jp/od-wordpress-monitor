@@ -12,6 +12,7 @@ use Olein\WordPressMonitor\Admin\AddSitePage;
 use Olein\WordPressMonitor\Admin\Admin;
 use Olein\WordPressMonitor\Admin\DashboardPage;
 use Olein\WordPressMonitor\Admin\NotificationSettingsPage;
+use Olein\WordPressMonitor\Admin\SiteDetailPage;
 use Olein\WordPressMonitor\Admin\SitesPage;
 use Olein\WordPressMonitor\Admin\StatusOverview;
 use Olein\WordPressMonitor\Credential\CredentialEncryptor;
@@ -119,6 +120,7 @@ final class Plugin {
 			( new Admin(
 				new DashboardPage( $overview ),
 				new SitesPage( $overview, $service ),
+				new SiteDetailPage( $sites, $statuses, $checks, $events, $service ),
 				new AddSitePage( $service ),
 				new NotificationSettingsPage( $notification_settings )
 			) )->register_hooks();
