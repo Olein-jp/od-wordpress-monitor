@@ -151,26 +151,30 @@ final class SiteDetailPageTest extends \WP_UnitTestCase {
 					metadata: array(
 						'updates' => array(
 							'software_inventory' => array(
-								'wordpress_version' => '7.1',
-								'theme'             => array(
-									'id'      => 'snow-monkey',
-									'name'    => 'Snow <script>Monkey</script>',
-									'version' => '31.0.2',
+								'theme'        => array(
+									'id'               => 'snow-monkey',
+									'name'             => 'Snow <script>Monkey</script>',
+									'current_version'  => '31.0.2',
+									'latest_version'   => '31.1.0',
+									'update_available' => true,
 								),
-								'plugins'           => array(
+								'plugins'      => array(
 									array(
-										'id'      => 'alpha/alpha.php',
-										'name'    => 'Alpha Plugin',
-										'version' => '1.2.3',
+										'id'               => 'alpha/alpha.php',
+										'name'             => 'Alpha Plugin',
+										'current_version'  => '1.2.3',
+										'latest_version'   => '1.2.3',
+										'update_available' => false,
 									),
 									array(
-										'id'      => 'zulu/zulu.php',
-										'name'    => 'Zulu Plugin',
-										'version' => '4.5.6',
+										'id'               => 'zulu/zulu.php',
+										'name'             => 'Zulu Plugin',
+										'current_version'  => '4.5.6',
+										'update_available' => false,
 									),
 								),
-								'collected_at'      => '2026-09-10T09:30:00Z',
-								'truncated'         => false,
+								'collected_at' => '2026-09-10T09:30:00Z',
+								'truncated'    => false,
 							),
 						),
 					)
@@ -179,15 +183,23 @@ final class SiteDetailPageTest extends \WP_UnitTestCase {
 		);
 		$_GET['site_id'] = (string) $site_id;
 
-		$output = $this->render();
+		$output   = $this->render();
+		$software = substr( $output, strpos( $output, '<h2>Site Software</h2>' ), strpos( $output, '<h2>Recent Events</h2>' ) - strpos( $output, '<h2>Site Software</h2>' ) );
 
 		$this->assertStringContainsString( '<h2>Site Software</h2>', $output );
-		$this->assertStringContainsString( '>7.1</td>', $output );
+		$this->assertStringNotContainsString( '>WordPress<', $software );
+		$this->assertStringContainsString( '>Current version</th>', $software );
+		$this->assertStringContainsString( '>Update status</th>', $software );
+		$this->assertStringContainsString( '>Available version</th>', $software );
 		$this->assertStringContainsString( 'Snow &lt;script&gt;Monkey&lt;/script&gt;', $output );
 		$this->assertStringContainsString( '>31.0.2</td>', $output );
+		$this->assertStringContainsString( '>Update available</td>', $output );
+		$this->assertStringContainsString( '>31.1.0</td>', $output );
 		$this->assertStringContainsString( '>Alpha Plugin</td>', $output );
 		$this->assertStringContainsString( '>1.2.3</td>', $output );
+		$this->assertStringContainsString( '>Latest</td>', $output );
 		$this->assertStringContainsString( '>Zulu Plugin</td>', $output );
+		$this->assertStringContainsString( '>Unknown</td>', $software );
 		$this->assertMatchesRegularExpression( '/Last collected:\s*<time datetime="2026-09-10T09:30:00\+00:00">/s', $output );
 		$this->assertLessThan( strpos( $output, 'Zulu Plugin' ), strpos( $output, 'Alpha Plugin' ) );
 	}
@@ -240,6 +252,40 @@ final class SiteDetailPageTest extends \WP_UnitTestCase {
 		$this->assertMatchesRegularExpression( '/Site Health partially recovered<\/td>\s*<td>Problem<\/td>\s*<td>Attention<\/td>/s', $output );
 		$this->assertStringContainsString( 'Recent Events is a history of state changes', $output );
 		$this->assertStringContainsString( 'limited to safe synchronous tests', $output );
+	}
+
+	public function test_renders_legacy_software_versions_as_unknown_update_status(): void {
+		$site_id = $this->create_site( 'Legacy Inventory Site' );
+		$this->assertTrue(
+			$this->statuses->upsert(
+				new SiteStatus(
+					site_id: $site_id,
+					metadata: array(
+						'updates' => array(
+							'software_inventory' => array(
+								'wordpress_version' => '7.1',
+								'theme'             => array(
+									'id'      => 'legacy-theme',
+									'name'    => 'Legacy Theme',
+									'version' => '2.0.0',
+								),
+								'plugins'           => array(),
+								'collected_at'      => '2026-09-10T09:30:00Z',
+							),
+						),
+					)
+				)
+			)
+		);
+		$_GET['site_id'] = (string) $site_id;
+
+		$output   = $this->render();
+		$software = substr( $output, strpos( $output, '<h2>Site Software</h2>' ), strpos( $output, '<h2>Recent Events</h2>' ) - strpos( $output, '<h2>Site Software</h2>' ) );
+
+		$this->assertStringContainsString( '>Legacy Theme</td>', $software );
+		$this->assertStringContainsString( '>2.0.0</td>', $software );
+		$this->assertStringContainsString( '>Unknown</td>', $software );
+		$this->assertStringNotContainsString( '>WordPress<', $software );
 	}
 
 	public function test_empty_status_and_history_are_shown_safely(): void {

@@ -102,7 +102,7 @@ final class UpdateMonitorTest extends \WP_UnitTestCase {
 	}
 
 	public function test_collects_only_active_software_for_current_inventory(): void {
-		$response            = $this->updates_response( 0, 0, 0 );
+		$response            = $this->updates_response( 0, 0, 1 );
 		$response['themes']  = array(
 			array(
 				'stylesheet'       => 'inactive-theme',
@@ -116,8 +116,8 @@ final class UpdateMonitorTest extends \WP_UnitTestCase {
 				'stylesheet'       => 'active-theme',
 				'name'             => 'Active Theme',
 				'current_version'  => '2.3.4',
-				'latest_version'   => '2.3.4',
-				'update_available' => false,
+				'latest_version'   => '2.4.0',
+				'update_available' => true,
 				'active'           => true,
 			),
 		);
@@ -143,21 +143,25 @@ final class UpdateMonitorTest extends \WP_UnitTestCase {
 
 		$inventory = $this->monitor()->check( $this->site )->data()['software_inventory'];
 
-		$this->assertSame( '7.1', $inventory['wordpress_version'] );
+		$this->assertArrayNotHasKey( 'wordpress_version', $inventory );
 		$this->assertSame(
 			array(
-				'id'      => 'active-theme',
-				'name'    => 'Active Theme',
-				'version' => '2.3.4',
+				'id'               => 'active-theme',
+				'name'             => 'Active Theme',
+				'current_version'  => '2.3.4',
+				'latest_version'   => '2.4.0',
+				'update_available' => true,
 			),
 			$inventory['theme']
 		);
 		$this->assertSame(
 			array(
 				array(
-					'id'      => 'active/active.php',
-					'name'    => 'Active Plugin',
-					'version' => '3.2.1',
+					'id'               => 'active/active.php',
+					'name'             => 'Active Plugin',
+					'current_version'  => '3.2.1',
+					'latest_version'   => '3.2.1',
+					'update_available' => false,
 				),
 			),
 			$inventory['plugins']
