@@ -71,6 +71,30 @@ final class StateTransitionTest extends \WP_UnitTestCase {
 		);
 	}
 
+	public function test_creates_site_health_partial_recovery_from_critical_to_warning(): void {
+		$result = $this->result( 'site_health', Status::WARNING );
+		$event  = $this->transition->detect(
+			$this->status( 'site_health', Status::CRITICAL ),
+			$this->status( 'site_health', Status::WARNING ),
+			$result
+		);
+
+		$this->assertNotNull( $event );
+		$this->assertSame( EventType::SITE_HEALTH_PARTIALLY_RECOVERED, $event->type() );
+		$this->assertSame( Status::CRITICAL, $event->previous_status() );
+		$this->assertSame( Status::WARNING, $event->current_status() );
+	}
+
+	public function test_ignores_initial_site_health_recommendation(): void {
+		$this->assertNull(
+			$this->transition->detect(
+				$this->status( 'site_health', Status::UNKNOWN ),
+				$this->status( 'site_health', Status::WARNING ),
+				$this->result( 'site_health', Status::WARNING )
+			)
+		);
+	}
+
 	public function test_creates_a_recovery_event(): void {
 		$result = $this->result( 'http', Status::HEALTHY );
 		$event  = $this->transition->detect(

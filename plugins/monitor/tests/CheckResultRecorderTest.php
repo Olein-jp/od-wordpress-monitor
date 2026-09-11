@@ -171,15 +171,23 @@ final class CheckResultRecorderTest extends \WP_UnitTestCase {
 
 		$this->assertTrue( $recorder->record( $this->site_health_result( Status::CRITICAL, '2026-09-10T03:00:00Z', 1, 0 ) ) );
 		$this->assertTrue( $recorder->record( $this->site_health_result( Status::CRITICAL, '2026-09-10T04:00:00Z', 1, 0 ) ) );
-		$this->assertTrue( $recorder->record( $this->site_health_result( Status::HEALTHY, '2026-09-10T05:00:00Z', 0, 0 ) ) );
+		$this->assertTrue( $recorder->record( $this->site_health_result( Status::WARNING, '2026-09-10T05:00:00Z', 0, 2 ) ) );
+		$this->assertTrue( $recorder->record( $this->site_health_result( Status::HEALTHY, '2026-09-10T06:00:00Z', 0, 0 ) ) );
+		$this->assertTrue( $recorder->record( $this->site_health_result( Status::CRITICAL, '2026-09-10T07:00:00Z', 1, 0 ) ) );
+		$this->assertTrue( $recorder->record( $this->site_health_result( Status::HEALTHY, '2026-09-10T08:00:00Z', 0, 0 ) ) );
 
 		$events = $this->events->for_site( 7 );
 		$status = $this->statuses->find( 7 );
-		$this->assertCount( 6, $this->checks->for_site( 7 ) );
-		$this->assertCount( 2, $events );
+		$this->assertCount( 9, $this->checks->for_site( 7 ) );
+		$this->assertCount( 4, $events );
 		$this->assertSame( EventType::SITE_HEALTH_RECOVERED, $events[0]->type() );
 		$this->assertSame( EventType::SITE_HEALTH_CRITICAL, $events[1]->type() );
-		$this->assertSame( array( NotificationRule::OUTAGE, NotificationRule::RECOVERY ), $sender->types );
+		$this->assertSame( EventType::SITE_HEALTH_PARTIALLY_RECOVERED, $events[2]->type() );
+		$this->assertSame( Status::CRITICAL, $events[2]->previous_status() );
+		$this->assertSame( Status::WARNING, $events[2]->current_status() );
+		$this->assertSame( 2, $events[2]->metadata()['recommended'] );
+		$this->assertSame( EventType::SITE_HEALTH_CRITICAL, $events[3]->type() );
+		$this->assertSame( array( NotificationRule::OUTAGE, NotificationRule::OUTAGE, NotificationRule::RECOVERY ), $sender->types );
 		$this->assertSame( Status::HEALTHY, $status->site_health_status() );
 		$this->assertSame( 'site_health_test', $status->metadata()['site_health']['representative_test_id'] );
 	}

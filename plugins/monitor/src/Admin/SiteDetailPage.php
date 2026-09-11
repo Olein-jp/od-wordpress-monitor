@@ -63,6 +63,9 @@ final class SiteDetailPage {
 			<h2><?php echo esc_html__( 'Current Status', 'od-wordpress-monitor' ); ?></h2>
 			<?php $this->render_current_status( $site, $status ); ?>
 
+			<h2><?php echo esc_html__( 'Site Health Details', 'od-wordpress-monitor' ); ?></h2>
+			<?php $this->render_site_health_details( $status ); ?>
+
 			<h2><?php echo esc_html__( 'Site Software', 'od-wordpress-monitor' ); ?></h2>
 			<?php $this->render_software_inventory( $status ); ?>
 
@@ -73,6 +76,51 @@ final class SiteDetailPage {
 			<?php $this->render_checks( $checks ); ?>
 		</div>
 		<?php
+	}
+
+	private function render_site_health_details( ?SiteStatus $status ): void {
+		$metadata    = null === $status ? array() : $status->metadata();
+		$site_health = isset( $metadata['site_health'] ) && is_array( $metadata['site_health'] ) ? $metadata['site_health'] : null;
+		?>
+		<p><?php echo esc_html__( 'The Agent Site Health check is limited to safe synchronous tests and may not exactly match the WordPress Site Health screen.', 'od-wordpress-monitor' ); ?></p>
+		<?php
+		if ( null === $site_health ) {
+			echo '<p>' . esc_html__( 'Site Health details have not yet been collected.', 'od-wordpress-monitor' ) . '</p>';
+			return;
+		}
+
+		$rows = array(
+			array( __( 'Critical problems', 'od-wordpress-monitor' ), $this->site_health_count( $site_health, 'critical' ) ),
+			array( __( 'Recommended improvements', 'od-wordpress-monitor' ), $this->site_health_count( $site_health, 'recommended' ) ),
+			array( __( 'Good results', 'od-wordpress-monitor' ), $this->site_health_count( $site_health, 'good' ) ),
+			array( __( 'Representative test ID', 'od-wordpress-monitor' ), isset( $site_health['representative_test_id'] ) && is_string( $site_health['representative_test_id'] ) && '' !== $site_health['representative_test_id'] ? $site_health['representative_test_id'] : '—' ),
+		);
+		?>
+		<table class="widefat striped">
+			<caption class="screen-reader-text"><?php echo esc_html__( 'Latest Site Health diagnostic summary', 'od-wordpress-monitor' ); ?></caption>
+			<thead><tr>
+				<th scope="col"><?php echo esc_html__( 'Item', 'od-wordpress-monitor' ); ?></th>
+				<th scope="col"><?php echo esc_html__( 'Value', 'od-wordpress-monitor' ); ?></th>
+			</tr></thead>
+			<tbody>
+				<?php foreach ( $rows as $row ) : ?>
+					<tr>
+						<th scope="row"><?php echo esc_html( $row[0] ); ?></th>
+						<td><?php echo esc_html( $row[1] ); ?></td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+		<?php
+	}
+
+	/**
+	 * @param array<string|int,mixed> $metadata Site Health metadata.
+	 */
+	private function site_health_count( array $metadata, string $key ): string {
+		return isset( $metadata[ $key ] ) && is_int( $metadata[ $key ] ) && 0 <= $metadata[ $key ]
+			? (string) $metadata[ $key ]
+			: '—';
 	}
 
 	private function render_software_inventory( ?SiteStatus $status ): void {
@@ -190,6 +238,8 @@ final class SiteDetailPage {
 	 * @param list<MonitoringEvent> $events Recent events.
 	 */
 	private function render_events( array $events ): void {
+		echo '<p>' . esc_html__( 'Recent Events is a history of state changes and may include problems that are no longer active.', 'od-wordpress-monitor' ) . '</p>';
+
 		if ( array() === $events ) {
 			echo '<p>' . esc_html__( 'No events have been recorded.', 'od-wordpress-monitor' ) . '</p>';
 			return;
@@ -315,6 +365,7 @@ final class SiteDetailPage {
 			EventType::AGENT                 => __( 'Agent', 'od-wordpress-monitor' ),
 			EventType::UPDATES               => __( 'Updates', 'od-wordpress-monitor' ),
 			EventType::SITE_HEALTH_CRITICAL  => __( 'Site Health problem', 'od-wordpress-monitor' ),
+			EventType::SITE_HEALTH_PARTIALLY_RECOVERED => __( 'Site Health partially recovered', 'od-wordpress-monitor' ),
 			EventType::SITE_HEALTH_RECOVERED => __( 'Site Health recovered', 'od-wordpress-monitor' ),
 			EventType::SSL                   => __( 'SSL', 'od-wordpress-monitor' ),
 			default                          => __( 'Unknown event', 'od-wordpress-monitor' ),
