@@ -42,7 +42,8 @@ final class PingControllerTest extends \WP_UnitTestCase {
 		$result = $this->controller->permissions_check();
 
 		$this->assertWPError( $result );
-		$this->assertSame( 403, $result->get_error_data()['status'] );
+		$this->assertSame( 'od_monitor_agent_unauthorized', $result->get_error_code() );
+		$this->assertSame( 401, $result->get_error_data()['status'] );
 	}
 
 	public function test_user_without_capability_is_denied(): void {

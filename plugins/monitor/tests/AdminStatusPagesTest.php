@@ -8,10 +8,12 @@
 namespace Olein\WordPressMonitor\Tests;
 
 use Olein\WordPressMonitor\Activation\DatabaseMigrator;
+use Olein\WordPressMonitor\Admin\AddSitePage;
 use Olein\WordPressMonitor\Admin\DashboardPage;
 use Olein\WordPressMonitor\Admin\SitesPage;
 use Olein\WordPressMonitor\Admin\StatusOverview;
 use Olein\WordPressMonitor\Credential\CredentialEncryptor;
+use Olein\WordPressMonitor\Credential\Credential;
 use Olein\WordPressMonitor\Credential\CredentialRepository;
 use Olein\WordPressMonitor\Credential\CredentialService;
 use Olein\WordPressMonitor\Http\AgentClient;
@@ -126,6 +128,28 @@ final class AdminStatusPagesTest extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'No sites have been added.', $output );
 	}
 
+	public function test_credential_plaintext_and_ciphertext_are_not_rendered(): void {
+		global $wpdb;
+
+		$site_id     = $this->create_site( 'Credential Boundary' );
+		$repository  = new CredentialRepository( $wpdb );
+		$credentials = new CredentialService(
+			$repository,
+			new CredentialEncryptor( str_repeat( 'k', SODIUM_CRYPTO_SECRETBOX_KEYBYTES ) )
+		);
+		$this->assertIsInt( $credentials->store( $site_id, new Credential( 'agent-user', 'plain-secret' ) ) );
+		$stored = $repository->find_by_site( $site_id );
+
+		ob_start();
+		( new AddSitePage( $this->site_service() ) )->render();
+		$add_output = (string) ob_get_clean();
+		$output     = $add_output . $this->render( $this->sites_page() );
+
+		$this->assertStringContainsString( 'type="password"', $add_output );
+		$this->assertStringNotContainsString( 'plain-secret', $output );
+		$this->assertStringNotContainsString( $stored['encrypted_password'], $output );
+	}
+
 	/**
 	 * @dataProvider restricted_page_provider
 	 */
@@ -152,16 +176,18 @@ final class AdminStatusPagesTest extends \WP_UnitTestCase {
 	}
 
 	private function sites_page(): SitesPage {
+		return new SitesPage( $this->overview, $this->site_service() );
+	}
+
+	private function site_service(): SiteService {
 		global $wpdb;
 
-		$service = new SiteService(
+		return new SiteService(
 			$this->sites,
 			new CredentialService( new CredentialRepository( $wpdb ), new CredentialEncryptor() ),
 			new AgentClient( new HttpClient(), new ResponseValidator() ),
 			new UUID()
 		);
-
-		return new SitesPage( $this->overview, $service );
 	}
 
 	/**

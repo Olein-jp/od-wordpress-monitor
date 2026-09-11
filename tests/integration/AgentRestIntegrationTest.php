@@ -21,12 +21,14 @@ final class AgentRestIntegrationTest extends \WP_UnitTestCase {
 	public function test_registered_ping_route_rejects_anonymous_request(): void {
 		wp_set_current_user( 0 );
 		$ping    = rest_do_request( new WP_REST_Request( 'GET', '/od-monitor-agent/v1/ping' ) );
+		$status  = rest_do_request( new WP_REST_Request( 'GET', '/od-monitor-agent/v1/status' ) );
 		$updates = rest_do_request( new WP_REST_Request( 'GET', '/od-monitor-agent/v1/updates' ) );
 		$health  = rest_do_request( new WP_REST_Request( 'GET', '/od-monitor-agent/v1/site-health' ) );
 
-		$this->assertSame( 403, $ping->get_status() );
-		$this->assertSame( 403, $updates->get_status() );
-		$this->assertSame( 403, $health->get_status() );
+		$this->assertSame( 401, $ping->get_status() );
+		$this->assertSame( 401, $status->get_status() );
+		$this->assertSame( 401, $updates->get_status() );
+		$this->assertSame( 401, $health->get_status() );
 	}
 
 	public function test_registered_endpoints_return_data_for_capable_user(): void {

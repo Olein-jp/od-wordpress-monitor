@@ -153,10 +153,12 @@ final class AgentClientTest extends \WP_UnitTestCase {
 	}
 
 	public function test_generic_wp_error(): void {
-		add_filter( 'pre_http_request', static fn() => new WP_Error( 'http_request_failed', 'DNS failure' ) );
+		add_filter( 'pre_http_request', static fn() => new WP_Error( 'http_request_failed', 'Authorization: Basic dXNlcjpzdXBlcnNlY3JldA== at /var/www/html/wp-config.php' ) );
 		$result = $this->client->ping( $this->site, $this->credential );
 
 		$this->assertSame( 'CONNECTION_ERROR', $result->get_error_code() );
+		$this->assertStringNotContainsString( 'dXNlcjpzdXBlcnNlY3JldA==', $result->get_error_message() );
+		$this->assertStringNotContainsString( 'wp-config.php', $result->get_error_message() );
 	}
 
 	public function test_malformed_json(): void {

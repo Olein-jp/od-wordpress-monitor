@@ -14,11 +14,24 @@ DBバックアップには暗号化済みApplication Passwordに加え、サイ�
 
 ## Agent permissions and transport
 
-Agent専用roleはログインに必要な `read` とAPI用の `od_monitor_read` だけを持ち、管理者権限を持ちません。`/ping` と `/status` は `permission_callback` でこのcapabilityを確認します。MonitorはHTTPS URLのみ受け入れ、WordPressの安全なHTTP APIで通信します。
+Agent専用roleはログインに必要な `read` とAPI用の `od_monitor_read` だけを持ち、管理者権限を持ちません。`/ping`、`/status`、`/updates`、`/site-health` の全routeは `permission_callback` でこのcapabilityを確認します。未認証requestは401、ログイン済みでcapabilityがないrequestは403として拒否します。MonitorはHTTPS URLのみ受け入れ、WordPressの安全なHTTP APIで通信します。
 
 ## Logging and exposure
 
-ログへ記録可能なのはsite UUID、endpoint、HTTP status、正規化済みerror code、durationです。Application Password、Authorization header、cookie、復号後credentialは記録禁止です。AgentはDB password、salts、API key、ユーザー一覧、投稿、フォーム送信、注文、プラグイン設定を返しません。
+ログへ記録可能なのはsite UUID、endpoint、HTTP status、正規化済みerror code、durationです。Application Password、Authorization header、cookie、復号後credentialは記録禁止です。AgentはDB password、salts、API key、ユーザー一覧、投稿、フォーム送信、注文、プラグイン設定を返しません。収集中の想定外例外は固定codeと固定messageのREST errorへ変換し、例外message、file path、stack traceを応答へ含めません。MonitorもHTTP APIのraw error messageを分類にだけ使用し、保存・表示するerrorには引き継ぎません。
+
+## MVP security review gate
+
+MVPのsecurity boundaryは、次の自動テストをrelease前gateとして扱います。
+
+| 境界 | 期待する挙動 |
+| --- | --- |
+| Agent REST API | 全4 endpointで未認証を401、capability不足を403として拒否し、`od_monitor_read` 保有者だけに成功応答を返す |
+| Credential | Application Passwordをlibsodiumで暗号化してDBへ保存し、Agent requestの直前だけ復号する。保存後の管理画面には平文・暗号文とも再表示しない |
+| Error・metadata | raw HTTP error、例外message、Authorization header、credentialをREST応答、`CheckResult`、永続metadataへ渡さない |
+| Outbound request | 登録時と実行時にHTTPS・public IPを検証し、DNS再解決、private/reserved address、危険なredirect、認証付きcross-origin redirectを拒否する |
+
+`composer test` は、全REST routeの未認証・権限不足・正常系、credentialの暗号化と復号境界、secretを含むraw errorの秘匿化、内部IP・DNS変更・redirectの拒否を統合して検証します。`composer run lint` と合わせて成功することをrelease条件とします。
 
 ## Outbound URL・SSRF対策
 

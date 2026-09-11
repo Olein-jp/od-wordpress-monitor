@@ -8,6 +8,8 @@
 namespace Olein\MonitorAgent\Rest;
 
 use Olein\MonitorAgent\Collector\UpdateCollector;
+use Throwable;
+use WP_Error;
 use WP_REST_Response;
 use WP_REST_Server;
 
@@ -35,13 +37,17 @@ final class UpdatesController extends RestController {
 	 * Return the safe update payload.
 	 */
 	public function get_item( $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
-		return new WP_REST_Response(
-			array_merge(
-				array( 'schema_version' => self::SCHEMA_VERSION ),
-				$this->update_collector->collect(),
-				array( 'timestamp' => $this->timestamp() )
-			),
-			200
-		);
+		try {
+			return new WP_REST_Response(
+				array_merge(
+					array( 'schema_version' => self::SCHEMA_VERSION ),
+					$this->update_collector->collect(),
+					array( 'timestamp' => $this->timestamp() )
+				),
+				200
+			);
+		} catch ( Throwable ) {
+			return $this->unavailable_error();
+		}
 	}
 }

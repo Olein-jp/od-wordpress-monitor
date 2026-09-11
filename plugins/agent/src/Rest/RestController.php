@@ -32,10 +32,23 @@ abstract class RestController extends WP_REST_Controller {
 			return true;
 		}
 
+		$status = rest_authorization_required_code();
+
 		return new WP_Error(
-			'od_monitor_agent_forbidden',
+			401 === $status ? 'od_monitor_agent_unauthorized' : 'od_monitor_agent_forbidden',
 			__( 'You are not allowed to read monitoring data.', 'od-monitor-agent' ),
-			array( 'status' => 403 )
+			array( 'status' => $status )
+		);
+	}
+
+	/**
+	 * 想定外の内部エラーを秘匿化した応答へ変換する。
+	 */
+	protected function unavailable_error(): WP_Error {
+		return new WP_Error(
+			'od_monitor_agent_unavailable',
+			__( 'Monitoring data is unavailable.', 'od-monitor-agent' ),
+			array( 'status' => 500 )
 		);
 	}
 

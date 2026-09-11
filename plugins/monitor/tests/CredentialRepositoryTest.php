@@ -40,10 +40,13 @@ final class CredentialRepositoryTest extends \WP_UnitTestCase {
 
 		$credential_id = $service->store( $site_id, new Credential( 'agent-user', 'plain-secret' ) );
 		$stored        = $repo->find_by_site( $site_id );
+		$database_row  = $wpdb->get_row( "SELECT * FROM {$wpdb->prefix}odm_credentials WHERE site_id = {$site_id}", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		$this->assertIsInt( $credential_id );
+		$this->assertIsArray( $database_row );
 		$this->assertSame( 'agent-user', $stored['username'] );
 		$this->assertStringNotContainsString( 'plain-secret', $stored['encrypted_password'] );
+		$this->assertStringNotContainsString( 'plain-secret', wp_json_encode( $database_row ) );
 		$this->assertSame( 'plain-secret', $service->for_site( $site_id )->password() );
 	}
 }

@@ -11,6 +11,8 @@ use Olein\MonitorAgent\Collector\ServerCollector;
 use Olein\MonitorAgent\Collector\SiteCollector;
 use Olein\MonitorAgent\Collector\WordPressCollector;
 use Olein\MonitorAgent\Support\Version;
+use Throwable;
+use WP_Error;
 use WP_REST_Response;
 use WP_REST_Server;
 
@@ -42,16 +44,20 @@ final class StatusController extends RestController {
 	 * Return the safe status payload.
 	 */
 	public function get_item( $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
-		return new WP_REST_Response(
-			array(
-				'schema_version' => self::SCHEMA_VERSION,
-				'site'           => $this->site_collector->collect(),
-				'wordpress'      => $this->wordpress_collector->collect(),
-				'server'         => $this->server_collector->collect(),
-				'agent'          => array( 'version' => Version::get() ),
-				'timestamp'      => $this->timestamp(),
-			),
-			200
-		);
+		try {
+			return new WP_REST_Response(
+				array(
+					'schema_version' => self::SCHEMA_VERSION,
+					'site'           => $this->site_collector->collect(),
+					'wordpress'      => $this->wordpress_collector->collect(),
+					'server'         => $this->server_collector->collect(),
+					'agent'          => array( 'version' => Version::get() ),
+					'timestamp'      => $this->timestamp(),
+				),
+				200
+			);
+		} catch ( Throwable ) {
+			return $this->unavailable_error();
+		}
 	}
 }

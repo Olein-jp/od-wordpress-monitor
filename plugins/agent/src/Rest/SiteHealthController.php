@@ -8,6 +8,7 @@
 namespace Olein\MonitorAgent\Rest;
 
 use Olein\MonitorAgent\Collector\SiteHealthCollector;
+use Throwable;
 use WP_Error;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -38,18 +39,22 @@ final class SiteHealthController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_item( $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
-		$payload = $this->site_health_collector->collect();
+		try {
+			$payload = $this->site_health_collector->collect();
 
-		if ( is_wp_error( $payload ) ) {
-			return $payload;
+			if ( is_wp_error( $payload ) ) {
+				return $payload;
+			}
+
+			return new WP_REST_Response(
+				array_merge(
+					array( 'schema_version' => self::SCHEMA_VERSION ),
+					$payload
+				),
+				200
+			);
+		} catch ( Throwable ) {
+			return $this->unavailable_error();
 		}
-
-		return new WP_REST_Response(
-			array_merge(
-				array( 'schema_version' => self::SCHEMA_VERSION ),
-				$payload
-			),
-			200
-		);
 	}
 }
