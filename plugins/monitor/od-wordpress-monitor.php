@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       OD WordPress Monitor
  * Description:       Registers and checks WordPress sites running OD Monitor Agent.
- * Version:           1.0.4
+ * Version:           1.0.5
  * Requires at least: 6.8
  * Requires PHP:      8.1
  * Update URI:        https://github.com/Olein-jp/od-wordpress-monitor-release
@@ -17,7 +17,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'OD_WORDPRESS_MONITOR_VERSION', '1.0.4' );
+define( 'OD_WORDPRESS_MONITOR_VERSION', '1.0.5' );
 
 $od_wordpress_monitor_autoloader = __DIR__ . '/vendor/autoload.php';
 
