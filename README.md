@@ -155,6 +155,8 @@ Agentは認証済みリクエストに対して、次の読み取り専用エン
 
 MonitorとAgentは、それぞれ専用の公開GitHub Releasesから更新を確認します。新しいバージョンが公開されると、通常のWordPressプラグインと同様に管理画面の更新画面へ表示されます。
 
+Monitorの更新後は、次の通常リクエストで保存済みデータベーススキーマのバージョンを確認し、必要な変更だけを自動適用します。すでに最新版なら変更処理は再実行しません。処理が完了するまでは監視機能を開始せず、失敗時は旧バージョン情報を維持したまま次のリクエストで安全に再試行します。管理者には管理画面上で停止状態と対象バージョンを通知します。
+
 - [Monitorのリリース一覧](https://github.com/Olein-jp/od-wordpress-monitor-release/releases)
 - [Agentのリリース一覧](https://github.com/Olein-jp/od-monitor-agent-release/releases)
 

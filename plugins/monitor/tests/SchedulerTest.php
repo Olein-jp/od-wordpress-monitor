@@ -69,7 +69,7 @@ final class SchedulerTest extends \WP_UnitTestCase {
 		wp_schedule_single_event( time() + MINUTE_IN_SECONDS, RetryScheduler::HOOK, array( 1, 'site-uuid', 'http', 2 ) );
 		$generation = wp_generate_uuid4();
 		wp_schedule_single_event( time() + MINUTE_IN_SECONDS, BatchScheduler::HOOK, array( 'http', $generation ) );
-		Activator::activate();
+		$this->assertTrue( Activator::activate() );
 
 		foreach ( array_keys( Scheduler::CHECK_SCHEDULES ) as $check_type ) {
 			$this->assertIsInt( wp_next_scheduled( Scheduler::HOOK, array( $check_type ) ) );
