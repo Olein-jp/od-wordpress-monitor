@@ -51,9 +51,8 @@ final class CheckMetadataTest extends \WP_UnitTestCase {
 					'theme_updates'      => 2,
 					'plugins'            => array( 'private-plugin' ),
 					'software_inventory' => array(
-						'wordpress_version' => '7.1',
-						'plugins'           => array(),
-						'collected_at'      => '2026-09-10T00:00:00Z',
+						'plugins'      => array(),
+						'collected_at' => '2026-09-10T00:00:00Z',
 					),
 					'invalid_count'      => -1,
 				)
@@ -78,39 +77,48 @@ final class CheckMetadataTest extends \WP_UnitTestCase {
 				array(
 					'total_updates'      => 0,
 					'software_inventory' => array(
-						'wordpress_version' => '7.1<script>discarded()</script>',
-						'theme'             => array(
-							'id'      => 'theme',
-							'name'    => '<b>Snow Monkey</b>',
-							'version' => '31.0.2',
+						'theme'        => array(
+							'id'               => 'theme',
+							'name'             => '<b>Snow Monkey</b>',
+							'current_version'  => '31.0.2<script>discarded()</script>',
+							'latest_version'   => '31.1.0',
+							'update_available' => true,
 						),
-						'plugins'           => array(
+						'plugins'      => array(
 							array(
-								'id'      => 'z/z.php',
-								'name'    => 'Zulu',
-								'version' => '',
+								'id'              => 'z/z.php',
+								'name'            => 'Zulu',
+								'current_version' => '',
 							),
 							array(
-								'id'      => 'a/a.php',
-								'name'    => '<em>Alpha</em>',
-								'version' => '1.0.0',
+								'id'               => 'a/a.php',
+								'name'             => '<em>Alpha</em>',
+								'current_version'  => '1.0.0',
+								'latest_version'   => '1.0.0',
+								'update_available' => false,
 							),
 							array(
-								'id'      => 'a/a.php',
-								'name'    => 'Duplicate',
-								'version' => '9.0.0',
+								'id'               => 'a/a.php',
+								'name'             => 'Duplicate',
+								'current_version'  => '9.0.0',
+								'latest_version'   => '9.0.0',
+								'update_available' => false,
 							),
 						),
-						'collected_at'      => '2026-09-10T00:00:00Z',
+						'collected_at' => '2026-09-10T00:00:00Z',
 					),
 				)
 			)
 		);
 
-		$this->assertSame( '7.1', $metadata['software_inventory']['wordpress_version'] );
+		$this->assertArrayNotHasKey( 'wordpress_version', $metadata['software_inventory'] );
 		$this->assertSame( 'Snow Monkey', $metadata['software_inventory']['theme']['name'] );
+		$this->assertSame( '31.0.2', $metadata['software_inventory']['theme']['current_version'] );
+		$this->assertSame( '31.1.0', $metadata['software_inventory']['theme']['latest_version'] );
+		$this->assertTrue( $metadata['software_inventory']['theme']['update_available'] );
 		$this->assertSame( array( 'Alpha', 'Zulu' ), array_column( $metadata['software_inventory']['plugins'], 'name' ) );
-		$this->assertSame( '', $metadata['software_inventory']['plugins'][1]['version'] );
+		$this->assertSame( '', $metadata['software_inventory']['plugins'][1]['current_version'] );
+		$this->assertArrayNotHasKey( 'update_available', $metadata['software_inventory']['plugins'][1] );
 		$this->assertFalse( $metadata['software_inventory']['truncated'] );
 	}
 
@@ -120,9 +128,8 @@ final class CheckMetadataTest extends \WP_UnitTestCase {
 				'updates',
 				array(
 					'software_inventory' => array(
-						'wordpress_version' => '7.1',
-						'plugins'           => array(),
-						'collected_at'      => 'not-a-date',
+						'plugins'      => array(),
+						'collected_at' => 'not-a-date',
 					),
 				)
 			)
@@ -160,9 +167,11 @@ final class CheckMetadataTest extends \WP_UnitTestCase {
 		for ( $index = 101; $index >= 1; --$index ) {
 			$name      = sprintf( 'Plugin %03d', $index );
 			$plugins[] = array(
-				'id'      => sprintf( 'plugin-%03d/plugin.php', $index ),
-				'name'    => $name,
-				'version' => '1.0.0',
+				'id'               => sprintf( 'plugin-%03d/plugin.php', $index ),
+				'name'             => $name,
+				'current_version'  => '1.0.0',
+				'latest_version'   => '1.0.0',
+				'update_available' => false,
 			);
 		}
 
@@ -171,9 +180,8 @@ final class CheckMetadataTest extends \WP_UnitTestCase {
 				'updates',
 				array(
 					'software_inventory' => array(
-						'wordpress_version' => '7.1',
-						'plugins'           => $plugins,
-						'collected_at'      => '2026-09-10T00:00:00Z',
+						'plugins'      => $plugins,
+						'collected_at' => '2026-09-10T00:00:00Z',
 					),
 				)
 			)

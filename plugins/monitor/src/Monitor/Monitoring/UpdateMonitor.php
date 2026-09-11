@@ -118,9 +118,11 @@ final class UpdateMonitor implements MonitorInterface {
 		foreach ( $response['themes'] as $candidate ) {
 			if ( $candidate['active'] ) {
 				$theme = array(
-					'id'      => $candidate['stylesheet'],
-					'name'    => $candidate['name'],
-					'version' => $candidate['current_version'],
+					'id'               => $candidate['stylesheet'],
+					'name'             => $candidate['name'],
+					'current_version'  => $candidate['current_version'],
+					'latest_version'   => $candidate['latest_version'],
+					'update_available' => $candidate['update_available'],
 				);
 				break;
 			}
@@ -134,17 +136,18 @@ final class UpdateMonitor implements MonitorInterface {
 			}
 
 			$plugins[] = array(
-				'id'      => $plugin['file'],
-				'name'    => $plugin['name'],
-				'version' => $plugin['current_version'],
+				'id'               => $plugin['file'],
+				'name'             => $plugin['name'],
+				'current_version'  => $plugin['current_version'],
+				'latest_version'   => $plugin['latest_version'],
+				'update_available' => $plugin['update_available'],
 			);
 		}
 
 		return array(
-			'wordpress_version' => $response['wordpress']['current_version'],
-			'theme'             => $theme,
-			'plugins'           => $plugins,
-			'collected_at'      => $response['timestamp'],
+			'theme'        => $theme,
+			'plugins'      => $plugins,
+			'collected_at' => $response['timestamp'],
 		);
 	}
 

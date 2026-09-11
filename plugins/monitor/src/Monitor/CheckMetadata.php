@@ -124,7 +124,7 @@ final class CheckMetadata {
 	private function software_inventory( $inventory ): ?array {
 		if (
 			! is_array( $inventory )
-			|| ! isset( $inventory['wordpress_version'], $inventory['plugins'], $inventory['collected_at'] )
+			|| ! isset( $inventory['plugins'], $inventory['collected_at'] )
 			|| ! is_array( $inventory['plugins'] )
 			|| ! array_is_list( $inventory['plugins'] )
 			|| ! is_string( $inventory['collected_at'] )
@@ -134,12 +134,7 @@ final class CheckMetadata {
 			return null;
 		}
 
-		$wordpress_version = $this->bounded_text( $inventory['wordpress_version'], self::MAX_VERSION_LENGTH );
-		$theme             = null;
-
-		if ( null === $wordpress_version ) {
-			return null;
-		}
+		$theme = null;
 
 		if ( isset( $inventory['theme'] ) && is_array( $inventory['theme'] ) ) {
 			$theme = $this->software_item( $inventory['theme'] );
@@ -168,26 +163,39 @@ final class CheckMetadata {
 		$plugins           = array_slice( $plugins, 0, self::MAX_INVENTORY_PLUGINS );
 
 		return array(
-			'wordpress_version' => $wordpress_version,
-			'theme'             => $theme,
-			'plugins'           => $plugins,
-			'collected_at'      => $inventory['collected_at'],
-			'truncated'         => $plugins_truncated,
+			'theme'        => $theme,
+			'plugins'      => $plugins,
+			'collected_at' => $inventory['collected_at'],
+			'truncated'    => $plugins_truncated,
 		);
 	}
 
 	/**
 	 * @param array<string|int,mixed> $item Untrusted software item.
-	 * @return array{id:string,name:string,version:string}|null
+	 * @return array<string,mixed>|null
 	 */
 	private function software_item( array $item ): ?array {
-		$id      = isset( $item['id'] ) ? $this->bounded_text( $item['id'], self::MAX_IDENTIFIER_LENGTH ) : null;
-		$name    = isset( $item['name'] ) ? $this->bounded_text( $item['name'], self::MAX_NAME_LENGTH ) : null;
-		$version = isset( $item['version'] ) ? $this->bounded_text( $item['version'], self::MAX_VERSION_LENGTH, true ) : null;
+		$id              = isset( $item['id'] ) ? $this->bounded_text( $item['id'], self::MAX_IDENTIFIER_LENGTH ) : null;
+		$name            = isset( $item['name'] ) ? $this->bounded_text( $item['name'], self::MAX_NAME_LENGTH ) : null;
+		$current_version = isset( $item['current_version'] ) ? $this->bounded_text( $item['current_version'], self::MAX_VERSION_LENGTH, true ) : null;
 
-		return null === $id || null === $name || null === $version
-			? null
-			: compact( 'id', 'name', 'version' );
+		if ( null === $current_version && isset( $item['version'] ) ) {
+			$current_version = $this->bounded_text( $item['version'], self::MAX_VERSION_LENGTH, true );
+		}
+
+		if ( null === $id || null === $name || null === $current_version ) {
+			return null;
+		}
+
+		$normalized = compact( 'id', 'name', 'current_version' );
+		$latest     = isset( $item['latest_version'] ) ? $this->bounded_text( $item['latest_version'], self::MAX_VERSION_LENGTH, true ) : null;
+
+		if ( null !== $latest && isset( $item['update_available'] ) && is_bool( $item['update_available'] ) ) {
+			$normalized['latest_version']   = $latest;
+			$normalized['update_available'] = $item['update_available'];
+		}
+
+		return $normalized;
 	}
 
 	/**
