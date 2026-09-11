@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  coding-standards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: "8.1"
+          coverage: none
+          tools: composer:v2
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run coding standards
+        run: composer lint
+
+  compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: WordPress 6.8 / PHP 8.1
+            config: .wp-env.wp68.json
+          - label: Current WordPress / PHP 8.3
+            config: .wp-env.test.json
+
+    name: ${{ matrix.label }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: "8.1"
+          coverage: none
+          tools: composer:v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install development dependencies
+        run: |
+          composer install --no-interaction --prefer-dist
+          npm ci
+
+      - name: Start WordPress test environment
+        env:
+          WP_ENV_CONFIG: ${{ matrix.config }}
+        run: npx wp-env start --config="$WP_ENV_CONFIG" --auto-port
+
+      - name: Activate plugins
+        env:
+          WP_ENV_CONFIG: ${{ matrix.config }}
+        run: npx wp-env run cli --config="$WP_ENV_CONFIG" wp plugin activate agent monitor
+
+      - name: Record environment versions
+        env:
+          WP_ENV_CONFIG: ${{ matrix.config }}
+        run: npx wp-env run cli --config="$WP_ENV_CONFIG" wp eval 'echo "WordPress " . get_bloginfo( "version" ) . "; PHP " . PHP_VERSION . PHP_EOL;'
+
+      - name: Run PHPUnit
+        env:
+          WP_ENV_CONFIG: ${{ matrix.config }}
+        run: npx wp-env run cli --config="$WP_ENV_CONFIG" --env-cwd=wp-content/od-wordpress-monitor-workspace env WP_TESTS_DIR=/wordpress-phpunit composer test
+
+      - name: Stop WordPress test environment
+        if: always()
+        env:
+          WP_ENV_CONFIG: ${{ matrix.config }}
+        run: npx wp-env stop --config="$WP_ENV_CONFIG"
+
+  release-artifacts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: "8.1"
+          coverage: none
+          tools: composer:v2
+
+      - name: Build and smoke-test both plugin archives
+        run: |
+          monitor_version="$(sed -n "s/.*define( 'OD_WORDPRESS_MONITOR_VERSION', '\([^']*\)' );.*/\1/p" plugins/monitor/od-wordpress-monitor.php)"
+          agent_version="$(sed -n "s/.*define( 'OD_MONITOR_AGENT_VERSION', '\([^']*\)' );.*/\1/p" plugins/agent/od-monitor-agent.php)"
+          ./scripts/build-plugin-release.sh monitor "$monitor_version" "$RUNNER_TEMP/releases"
+          ./scripts/build-plugin-release.sh agent "$agent_version" "$RUNNER_TEMP/releases"
+          ./scripts/verify-plugin-release.sh monitor "$monitor_version" "$RUNNER_TEMP/releases/od-wordpress-monitor.zip"
+          ./scripts/verify-plugin-release.sh agent "$agent_version" "$RUNNER_TEMP/releases/od-monitor-agent.zip"

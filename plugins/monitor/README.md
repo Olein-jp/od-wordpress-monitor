@@ -51,6 +51,12 @@ OD Monitor Agent を導入したWordPressサイトを登録し、接続状況、
 
 ## 変更履歴
 
+### 1.0.4
+
+- Dashboardで全サイトの状態件数、問題サイト、Schedulerの健全性を確認できるようにしました。
+- Sitesに監視種別ごとの状態、最終確認時刻、状態filterを追加しました。
+- サイト詳細画面で現在状態、直近20件のevent、直近20件のcheck履歴を表示できるようにしました。
+
 ### 1.0.3
 
 - AgentのSite Health結果を60分ごとに取得し、healthy・warning・criticalへ判定できるようにしました。

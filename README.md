@@ -9,7 +9,7 @@ MonitorとAgentは、HTTPS上のWordPress REST APIとApplication Passwordを使�
 
 ## 現在のバージョン
 
-- OD WordPress Monitor：1.0.3
+- OD WordPress Monitor：1.0.4
 - OD Monitor Agent：1.0.1
 - 通信スキーマ：1.0
 
@@ -30,7 +30,7 @@ MonitorとAgentは、HTTPS上のWordPress REST APIとApplication Passwordを使�
 - 障害・復旧時のメール通知
 - GitHub Releases経由でのプラグインアップデート
 
-定期監視の結果は内部データとして保存されますが、**保存した履歴を一覧表示する画面はまだありません**。管理画面では、サイト登録時または「Test Connection」実行時に取得した接続状態とバージョン情報を確認できます。メール通知はMonitor全体で一つの通知先を設定でき、障害・復旧の状態変化だけを対象にします。
+定期監視の結果は履歴と現在状態として保存されます。管理画面のDashboardとSitesでは全体の状態を確認でき、各サイトの詳細画面では現在状態、直近20件のイベント、直近20件の監視結果を確認できます。メール通知はMonitor全体で一つの通知先を設定でき、障害・復旧の状態変化だけを対象にします。
 
 また、登録済みサイトの編集・削除は管理画面からは行えません。
 
@@ -222,6 +222,8 @@ npm run test:php:wp68
 npm run env:test:wp68:stop
 ```
 
+CIでは、最小対応環境のWordPress 6.8／PHP 8.1と、現行WordPress／PHP 8.3の両方で全テストを実行します。100サイト・1万件の監視履歴を使うMVP負荷プロファイルと、Monitor／Agent配布ZIPのsmoke testも全体テストに含まれます。検証条件、結果、既知の制約は[MVPリリース判定](docs/release-readiness.md)を参照してください。
+
 詳しい仕様は、次の資料を参照してください。
 
 - [アーキテクチャ](docs/architecture.md)
@@ -230,5 +232,6 @@ npm run env:test:wp68:stop
 - [アンインストール・バックアップ・復元](docs/backup-and-restore.md)
 - [Site Health API 安全利用調査](docs/site-health-investigation.md)
 - [リリース手順](docs/releases.md)
+- [MVPリリース判定](docs/release-readiness.md)
 - [Monitor固有のREADME](plugins/monitor/README.md)
 - [Agent固有のREADME](plugins/agent/README.md)

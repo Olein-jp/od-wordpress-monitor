@@ -38,18 +38,25 @@ WordPressのApplication Password認証失敗は401、capability不足は403、�
 
 - `INVALID_URL`
 - `HTTPS_REQUIRED`
+- `REDIRECT_LIMIT`
+- `UNSAFE_REDIRECT`
 - `CONNECTION_ERROR`
 - `TIMEOUT`
 - `AGENT_NOT_FOUND`
 - `AUTHENTICATION_FAILED`
 - `PERMISSION_DENIED`
+- `CREDENTIAL_NOT_FOUND`
+- `CREDENTIAL_DECRYPTION_FAILED`
 - `INVALID_JSON`
 - `INVALID_RESPONSE`
 - `UNSUPPORTED_SCHEMA`
+- `AGENT_ERROR`
 
 応答本文やログへAuthorization header、Application Password、cookieを含めません。
 
 `AgentPingMonitor` は `/ping` の結果を `agent_ping` 種別の `CheckResult` に変換します。成功時のmetadataはendpoint、schema version、Agent versionだけです。失敗時は上記の正規化済みerror codeだけを使用し、Agentのrawエラー、username、Application Password、Authorization headerは保持しません。
+
+`AgentStatusMonitor` は `/status` の結果を `agent_status` 種別の `CheckResult` に変換します。成功時はWordPress、PHP、Agentのversion、multisite、環境種別だけを状態metadataへ保持し、site identityや完全なAgent応答は保存しません。通信、認証、credential、schema検証の失敗は上記の固定error codeと固定messageへ正規化します。
 
 `UpdateMonitor` は `/updates` の結果を `updates` 種別の `CheckResult` に変換します。更新がない場合はhealthy、1件以上ある場合はwarningです。metadataにはendpoint、schema version、合計・種別別の更新件数、更新対象種別だけを含め、個別項目や完全なAgent応答は保持しません。通信、認証、schema検証の失敗はcriticalとし、上記の正規化済みerror codeを使用します。
 

@@ -135,11 +135,28 @@ jobs:
         if: always()
         run: npm run env:test:stop
 
+      - name: Start minimum-version test environment
+        run: npm run env:test:wp68:start
+
+      - name: Run minimum-version PHPUnit
+        run: npm run test:php:wp68
+
+      - name: Stop minimum-version test environment
+        if: always()
+        run: npm run env:test:wp68:stop
+
       - name: Build distribution archive
         env:
           PLUGIN: ${{ steps.release.outputs.plugin }}
           VERSION: ${{ steps.release.outputs.version }}
         run: ./scripts/build-plugin-release.sh "$PLUGIN" "$VERSION" "$RUNNER_TEMP/release"
+
+      - name: Smoke-test distribution archive
+        env:
+          PLUGIN: ${{ steps.release.outputs.plugin }}
+          VERSION: ${{ steps.release.outputs.version }}
+          SLUG: ${{ steps.release.outputs.slug }}
+        run: ./scripts/verify-plugin-release.sh "$PLUGIN" "$VERSION" "$RUNNER_TEMP/release/$SLUG.zip"
 
       - name: Create distribution token
         id: app-token

@@ -42,6 +42,9 @@ The source repository's normal `GITHUB_TOKEN` remains read-only. The workflow re
 1. Update the target plugin's `Version` header and version constant to the same `X.Y.Z` value.
 2. Update its changelog or README when relevant.
 3. Run the normal lint and PHPUnit suite.
+   - Confirm the minimum WordPress 6.8 / PHP 8.1 job and the current WordPress / PHP 8.3 job are both green.
+   - Confirm the MVP workflow, scale profile, and both plugin archive smoke tests are green.
+   - Review the known limitations and decision in [MVP release readiness](release-readiness.md).
 4. Merge the release preparation change to `main`.
 5. Create and push exactly one source tag:
 
@@ -82,8 +85,8 @@ Inspect the ZIP and checksum before installation:
 
 ```bash
 unzip -l /tmp/odm-monitor-release/od-wordpress-monitor.zip
-cd /tmp/odm-monitor-release
-shasum -a 256 -c od-wordpress-monitor.zip.sha256
+(cd /tmp/odm-monitor-release && shasum -a 256 -c od-wordpress-monitor.zip.sha256)
+./scripts/verify-plugin-release.sh monitor 1.0.0 /tmp/odm-monitor-release/od-wordpress-monitor.zip
 ```
 
 ## Compatibility and rollback

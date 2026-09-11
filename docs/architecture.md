@@ -12,11 +12,12 @@ Monitor WordPress
   Scheduler/runner → AgentPingMonitor → CredentialService + AgentClient /ping
   Scheduler/runner → AgentStatusMonitor → CredentialService + AgentClient /status
   Scheduler/runner → UpdateMonitor → CredentialService + AgentClient /updates
+  Scheduler/runner → SiteHealthMonitor → CredentialService + AgentClient /site-health
                   ↓              ↓
             Site/Credential DB   Agent REST API
 
 Agent WordPress
-  Application Password auth → od_monitor_read → /ping, /status → Collectors
+  Application Password auth → od_monitor_read → /ping, /status, /updates, /site-health → Collectors
 ```
 
 `HttpMonitor` は保存済み `Site` の公開HTTPS URLだけを共通のoutbound URL policyとWordPressの安全なHTTP APIで取得し、2xx、非成功status、timeout、接続失敗を共通の `CheckResult` に正規化します。response bodyは保持せず、redirectは最大3回まで接続先と解決後のIPを個別検証します。
@@ -28,6 +29,8 @@ Agent WordPress
 `AgentStatusMonitor` は `/status` の検証済み応答を15分間隔の監視結果へ正規化し、site identityを除いたWordPress・PHP・Agentのversionと環境種別だけを保持します。
 
 `UpdateMonitor` は `/updates` の検証済みsummaryを読み、更新がなければhealthy、1件以上あればwarningとして、WordPress本体・プラグイン・テーマ別の件数と対象種別だけを `CheckResult` に保持します。
+
+`SiteHealthMonitor` は `/site-health` の検証済みsummaryを読み、critical・recommended・goodを監視状態へ正規化します。永続化するのは件数と代表テストの識別子・状態だけで、診断本文や完全なAgent応答は保持しません。
 
 `packages/protocol` は通信契約の文書、schema、fixtureのみを保持します。ルートのComposerとPHPUnitはmonorepo全体の開発・検証用であり、各プラグインの実行時依存ではありません。
 
@@ -46,3 +49,9 @@ Agent WordPress
 日次cleanupは1回の処理件数を制限し、90日を超えたcheck履歴、期限切れexecution lock、期限切れのプラグイン固有transientを段階的に削除します。eventsとsite statusは保持し、現在有効なlockや実行中に更新されたoptionは観測済みの値との一致確認で保護します。
 
 Monitorのデータベースマイグレーションは、有効化時だけでなく通常のWordPress起動時にも保存済みスキーマバージョンを比較します。期限付きlockで同時実行を直列化し、冪等なテーブル定義を適用した後に必須テーブル・カラム・インデックスを検証し、すべて成功した場合だけバージョンoptionを更新します。失敗中はrepositoryとschedulerを組み立てず、旧バージョンと秘密情報を含まない状態コードを保持して次回起動で再試行します。大量データ変換はこの同期経路へ追加せず、上限付きのバックグラウンド処理へ分離します。
+
+## Release verification boundaries
+
+通常のCIはWordPress 6.8／PHP 8.1と現行WordPress／PHP 8.3の両方で同じ統合テストを実行します。登録、Agent通信、6種類の監視、状態評価、履歴、イベント、通知、管理画面表示を1つのシナリオで接続し、個別unit testだけでは検出できないcomposition上の不整合を確認します。
+
+性能確認は100サイト・1万件のcheck履歴をMVP検証プロファイルとし、20件単位のkeyset batch走査、直近履歴取得、Dashboard集計、300件単位のcleanupを実DB上で実行します。このプロファイルは再現可能な回帰検出用であり、ホスティング環境ごとの最大収容数やSLAを保証するものではありません。条件と最新の判定は[リリース判定](release-readiness.md)に記録します。
