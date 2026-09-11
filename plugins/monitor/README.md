@@ -43,6 +43,12 @@ OD Monitor Agent を導入したWordPressサイトを登録し、接続状況、
 
 メール送信にはWordPress標準の `wp_mail()` を使用します。実際にメールを配送するには、Monitorサイト側でWordPressのメール送信環境が正しく設定されている必要があります。
 
+## アンインストールと復元
+
+誤操作によるデータ消失を防ぐため、プラグインを削除しても登録サイト、暗号化済みApplication Password、監視状態、履歴、イベント、設定を削除しません。再インストール時は保持したデータに必要なマイグレーションを適用してから監視を再開します。
+
+バックアップにはMonitorの全5テーブルと関連optionを含むデータベース全体に加え、暗号鍵の導出に使われた元環境のauth saltが必要です。DBとsaltの両方を取得するとcredentialを復号できるため、分離して暗号化・アクセス制限してください。詳しい対象、手順、復元後の「Test Connection」は[運用手順](https://github.com/Olein-jp/od-wordpress-monitor/blob/main/docs/backup-and-restore.md)を参照してください。
+
 ## 変更履歴
 
 ### 1.0.3

@@ -10,6 +10,8 @@ Application Passwordは平文保存しません。`CredentialEncryptor` はlibso
 
 バックアップ移行時は、Monitor DBだけでなく元のWordPress saltsも安全に引き継ぐ必要があります。saltを変更すると既存credentialは復号できなくなります。
 
+DBバックアップには暗号化済みApplication Passwordに加え、サイトURL、監視履歴、通知先メールアドレスが含まれます。DBとauth saltの両方を取得されるとcredentialを復号できるため、保存・転送時に暗号化し、別々のアクセス制御下で管理します。Issue、チャット、メール、コマンド出力、作業ログへSQL dump、salt、Application Passwordを載せません。具体的な対象と復元順序は[Monitorのアンインストール・バックアップ・復元](backup-and-restore.md)に定義します。
+
 ## Agent permissions and transport
 
 Agent専用roleはログインに必要な `read` とAPI用の `od_monitor_read` だけを持ち、管理者権限を持ちません。`/ping` と `/status` は `permission_callback` でこのcapabilityを確認します。MonitorはHTTPS URLのみ受け入れ、WordPressの安全なHTTP APIで通信します。

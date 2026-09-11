@@ -175,10 +175,12 @@ Monitorの更新後は、次の通常リクエストで保存済みデータベ�
 
 ## アンインストール時の注意
 
-誤操作によるデータ消失を防ぐため、現時点ではプラグインを削除しても次のデータを自動削除しません。
+誤操作によるデータ消失を防ぐため、プラグインを削除しても次のデータを自動削除しません。
 
-- Monitorに登録したサイトと暗号化済み認証情報
+- Monitorに登録したサイト、暗号化済み認証情報、監視状態、履歴、イベント、設定
 - Agentが作成した権限グループとユーザーとの関連付け
+
+Monitorを削除・再インストールする前や、DBを復元するときは、[Monitorのアンインストール・バックアップ・復元](docs/backup-and-restore.md)を確認してください。暗号化済み認証情報の復元には、DBだけでなく元のauth saltも必要です。
 
 ## 開発者向け情報
 
@@ -225,6 +227,7 @@ npm run env:test:wp68:stop
 - [アーキテクチャ](docs/architecture.md)
 - [通信プロトコル](docs/protocol.md)
 - [セキュリティ](docs/security.md)
+- [アンインストール・バックアップ・復元](docs/backup-and-restore.md)
 - [Site Health API 安全利用調査](docs/site-health-investigation.md)
 - [リリース手順](docs/releases.md)
 - [Monitor固有のREADME](plugins/monitor/README.md)
