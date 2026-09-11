@@ -60,7 +60,7 @@ WordPressのApplication Password認証失敗は401、capability不足は403、�
 
 `UpdateMonitor` は `/updates` の結果を `updates` 種別の `CheckResult` に変換します。更新がない場合はhealthy、1件以上ある場合はwarningです。チェック履歴とイベントのmetadataには合計・種別別の更新件数だけを含めます。現在状態には、サイト詳細表示に必要なWordPress本体、有効テーマ、有効プラグインの名称・識別子・現在versionと取得日時を、上限付きの正規化済みスナップショットとして保持します。通信、認証、schema検証に失敗した場合は直前の正常なスナップショットを維持し、チェック自体はcriticalとして上記の正規化済みerror codeを使用します。完全なAgent応答は保存しません。
 
-`SiteHealthMonitor` は `/site-health` を60分ごとに取得し、criticalが1件以上ならcritical、criticalがなくrecommendedが1件以上ならwarning、両方なければhealthyとして履歴と現在状態へ保存します。永続化するmetadataは件数と代表testのid/statusだけです。criticalへの遷移は`SITE_HEALTH_CRITICAL`、criticalからhealthyへの復旧は`SITE_HEALTH_RECOVERED`として記録し、recommendedのみの状態ではイベントと通知を生成しません。
+`SiteHealthMonitor` は `/site-health` を60分ごとに取得し、criticalが1件以上ならcritical、criticalがなくrecommendedが1件以上ならwarning、両方なければhealthyとして履歴と現在状態へ保存します。永続化するmetadataは件数と代表testのid/statusだけです。criticalへの遷移は`SITE_HEALTH_CRITICAL`、criticalからwarningへの部分回復は`SITE_HEALTH_PARTIALLY_RECOVERED`、criticalからhealthyへの完全回復は`SITE_HEALTH_RECOVERED`として記録します。部分回復とrecommendedのみの初回状態では通知を生成しません。
 
 ## Compatibility policy
 

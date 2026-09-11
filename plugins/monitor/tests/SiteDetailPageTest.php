@@ -15,6 +15,7 @@ use Olein\WordPressMonitor\Credential\CredentialEncryptor;
 use Olein\WordPressMonitor\Credential\CredentialRepository;
 use Olein\WordPressMonitor\Credential\CredentialService;
 use Olein\WordPressMonitor\Event\EventRepository;
+use Olein\WordPressMonitor\Event\EventType;
 use Olein\WordPressMonitor\Event\MonitoringEvent;
 use Olein\WordPressMonitor\Http\AgentClient;
 use Olein\WordPressMonitor\Http\HttpClient;
@@ -191,12 +192,63 @@ final class SiteDetailPageTest extends \WP_UnitTestCase {
 		$this->assertLessThan( strpos( $output, 'Zulu Plugin' ), strpos( $output, 'Alpha Plugin' ) );
 	}
 
+	public function test_renders_site_health_summary_partial_recovery_and_context(): void {
+		$site_id = $this->create_site( 'Health Site' );
+		$time    = new DateTimeImmutable( '2026-09-10T11:00:00Z' );
+		$this->assertTrue(
+			$this->statuses->upsert(
+				new SiteStatus(
+					site_id: $site_id,
+					site_health_status: 'warning',
+					site_health_checked_at: $time,
+					metadata: array(
+						'site_health' => array(
+							'critical'               => 0,
+							'recommended'            => 2,
+							'good'                   => 7,
+							'representative_test_id' => 'php_<script>version</script>',
+						),
+					)
+				)
+			)
+		);
+		$this->assertIsInt(
+			$this->events->create(
+				new MonitoringEvent(
+					null,
+					$site_id,
+					EventType::SITE_HEALTH_PARTIALLY_RECOVERED,
+					'critical',
+					'warning',
+					null,
+					'Critical problems have been resolved.',
+					$time
+				)
+			)
+		);
+		$_GET['site_id'] = (string) $site_id;
+
+		$output = $this->render();
+
+		$this->assertStringContainsString( '<h2>Site Health Details</h2>', $output );
+		$this->assertMatchesRegularExpression( '/<th scope="row">Critical problems<\/th>\s*<td>0<\/td>/s', $output );
+		$this->assertMatchesRegularExpression( '/<th scope="row">Recommended improvements<\/th>\s*<td>2<\/td>/s', $output );
+		$this->assertMatchesRegularExpression( '/<th scope="row">Good results<\/th>\s*<td>7<\/td>/s', $output );
+		$this->assertStringContainsString( 'php_&lt;script&gt;version&lt;/script&gt;', $output );
+		$this->assertStringNotContainsString( 'php_<script>version</script>', $output );
+		$this->assertStringContainsString( 'Site Health partially recovered', $output );
+		$this->assertMatchesRegularExpression( '/Site Health partially recovered<\/td>\s*<td>Problem<\/td>\s*<td>Attention<\/td>/s', $output );
+		$this->assertStringContainsString( 'Recent Events is a history of state changes', $output );
+		$this->assertStringContainsString( 'limited to safe synchronous tests', $output );
+	}
+
 	public function test_empty_status_and_history_are_shown_safely(): void {
 		$_GET['site_id'] = (string) $this->create_site( 'Unchecked Site' );
 
 		$output = $this->render();
 
 		$this->assertStringContainsString( 'Unknown', $output );
+		$this->assertStringContainsString( 'Site Health details have not yet been collected.', $output );
 		$this->assertStringContainsString( 'Software information has not yet been collected.', $output );
 		$this->assertStringContainsString( 'No events have been recorded.', $output );
 		$this->assertStringContainsString( 'No checks have been recorded.', $output );

@@ -34,7 +34,13 @@ final class StateTransition {
 			return null;
 		}
 
-		if ( Status::HEALTHY === $current_status ) {
+		if (
+			'site_health' === $result->type()
+			&& Status::CRITICAL === $previous_status
+			&& Status::WARNING === $current_status
+		) {
+			$event_type = EventType::SITE_HEALTH_PARTIALLY_RECOVERED;
+		} elseif ( Status::HEALTHY === $current_status ) {
 			if ( Status::UNKNOWN === $previous_status ) {
 				return null;
 			}
