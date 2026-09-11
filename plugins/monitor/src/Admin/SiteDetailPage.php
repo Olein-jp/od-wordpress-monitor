@@ -63,6 +63,9 @@ final class SiteDetailPage {
 			<h2><?php echo esc_html__( 'Current Status', 'od-wordpress-monitor' ); ?></h2>
 			<?php $this->render_current_status( $site, $status ); ?>
 
+			<h2><?php echo esc_html__( 'Site Software', 'od-wordpress-monitor' ); ?></h2>
+			<?php $this->render_software_inventory( $status ); ?>
+
 			<h2><?php echo esc_html__( 'Recent Events', 'od-wordpress-monitor' ); ?></h2>
 			<?php $this->render_events( $events ); ?>
 
@@ -70,6 +73,71 @@ final class SiteDetailPage {
 			<?php $this->render_checks( $checks ); ?>
 		</div>
 		<?php
+	}
+
+	private function render_software_inventory( ?SiteStatus $status ): void {
+		$metadata  = null === $status ? array() : $status->metadata();
+		$updates   = isset( $metadata['updates'] ) && is_array( $metadata['updates'] ) ? $metadata['updates'] : array();
+		$inventory = isset( $updates['software_inventory'] ) && is_array( $updates['software_inventory'] ) ? $updates['software_inventory'] : null;
+
+		if ( null === $inventory ) {
+			echo '<p>' . esc_html__( 'Software information has not yet been collected.', 'od-wordpress-monitor' ) . '</p>';
+			return;
+		}
+
+		$wordpress_version = isset( $inventory['wordpress_version'] ) && is_string( $inventory['wordpress_version'] ) ? $inventory['wordpress_version'] : '—';
+		$theme             = isset( $inventory['theme'] ) && is_array( $inventory['theme'] ) ? $inventory['theme'] : null;
+		$plugins           = isset( $inventory['plugins'] ) && is_array( $inventory['plugins'] ) && array_is_list( $inventory['plugins'] ) ? $inventory['plugins'] : array();
+		$collected_at      = isset( $inventory['collected_at'] ) && is_string( $inventory['collected_at'] ) ? $this->parse_inventory_date( $inventory['collected_at'] ) : null;
+		?>
+		<p>
+			<?php echo esc_html__( 'Last collected:', 'od-wordpress-monitor' ); ?>
+			<?php $this->render_date( $collected_at ); ?>
+		</p>
+		<table class="widefat striped">
+			<caption class="screen-reader-text"><?php echo esc_html__( 'Active site software and current versions', 'od-wordpress-monitor' ); ?></caption>
+			<thead><tr>
+				<th scope="col"><?php echo esc_html__( 'Type', 'od-wordpress-monitor' ); ?></th>
+				<th scope="col"><?php echo esc_html__( 'Name', 'od-wordpress-monitor' ); ?></th>
+				<th scope="col"><?php echo esc_html__( 'Version', 'od-wordpress-monitor' ); ?></th>
+			</tr></thead>
+			<tbody>
+				<tr>
+					<th scope="row"><?php echo esc_html__( 'WordPress', 'od-wordpress-monitor' ); ?></th>
+					<td><?php echo esc_html__( 'WordPress', 'od-wordpress-monitor' ); ?></td>
+					<td><?php echo esc_html( $wordpress_version ); ?></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html__( 'Theme', 'od-wordpress-monitor' ); ?></th>
+					<td><?php echo esc_html( null !== $theme && isset( $theme['name'] ) && is_string( $theme['name'] ) ? $theme['name'] : '—' ); ?></td>
+					<td><?php echo esc_html( null !== $theme && isset( $theme['version'] ) && is_string( $theme['version'] ) && '' !== $theme['version'] ? $theme['version'] : '—' ); ?></td>
+				</tr>
+				<?php foreach ( $plugins as $plugin ) : ?>
+					<?php
+					if ( ! is_array( $plugin ) ) {
+						continue;
+					}
+					?>
+					<tr>
+						<th scope="row"><?php echo esc_html__( 'Plugin', 'od-wordpress-monitor' ); ?></th>
+						<td><?php echo esc_html( isset( $plugin['name'] ) && is_string( $plugin['name'] ) ? $plugin['name'] : '—' ); ?></td>
+						<td><?php echo esc_html( isset( $plugin['version'] ) && is_string( $plugin['version'] ) && '' !== $plugin['version'] ? $plugin['version'] : '—' ); ?></td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+		<?php if ( ! empty( $inventory['truncated'] ) ) : ?>
+			<p><?php echo esc_html__( 'Only the first 100 active plugins are shown.', 'od-wordpress-monitor' ); ?></p>
+		<?php endif; ?>
+		<?php
+	}
+
+	private function parse_inventory_date( string $date ): ?DateTimeImmutable {
+		try {
+			return new DateTimeImmutable( $date );
+		} catch ( \Throwable ) {
+			return null;
+		}
 	}
 
 	private function render_missing_site(): void {

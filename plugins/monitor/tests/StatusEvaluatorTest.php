@@ -89,7 +89,41 @@ final class StatusEvaluatorTest extends \WP_UnitTestCase {
 		$this->assertSame( Status::UNKNOWN, $current->http_status() );
 		$this->assertSame( $finished, $current->agent_checked_at() );
 		$this->assertSame( $finished, $current->last_checked_at() );
-		$this->assertSame( array(), $current->metadata()['agent_status'] );
+		$this->assertSame( array( 'wordpress' => '6.9' ), $current->metadata()['agent_status'] );
+	}
+
+	public function test_preserves_last_successful_inventory_when_update_check_fails(): void {
+		$inventory = array(
+			'wordpress_version' => '7.1',
+			'theme'             => null,
+			'plugins'           => array(),
+			'collected_at'      => '2026-09-10T00:00:00Z',
+			'truncated'         => false,
+		);
+		$previous  = new SiteStatus(
+			1,
+			metadata: array(
+				'updates' => array(
+					'total_updates'      => 0,
+					'software_inventory' => $inventory,
+				),
+			)
+		);
+		$failed    = new CheckResult(
+			1,
+			'updates',
+			Status::CRITICAL,
+			'CONNECTION_ERROR',
+			'Failed.',
+			new DateTimeImmutable( '2026-09-10T01:00:00Z' ),
+			new DateTimeImmutable( '2026-09-10T01:00:00Z' ),
+			1,
+			array( 'endpoint' => 'updates' )
+		);
+
+		$current = $this->evaluator->apply( $previous, $failed );
+
+		$this->assertSame( $inventory, $current->metadata()['updates']['software_inventory'] );
 	}
 
 	public function test_rejects_a_result_for_another_site(): void {

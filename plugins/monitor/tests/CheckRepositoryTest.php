@@ -78,6 +78,38 @@ final class CheckRepositoryTest extends \WP_UnitTestCase {
 		);
 	}
 
+	public function test_update_history_does_not_duplicate_software_inventory(): void {
+		$time   = new DateTimeImmutable( '2026-09-09T00:00:00Z' );
+		$result = new CheckResult(
+			4,
+			'updates',
+			'healthy',
+			null,
+			'Checked.',
+			$time,
+			$time,
+			25,
+			array(
+				'total_updates'      => 0,
+				'software_inventory' => array(
+					'wordpress_version' => '7.1',
+					'plugins'           => array(
+						array(
+							'id'      => 'plugin/plugin.php',
+							'name'    => 'Plugin',
+							'version' => '1.0.0',
+						),
+					),
+					'collected_at'      => '2026-09-09T00:00:00Z',
+				),
+			)
+		);
+		$id     = $this->repository->create( $result );
+
+		$this->assertIsInt( $id );
+		$this->assertSame( array( 'total_updates' => 0 ), $this->repository->find( $id )->metadata() );
+	}
+
 	private function result( DateTimeImmutable $time, string $status ): CheckResult {
 		return new CheckResult( 4, 'http', $status, null, 'Checked.', $time, $time, 25, array( 'http_status' => 503 ) );
 	}

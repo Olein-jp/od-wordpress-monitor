@@ -101,6 +101,70 @@ final class UpdateMonitorTest extends \WP_UnitTestCase {
 		);
 	}
 
+	public function test_collects_only_active_software_for_current_inventory(): void {
+		$response            = $this->updates_response( 0, 0, 0 );
+		$response['themes']  = array(
+			array(
+				'stylesheet'       => 'inactive-theme',
+				'name'             => 'Inactive Theme',
+				'current_version'  => '1.0.0',
+				'latest_version'   => '1.0.0',
+				'update_available' => false,
+				'active'           => false,
+			),
+			array(
+				'stylesheet'       => 'active-theme',
+				'name'             => 'Active Theme',
+				'current_version'  => '2.3.4',
+				'latest_version'   => '2.3.4',
+				'update_available' => false,
+				'active'           => true,
+			),
+		);
+		$response['plugins'] = array(
+			array(
+				'file'             => 'active/active.php',
+				'name'             => 'Active Plugin',
+				'current_version'  => '3.2.1',
+				'latest_version'   => '3.2.1',
+				'update_available' => false,
+				'active'           => true,
+			),
+			array(
+				'file'             => 'inactive/inactive.php',
+				'name'             => 'Inactive Plugin',
+				'current_version'  => '4.0.0',
+				'latest_version'   => '4.0.0',
+				'update_available' => false,
+				'active'           => false,
+			),
+		);
+		$this->mock_response( 200, $response );
+
+		$inventory = $this->monitor()->check( $this->site )->data()['software_inventory'];
+
+		$this->assertSame( '7.1', $inventory['wordpress_version'] );
+		$this->assertSame(
+			array(
+				'id'      => 'active-theme',
+				'name'    => 'Active Theme',
+				'version' => '2.3.4',
+			),
+			$inventory['theme']
+		);
+		$this->assertSame(
+			array(
+				array(
+					'id'      => 'active/active.php',
+					'name'    => 'Active Plugin',
+					'version' => '3.2.1',
+				),
+			),
+			$inventory['plugins']
+		);
+		$this->assertSame( '2026-09-09T09:00:00Z', $inventory['collected_at'] );
+	}
+
 	/**
 	 * @dataProvider request_error_provider
 	 */
@@ -177,9 +241,9 @@ final class UpdateMonitorTest extends \WP_UnitTestCase {
 		$this->assertSame( 'UNSUPPORTED_SCHEMA', $result->error_code() );
 	}
 
-	public function test_update_item_names_and_credentials_are_not_retained(): void {
+	public function test_software_inventory_does_not_retain_credentials_or_authorization_details(): void {
 		$response                       = $this->updates_response( 0, 1, 0 );
-		$response['plugins'][0]['name'] = 'app-password-secret';
+		$response['plugins'][0]['name'] = 'Visible Plugin';
 		add_filter(
 			'pre_http_request',
 			function ( $preempt, array $arguments ) use ( $response ) {
@@ -194,6 +258,7 @@ final class UpdateMonitorTest extends \WP_UnitTestCase {
 		$content = $result->message() . wp_json_encode( $result->data() );
 
 		$this->assertSame( CheckResult::STATUS_WARNING, $result->status() );
+		$this->assertStringContainsString( 'Visible Plugin', $content );
 		$this->assertStringNotContainsString( 'app-password-secret', $content );
 		$this->assertStringNotContainsString( 'agent-user', $content );
 		$this->assertStringNotContainsString( 'Authorization', $content );

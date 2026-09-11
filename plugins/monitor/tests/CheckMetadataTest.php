@@ -45,12 +45,17 @@ final class CheckMetadataTest extends \WP_UnitTestCase {
 			$this->result(
 				'updates',
 				array(
-					'total_updates'     => 6,
-					'wordpress_updates' => 1,
-					'plugin_updates'    => 3,
-					'theme_updates'     => 2,
-					'plugins'           => array( 'private-plugin' ),
-					'invalid_count'     => -1,
+					'total_updates'      => 6,
+					'wordpress_updates'  => 1,
+					'plugin_updates'     => 3,
+					'theme_updates'      => 2,
+					'plugins'            => array( 'private-plugin' ),
+					'software_inventory' => array(
+						'wordpress_version' => '7.1',
+						'plugins'           => array(),
+						'collected_at'      => '2026-09-10T00:00:00Z',
+					),
+					'invalid_count'      => -1,
 				)
 			)
 		);
@@ -64,6 +69,120 @@ final class CheckMetadataTest extends \WP_UnitTestCase {
 			),
 			$metadata
 		);
+	}
+
+	public function test_status_metadata_normalizes_and_sorts_software_inventory(): void {
+		$metadata = $this->metadata->for_status(
+			$this->result(
+				'updates',
+				array(
+					'total_updates'      => 0,
+					'software_inventory' => array(
+						'wordpress_version' => '7.1<script>discarded()</script>',
+						'theme'             => array(
+							'id'      => 'theme',
+							'name'    => '<b>Snow Monkey</b>',
+							'version' => '31.0.2',
+						),
+						'plugins'           => array(
+							array(
+								'id'      => 'z/z.php',
+								'name'    => 'Zulu',
+								'version' => '',
+							),
+							array(
+								'id'      => 'a/a.php',
+								'name'    => '<em>Alpha</em>',
+								'version' => '1.0.0',
+							),
+							array(
+								'id'      => 'a/a.php',
+								'name'    => 'Duplicate',
+								'version' => '9.0.0',
+							),
+						),
+						'collected_at'      => '2026-09-10T00:00:00Z',
+					),
+				)
+			)
+		);
+
+		$this->assertSame( '7.1', $metadata['software_inventory']['wordpress_version'] );
+		$this->assertSame( 'Snow Monkey', $metadata['software_inventory']['theme']['name'] );
+		$this->assertSame( array( 'Alpha', 'Zulu' ), array_column( $metadata['software_inventory']['plugins'], 'name' ) );
+		$this->assertSame( '', $metadata['software_inventory']['plugins'][1]['version'] );
+		$this->assertFalse( $metadata['software_inventory']['truncated'] );
+	}
+
+	public function test_status_metadata_rejects_invalid_inventory_and_keeps_safe_agent_versions(): void {
+		$invalid = $this->metadata->for_status(
+			$this->result(
+				'updates',
+				array(
+					'software_inventory' => array(
+						'wordpress_version' => '7.1',
+						'plugins'           => array(),
+						'collected_at'      => 'not-a-date',
+					),
+				)
+			)
+		);
+		$agent   = $this->metadata->for_status(
+			$this->result(
+				'agent_status',
+				array(
+					'wordpress'        => '7.1',
+					'php'              => '8.3.33',
+					'agent_version'    => '1.0.2',
+					'environment_type' => 'production',
+					'is_multisite'     => false,
+					'site_name'        => 'Discarded',
+				)
+			)
+		);
+
+		$this->assertArrayNotHasKey( 'software_inventory', $invalid );
+		$this->assertSame(
+			array(
+				'wordpress'        => '7.1',
+				'php'              => '8.3.33',
+				'agent_version'    => '1.0.2',
+				'environment_type' => 'production',
+				'is_multisite'     => false,
+			),
+			$agent
+		);
+	}
+
+	public function test_status_metadata_sorts_before_limiting_active_plugins(): void {
+		$plugins = array();
+
+		for ( $index = 101; $index >= 1; --$index ) {
+			$name      = sprintf( 'Plugin %03d', $index );
+			$plugins[] = array(
+				'id'      => sprintf( 'plugin-%03d/plugin.php', $index ),
+				'name'    => $name,
+				'version' => '1.0.0',
+			);
+		}
+
+		$metadata = $this->metadata->for_status(
+			$this->result(
+				'updates',
+				array(
+					'software_inventory' => array(
+						'wordpress_version' => '7.1',
+						'plugins'           => $plugins,
+						'collected_at'      => '2026-09-10T00:00:00Z',
+					),
+				)
+			)
+		);
+
+		$this->assertCount( 100, $metadata['software_inventory']['plugins'] );
+		$this->assertSame( 'Plugin 001', $metadata['software_inventory']['plugins'][0]['name'] );
+		$this->assertSame( 'Plugin 100', $metadata['software_inventory']['plugins'][99]['name'] );
+		$this->assertTrue( $metadata['software_inventory']['truncated'] );
 	}
 
 	public function test_ssl_normalizes_existing_monitor_fields(): void {

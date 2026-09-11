@@ -141,12 +141,63 @@ final class SiteDetailPageTest extends \WP_UnitTestCase {
 		$this->assertLessThan( strpos( $output, 'Event message 03!' ), strpos( $output, 'Event message 22!' ) );
 	}
 
+	public function test_renders_current_software_inventory_and_collection_time(): void {
+		$site_id = $this->create_site( 'Inventory Site' );
+		$this->assertTrue(
+			$this->statuses->upsert(
+				new SiteStatus(
+					site_id: $site_id,
+					metadata: array(
+						'updates' => array(
+							'software_inventory' => array(
+								'wordpress_version' => '7.1',
+								'theme'             => array(
+									'id'      => 'snow-monkey',
+									'name'    => 'Snow <script>Monkey</script>',
+									'version' => '31.0.2',
+								),
+								'plugins'           => array(
+									array(
+										'id'      => 'alpha/alpha.php',
+										'name'    => 'Alpha Plugin',
+										'version' => '1.2.3',
+									),
+									array(
+										'id'      => 'zulu/zulu.php',
+										'name'    => 'Zulu Plugin',
+										'version' => '4.5.6',
+									),
+								),
+								'collected_at'      => '2026-09-10T09:30:00Z',
+								'truncated'         => false,
+							),
+						),
+					)
+				)
+			)
+		);
+		$_GET['site_id'] = (string) $site_id;
+
+		$output = $this->render();
+
+		$this->assertStringContainsString( '<h2>Site Software</h2>', $output );
+		$this->assertStringContainsString( '>7.1</td>', $output );
+		$this->assertStringContainsString( 'Snow &lt;script&gt;Monkey&lt;/script&gt;', $output );
+		$this->assertStringContainsString( '>31.0.2</td>', $output );
+		$this->assertStringContainsString( '>Alpha Plugin</td>', $output );
+		$this->assertStringContainsString( '>1.2.3</td>', $output );
+		$this->assertStringContainsString( '>Zulu Plugin</td>', $output );
+		$this->assertMatchesRegularExpression( '/Last collected:\s*<time datetime="2026-09-10T09:30:00\+00:00">/s', $output );
+		$this->assertLessThan( strpos( $output, 'Zulu Plugin' ), strpos( $output, 'Alpha Plugin' ) );
+	}
+
 	public function test_empty_status_and_history_are_shown_safely(): void {
 		$_GET['site_id'] = (string) $this->create_site( 'Unchecked Site' );
 
 		$output = $this->render();
 
 		$this->assertStringContainsString( 'Unknown', $output );
+		$this->assertStringContainsString( 'Software information has not yet been collected.', $output );
 		$this->assertStringContainsString( 'No events have been recorded.', $output );
 		$this->assertStringContainsString( 'No checks have been recorded.', $output );
 	}

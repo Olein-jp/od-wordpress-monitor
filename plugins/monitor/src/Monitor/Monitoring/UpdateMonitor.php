@@ -94,14 +94,57 @@ final class UpdateMonitor implements MonitorInterface {
 				? __( 'Updates are available.', 'od-wordpress-monitor' )
 				: __( 'No updates are currently reported.', 'od-wordpress-monitor' ),
 			array(
-				'endpoint'          => 'updates',
-				'schema_version'    => $response['schema_version'],
-				'total_updates'     => $summary['total'],
-				'wordpress_updates' => $summary['wordpress'],
-				'plugin_updates'    => $summary['plugins'],
-				'theme_updates'     => $summary['themes'],
-				'update_types'      => $update_types,
+				'endpoint'           => 'updates',
+				'schema_version'     => $response['schema_version'],
+				'total_updates'      => $summary['total'],
+				'wordpress_updates'  => $summary['wordpress'],
+				'plugin_updates'     => $summary['plugins'],
+				'theme_updates'      => $summary['themes'],
+				'update_types'       => $update_types,
+				'software_inventory' => $this->software_inventory( $response ),
 			)
+		);
+	}
+
+	/**
+	 * Reduce the validated Agent response to the fields needed for current inventory.
+	 *
+	 * @param array<string,mixed> $response Validated updates response.
+	 * @return array<string,mixed>
+	 */
+	private function software_inventory( array $response ): array {
+		$theme = null;
+
+		foreach ( $response['themes'] as $candidate ) {
+			if ( $candidate['active'] ) {
+				$theme = array(
+					'id'      => $candidate['stylesheet'],
+					'name'    => $candidate['name'],
+					'version' => $candidate['current_version'],
+				);
+				break;
+			}
+		}
+
+		$plugins = array();
+
+		foreach ( $response['plugins'] as $plugin ) {
+			if ( ! $plugin['active'] ) {
+				continue;
+			}
+
+			$plugins[] = array(
+				'id'      => $plugin['file'],
+				'name'    => $plugin['name'],
+				'version' => $plugin['current_version'],
+			);
+		}
+
+		return array(
+			'wordpress_version' => $response['wordpress']['current_version'],
+			'theme'             => $theme,
+			'plugins'           => $plugins,
+			'collected_at'      => $response['timestamp'],
 		);
 	}
 

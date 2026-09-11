@@ -56,9 +56,9 @@ WordPressのApplication Password認証失敗は401、capability不足は403、�
 
 `AgentPingMonitor` は `/ping` の結果を `agent_ping` 種別の `CheckResult` に変換します。成功時のmetadataはendpoint、schema version、Agent versionだけです。失敗時は上記の正規化済みerror codeだけを使用し、Agentのrawエラー、username、Application Password、Authorization headerは保持しません。
 
-`AgentStatusMonitor` は `/status` の結果を `agent_status` 種別の `CheckResult` に変換します。成功時はWordPress、PHP、Agentのversion、multisite、環境種別だけを状態metadataへ保持し、site identityや完全なAgent応答は保存しません。通信、認証、credential、schema検証の失敗は上記の固定error codeと固定messageへ正規化します。
+`AgentStatusMonitor` は `/status` の結果を `agent_status` 種別の `CheckResult` に変換します。成功時はWordPress、PHP、Agentのversion、multisite、環境種別だけを現在状態のmetadataへ保持し、チェック履歴には複製しません。site identityや完全なAgent応答は保存しません。通信、認証、credential、schema検証の失敗は上記の固定error codeと固定messageへ正規化します。
 
-`UpdateMonitor` は `/updates` の結果を `updates` 種別の `CheckResult` に変換します。更新がない場合はhealthy、1件以上ある場合はwarningです。metadataにはendpoint、schema version、合計・種別別の更新件数、更新対象種別だけを含め、個別項目や完全なAgent応答は保持しません。通信、認証、schema検証の失敗はcriticalとし、上記の正規化済みerror codeを使用します。
+`UpdateMonitor` は `/updates` の結果を `updates` 種別の `CheckResult` に変換します。更新がない場合はhealthy、1件以上ある場合はwarningです。チェック履歴とイベントのmetadataには合計・種別別の更新件数だけを含めます。現在状態には、サイト詳細表示に必要なWordPress本体、有効テーマ、有効プラグインの名称・識別子・現在versionと取得日時を、上限付きの正規化済みスナップショットとして保持します。通信、認証、schema検証に失敗した場合は直前の正常なスナップショットを維持し、チェック自体はcriticalとして上記の正規化済みerror codeを使用します。完全なAgent応答は保存しません。
 
 `SiteHealthMonitor` は `/site-health` を60分ごとに取得し、criticalが1件以上ならcritical、criticalがなくrecommendedが1件以上ならwarning、両方なければhealthyとして履歴と現在状態へ保存します。永続化するmetadataは件数と代表testのid/statusだけです。criticalへの遷移は`SITE_HEALTH_CRITICAL`、criticalからhealthyへの復旧は`SITE_HEALTH_RECOVERED`として記録し、recommendedのみの状態ではイベントと通知を生成しません。
 

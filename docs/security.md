@@ -56,7 +56,7 @@ redirectは自動追跡せず、共通HTTP層で最大3回まで処理します�
 
 Agent到達性監視は保存済みcredentialを `/ping` の送信直前にだけ復号します。`CheckResult` には成功時のschema versionとAgent version、または正規化済みerror codeだけを含め、username、Application Password、Authorization header、rawエラーメッセージを含めません。
 
-更新可否監視も保存済みcredentialを `/updates` の送信直前にだけ復号します。`CheckResult` には検証済みsummaryから得た種別別件数と対象種別だけを含め、個別プラグイン・テーマ情報、完全なAgent応答、credential、Authorization header、rawエラーを含めません。
+更新可否監視も保存済みcredentialを `/updates` の送信直前にだけ復号します。チェック履歴とイベントには検証済みsummaryから得た種別別件数だけを保存します。現在状態にはサイト詳細表示に必要なWordPress本体、有効テーマ、有効プラグインの名称・識別子・現在versionと取得日時だけを、文字数・件数を制限して保存します。無効な項目、完全なAgent応答、credential、Authorization header、rawエラーは保存しません。
 
 定期実行lockは `odm_lock_{site_uuid}_{check_type}` 形式のautoload無効optionとして保存し、期限とランダムな所有tokenだけを含めます。期限切れlockの置換と解除は観測した値が一致する場合だけ行い、古い実行が新しいlockを解除しないようにします。monitor例外のrawメッセージは結果へ保存しません。
 

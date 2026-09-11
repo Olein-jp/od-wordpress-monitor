@@ -64,8 +64,18 @@ final class StatusEvaluator {
 				throw new InvalidArgumentException( 'The check type cannot be applied to site status.' );
 		}
 
-		$metadata                    = $previous->metadata();
-		$metadata[ $result->type() ] = $this->check_metadata->for_result( $result );
+		$metadata        = $previous->metadata();
+		$result_metadata = $this->check_metadata->for_status( $result );
+
+		if (
+			'updates' === $result->type()
+			&& ! isset( $result_metadata['software_inventory'] )
+			&& isset( $metadata['updates']['software_inventory'] )
+		) {
+			$result_metadata['software_inventory'] = $metadata['updates']['software_inventory'];
+		}
+
+		$metadata[ $result->type() ] = $result_metadata;
 
 		return new SiteStatus(
 			$result->site_id(),

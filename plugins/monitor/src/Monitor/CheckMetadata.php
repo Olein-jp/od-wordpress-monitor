@@ -8,6 +8,11 @@
 namespace Olein\WordPressMonitor\Monitor;
 
 final class CheckMetadata {
+	private const MAX_INVENTORY_PLUGINS = 100;
+	private const MAX_IDENTIFIER_LENGTH = 191;
+	private const MAX_NAME_LENGTH       = 160;
+	private const MAX_VERSION_LENGTH    = 64;
+
 	/**
 	 * Return only the documented, bounded fields for one monitor type.
 	 *
@@ -23,6 +28,55 @@ final class CheckMetadata {
 			'ssl'         => $this->ssl( $data ),
 			default       => array(),
 		};
+	}
+
+	/**
+	 * Return bounded metadata for the single current-state row.
+	 *
+	 * Unlike check and event history, current status may retain the latest
+	 * normalized software inventory without duplicating it for every run.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function for_status( CheckResult $result ): array {
+		$metadata = $this->for_result( $result );
+		$data     = $result->data();
+
+		if ( 'agent_status' === $result->type() ) {
+			return $this->agent_status( $data );
+		}
+
+		if ( 'updates' === $result->type() && isset( $data['software_inventory'] ) ) {
+			$inventory = $this->software_inventory( $data['software_inventory'] );
+
+			if ( null !== $inventory ) {
+				$metadata['software_inventory'] = $inventory;
+			}
+		}
+
+		return $metadata;
+	}
+
+	/**
+	 * @param array<string|int,mixed> $data Check data.
+	 * @return array<string,mixed>
+	 */
+	private function agent_status( array $data ): array {
+		$metadata = array();
+
+		foreach ( array( 'wordpress', 'php', 'agent_version', 'environment_type' ) as $key ) {
+			$value = isset( $data[ $key ] ) ? $this->bounded_text( $data[ $key ], self::MAX_VERSION_LENGTH ) : null;
+
+			if ( null !== $value ) {
+				$metadata[ $key ] = $value;
+			}
+		}
+
+		if ( isset( $data['is_multisite'] ) && is_bool( $data['is_multisite'] ) ) {
+			$metadata['is_multisite'] = $data['is_multisite'];
+		}
+
+		return $metadata;
 	}
 
 	/**
@@ -61,6 +115,96 @@ final class CheckMetadata {
 		}
 
 		return $metadata;
+	}
+
+	/**
+	 * @param mixed $inventory Untrusted current software inventory.
+	 * @return array<string,mixed>|null
+	 */
+	private function software_inventory( $inventory ): ?array {
+		if (
+			! is_array( $inventory )
+			|| ! isset( $inventory['wordpress_version'], $inventory['plugins'], $inventory['collected_at'] )
+			|| ! is_array( $inventory['plugins'] )
+			|| ! array_is_list( $inventory['plugins'] )
+			|| ! is_string( $inventory['collected_at'] )
+			|| 1 !== preg_match( '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $inventory['collected_at'] )
+			|| false === strtotime( $inventory['collected_at'] )
+		) {
+			return null;
+		}
+
+		$wordpress_version = $this->bounded_text( $inventory['wordpress_version'], self::MAX_VERSION_LENGTH );
+		$theme             = null;
+
+		if ( null === $wordpress_version ) {
+			return null;
+		}
+
+		if ( isset( $inventory['theme'] ) && is_array( $inventory['theme'] ) ) {
+			$theme = $this->software_item( $inventory['theme'] );
+		}
+
+		$plugins = array();
+		$seen    = array();
+
+		foreach ( $inventory['plugins'] as $plugin ) {
+			$item = is_array( $plugin ) ? $this->software_item( $plugin ) : null;
+
+			if ( null === $item || isset( $seen[ $item['id'] ] ) ) {
+				continue;
+			}
+
+			$seen[ $item['id'] ] = true;
+			$plugins[]           = $item;
+		}
+
+		usort(
+			$plugins,
+			static fn( array $first, array $second ): int => array( strtolower( $first['name'] ), $first['id'] ) <=> array( strtolower( $second['name'] ), $second['id'] )
+		);
+
+		$plugins_truncated = count( $plugins ) > self::MAX_INVENTORY_PLUGINS;
+		$plugins           = array_slice( $plugins, 0, self::MAX_INVENTORY_PLUGINS );
+
+		return array(
+			'wordpress_version' => $wordpress_version,
+			'theme'             => $theme,
+			'plugins'           => $plugins,
+			'collected_at'      => $inventory['collected_at'],
+			'truncated'         => $plugins_truncated,
+		);
+	}
+
+	/**
+	 * @param array<string|int,mixed> $item Untrusted software item.
+	 * @return array{id:string,name:string,version:string}|null
+	 */
+	private function software_item( array $item ): ?array {
+		$id      = isset( $item['id'] ) ? $this->bounded_text( $item['id'], self::MAX_IDENTIFIER_LENGTH ) : null;
+		$name    = isset( $item['name'] ) ? $this->bounded_text( $item['name'], self::MAX_NAME_LENGTH ) : null;
+		$version = isset( $item['version'] ) ? $this->bounded_text( $item['version'], self::MAX_VERSION_LENGTH, true ) : null;
+
+		return null === $id || null === $name || null === $version
+			? null
+			: compact( 'id', 'name', 'version' );
+	}
+
+	/**
+	 * @param mixed $value Untrusted text value.
+	 */
+	private function bounded_text( $value, int $max_length, bool $allow_empty = false ): ?string {
+		if ( ! is_string( $value ) ) {
+			return null;
+		}
+
+		$value = trim( sanitize_text_field( wp_strip_all_tags( $value, true ) ) );
+
+		if ( '' === $value ) {
+			return $allow_empty ? '' : null;
+		}
+
+		return wp_html_excerpt( $value, $max_length, '' );
 	}
 
 	/**
