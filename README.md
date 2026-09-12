@@ -9,7 +9,7 @@ MonitorとAgentは、HTTPS上のWordPress REST APIとApplication Passwordを使�
 
 ## 現在のバージョン
 
-- OD WordPress Monitor：1.0.8
+- OD WordPress Monitor：1.0.9
 - OD Monitor Agent：1.0.4
 - 通信スキーマ：1.0
 
@@ -21,6 +21,7 @@ MonitorとAgentは、HTTPS上のWordPress REST APIとApplication Passwordを使�
 
 | バージョン | 主な変更点 |
 | --- | --- |
+| 1.0.9 | Email・Slack・Discord・Chatworkへの複数チャネル通知、SSL警告、任意の日次まとめ、一時的な配送失敗の限定再送を追加。 |
 | 1.0.8 | Agentが返すSite Healthのcritical・recommended全件の内訳を表示。日本語翻訳ファイルを同梱し、日本語環境で管理画面・通知・エラーを日本語表示。 |
 | 1.0.7 | Site Healthの診断内訳、部分回復の履歴、有効テーマ・プラグインの更新状態と更新可能バージョンをサイト詳細画面に表示。旧形式データを未確認として安全に表示。 |
 | 1.0.6 | サイト詳細画面にWordPress本体・有効テーマ・有効プラグインの現在バージョンを表示。ソフトウェア情報を現在状態へ保持。 |
@@ -57,10 +58,10 @@ MonitorとAgentは、HTTPS上のWordPress REST APIとApplication Passwordを使�
 - 定期監視結果と現在状態の保存
 - 稼働停止、復旧、更新あり、SSL警告などの状態変化イベントの保存
 - 90日を超えたチェック履歴の定期削除
-- 障害・復旧時のEmail・Slack・Discord・Chatwork通知
+- 障害・復旧・SSL期限警告時のEmail・Slack・Discord・Chatwork通知と、任意の日次まとめ通知
 - GitHub Releases経由でのプラグインアップデート
 
-定期監視の結果は履歴と現在状態として保存されます。管理画面のDashboardとSitesでは全体の状態を確認でき、各サイトの詳細画面では現在状態、直近20件のイベント、直近20件の監視結果を確認できます。Email・Slack・Discord・Chatwork通知はMonitor全体で個別に設定でき、障害・復旧の状態変化だけを対象にします。
+定期監視の結果は履歴と現在状態として保存されます。管理画面のDashboardとSitesでは全体の状態を確認でき、各サイトの詳細画面では現在状態、直近20件のイベント、直近20件の監視結果を確認できます。Email・Slack・Discord・Chatwork通知はMonitor全体で個別に設定でき、障害・復旧とSSL期限警告の即時通知、および任意の日次まとめに対応します。
 
 また、登録済みサイトの編集・削除は管理画面からは行えません。
 
