@@ -19,6 +19,7 @@ use Olein\WordPressMonitor\Event\MonitoringEvent;
 use Olein\WordPressMonitor\Monitor\CheckResult;
 use Olein\WordPressMonitor\Monitor\Status;
 use Olein\WordPressMonitor\Notification\NotificationChannelResult;
+use Olein\WordPressMonitor\Notification\NotificationDeliveryRetry;
 use Olein\WordPressMonitor\Notification\NotificationManager;
 use Olein\WordPressMonitor\Notification\NotificationMessage;
 use Olein\WordPressMonitor\Notification\NotificationMessageFactoryInterface;
@@ -162,6 +163,30 @@ final class CheckResultRecorderTest extends \WP_UnitTestCase {
 		$this->assertCount( 2, $this->checks->for_site( 7 ) );
 	}
 
+	public function test_temporary_channel_failure_is_scheduled_after_monitoring_is_saved(): void {
+		$sender   = new class() implements NotificationSenderInterface {
+			public function channel_id(): string {
+				return 'slack';
+			}
+			public function enabled(): bool {
+				return true;
+			}
+			public function send( NotificationMessage $message ): NotificationChannelResult {
+				unset( $message );
+				return NotificationChannelResult::failed( 'slack', 'HTTP_503' );
+			}
+		};
+		$recorder = $this->recorder_with_sender( $sender, true );
+		$this->assertTrue( $recorder->record( $this->result( Status::HEALTHY, '2026-09-09T00:00:00Z' ) ) );
+		$this->assertTrue( $recorder->record( $this->result( Status::CRITICAL, '2026-09-09T00:05:00Z' ) ) );
+		$event = $this->events->for_site( 7 )[0];
+		$this->assertSame( Status::CRITICAL, $this->statuses->find( 7 )->http_status() );
+		$this->assertCount( 2, $this->checks->for_site( 7 ) );
+		$this->assertSame( 'failed', $event->metadata()['notification']['channels']['slack']['status'] );
+		$this->assertIsInt( wp_next_scheduled( NotificationDeliveryRetry::HOOK, array( $event->id(), 'slack' ) ) );
+		wp_clear_scheduled_hook( NotificationDeliveryRetry::HOOK, array( $event->id(), 'slack' ) );
+	}
+
 	public function test_persists_site_health_transitions_without_notifying_recommended_state(): void {
 		update_option(
 			NotificationSettings::OPTION,
@@ -220,7 +245,26 @@ final class CheckResultRecorderTest extends \WP_UnitTestCase {
 		$this->assertSame( '2026-09-10T08:00:00Z', $status->metadata()['site_health']['collected_at'] );
 	}
 
-	private function recorder_with_sender( NotificationSenderInterface $sender ): CheckResultRecorder {
+	private function recorder_with_sender( NotificationSenderInterface $sender, bool $retry_failed = false ): CheckResultRecorder {
+		$manager = new NotificationManager(
+			new NotificationRule(),
+			new class() implements NotificationMessageFactoryInterface {
+				public function create( MonitoringEvent $event, string $notification_type ): ?NotificationMessage {
+					return new NotificationMessage(
+						$notification_type,
+						'Example Site',
+						'https://example.com',
+						$event->type(),
+						$event->previous_status(),
+						$event->current_status(),
+						$event->occurred_at(),
+						$event->error_code() ?? '—',
+						$event->message()
+					);
+				}
+			},
+			array( $sender )
+		);
 		return new CheckResultRecorder(
 			$this->database(),
 			$this->checks,
@@ -228,25 +272,8 @@ final class CheckResultRecorderTest extends \WP_UnitTestCase {
 			$this->events,
 			new StatusEvaluator(),
 			new StateTransition(),
-			new NotificationManager(
-				new NotificationRule(),
-				new class() implements NotificationMessageFactoryInterface {
-					public function create( MonitoringEvent $event, string $notification_type ): ?NotificationMessage {
-						return new NotificationMessage(
-							$notification_type,
-							'Example Site',
-							'https://example.com',
-							$event->type(),
-							$event->previous_status(),
-							$event->current_status(),
-							$event->occurred_at(),
-							$event->error_code() ?? '—',
-							$event->message()
-						);
-					}
-				},
-				array( $sender )
-			)
+			$manager,
+			$retry_failed ? new NotificationDeliveryRetry( $this->events, $manager ) : null
 		);
 	}
 

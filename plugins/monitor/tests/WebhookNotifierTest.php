@@ -116,6 +116,42 @@ final class WebhookNotifierTest extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * @dataProvider retry_after_provider
+	 */
+	public function test_accepts_only_bounded_retry_after( int $status, string $header, ?int $expected ): void {
+		$this->save( SlackNotifier::CHANNEL_ID, 'https://hooks.slack.com/services/T000/B000/private-token' );
+		add_filter(
+			'pre_http_request',
+			function () use ( $status, $header ) {
+				$response            = $this->response( $status, 'private response' );
+				$response['headers'] = array( 'retry-after' => $header );
+				return $response;
+			}
+		);
+
+		$result = $this->slack()->send( $this->message() );
+		$this->assertSame( $expected, $result->retry_after_seconds() );
+	}
+
+	public function test_tls_failure_is_not_classified_as_a_retryable_connection_error(): void {
+		$this->save( SlackNotifier::CHANNEL_ID, 'https://hooks.slack.com/services/T000/B000/private-token' );
+		add_filter( 'pre_http_request', static fn() => new WP_Error( 'http_request_failed', 'SSL certificate verify failed: private detail' ) );
+		$this->assertSame( 'TLS_ERROR', $this->slack()->send( $this->message() )->error_code() );
+	}
+
+	/**
+	 * @return array<string,array{int,string,?int}>
+	 */
+	public function retry_after_provider(): array {
+		return array(
+			'bounded rate limit' => array( 429, '120', 120 ),
+			'too long'           => array( 429, '3600', null ),
+			'bad header'         => array( 503, 'invalid', null ),
+			'permanent failure'  => array( 403, '120', null ),
+		);
+	}
+
+	/**
 	 * @return array<string,array{int,?string,string}>
 	 */
 	public function failure_provider(): array {

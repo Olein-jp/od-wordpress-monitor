@@ -12,6 +12,7 @@ use Olein\WordPressMonitor\Event\EventRepository;
 use Olein\WordPressMonitor\Event\MonitoringEvent;
 use Olein\WordPressMonitor\Monitor\CheckResult;
 use Olein\WordPressMonitor\Notification\NotificationManager;
+use Olein\WordPressMonitor\Notification\NotificationDeliveryRetry;
 use Olein\WordPressMonitor\Status\SiteStatus;
 use Olein\WordPressMonitor\Status\SiteStatusRepository;
 use Throwable;
@@ -26,7 +27,8 @@ final class CheckResultRecorder {
 		private readonly EventRepository $events,
 		private readonly StatusEvaluator $evaluator,
 		private readonly StateTransition $transition,
-		private readonly ?NotificationManager $notifications = null
+		private readonly ?NotificationManager $notifications = null,
+		private readonly ?NotificationDeliveryRetry $notification_retry = null
 	) {
 	}
 
@@ -89,8 +91,8 @@ final class CheckResultRecorder {
 		try {
 			$delivery = $this->notifications->notify( $event );
 
-			if ( null !== $delivery ) {
-				$this->events->record_notification_result( $event_id, $delivery );
+			if ( null !== $delivery && true === $this->events->record_notification_result( $event_id, $delivery ) ) {
+				$this->notification_retry?->schedule_failed( $event_id, $delivery );
 			}
 		} catch ( Throwable $exception ) {
 			unset( $exception );

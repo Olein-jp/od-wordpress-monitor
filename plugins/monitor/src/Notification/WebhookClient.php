@@ -78,6 +78,9 @@ final class WebhookClient {
 
 		if ( is_wp_error( $response ) ) {
 			$error = strtolower( $response->get_error_code() . ' ' . $response->get_error_message() );
+			if ( str_contains( $error, 'certificate' ) || str_contains( $error, 'ssl' ) ) {
+				return NotificationChannelResult::failed( $channel_id, 'TLS_ERROR' );
+			}
 
 			return NotificationChannelResult::failed(
 				$channel_id,
@@ -92,7 +95,34 @@ final class WebhookClient {
 
 		return NotificationChannelResult::failed(
 			$channel_id,
-			$status >= 100 && $status <= 599 ? 'HTTP_' . $status : 'HTTP_RESPONSE_INVALID'
+			$status >= 100 && $status <= 599 ? 'HTTP_' . $status : 'HTTP_RESPONSE_INVALID',
+			1,
+			$this->retry_after( $response, $status )
 		);
+	}
+
+	/**
+	 * Accept only a short, positive delay from transient HTTP responses.
+	 *
+	 * @param array<string,mixed> $response WordPress HTTP response.
+	 */
+	private function retry_after( array $response, int $status ): ?int {
+		if ( ! in_array( $status, array( 408, 429 ), true ) && ( $status < 500 || $status > 599 ) ) {
+			return null;
+		}
+
+		$header = wp_remote_retrieve_header( $response, 'retry-after' );
+		if ( ! is_string( $header ) || '' === $header || strlen( $header ) > 80 || preg_match( '/[\r\n]/', $header ) ) {
+			return null;
+		}
+
+		if ( 1 === preg_match( '/^[0-9]{1,4}$/', $header ) ) {
+			$seconds = (int) $header;
+		} else {
+			$timestamp = strtotime( $header );
+			$seconds   = false === $timestamp ? 0 : $timestamp - time();
+		}
+
+		return $seconds >= 1 && $seconds <= 900 ? $seconds : null;
 	}
 }

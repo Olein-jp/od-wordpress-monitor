@@ -40,6 +40,7 @@ use Olein\WordPressMonitor\Notification\EmailNotifier;
 use Olein\WordPressMonitor\Notification\DiscordNotifier;
 use Olein\WordPressMonitor\Notification\NotificationChannelSettings;
 use Olein\WordPressMonitor\Notification\NotificationDigestSignature;
+use Olein\WordPressMonitor\Notification\NotificationDeliveryRetry;
 use Olein\WordPressMonitor\Notification\NotificationManager;
 use Olein\WordPressMonitor\Notification\NotificationMessageFactory;
 use Olein\WordPressMonitor\Notification\NotificationRule;
@@ -123,6 +124,7 @@ final class Plugin {
 				new NotificationMessageFactory( $sites ),
 				array( $email_notifier, $slack_notifier, $discord_notifier, $chatwork_notifier )
 			);
+			$notification_retry    = new NotificationDeliveryRetry( $events, $notifications );
 			$recorder              = new CheckResultRecorder(
 				$wpdb,
 				$checks,
@@ -130,7 +132,8 @@ final class Plugin {
 				$events,
 				new StatusEvaluator(),
 				new StateTransition(),
-				$notifications
+				$notifications,
+				$notification_retry
 			);
 			$heartbeat             = new SchedulerHeartbeat();
 			$retry_scheduler       = new RetryScheduler();
@@ -160,7 +163,8 @@ final class Plugin {
 					$sites,
 					$notifications,
 					new NotificationDigestSignature()
-				)
+				),
+				$notification_retry
 			);
 			$scheduler->register_hooks();
 

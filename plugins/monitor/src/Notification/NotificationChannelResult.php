@@ -17,7 +17,8 @@ final class NotificationChannelResult {
 		private readonly string $channel_id,
 		private readonly string $status,
 		private readonly int $attempts,
-		private readonly ?string $error_code
+		private readonly ?string $error_code,
+		private readonly ?int $retry_after_seconds
 	) {
 		if ( 1 !== preg_match( '/^[a-z0-9][a-z0-9_-]{0,63}$/', $channel_id ) ) {
 			throw new InvalidArgumentException( 'Notification channel IDs must use lowercase safe characters.' );
@@ -29,13 +30,14 @@ final class NotificationChannelResult {
 	}
 
 	public static function sent( string $channel_id, int $attempts = 1 ): self {
-		return new self( $channel_id, self::SENT, $attempts, null );
+		return new self( $channel_id, self::SENT, $attempts, null, null );
 	}
 
-	public static function failed( string $channel_id, string $error_code = 'DELIVERY_FAILED', int $attempts = 1 ): self {
-		$error_code = 1 === preg_match( '/^[A-Z0-9_]{1,100}$/', $error_code ) ? $error_code : 'DELIVERY_FAILED';
+	public static function failed( string $channel_id, string $error_code = 'DELIVERY_FAILED', int $attempts = 1, ?int $retry_after_seconds = null ): self {
+		$error_code          = 1 === preg_match( '/^[A-Z0-9_]{1,100}$/', $error_code ) ? $error_code : 'DELIVERY_FAILED';
+		$retry_after_seconds = null !== $retry_after_seconds && $retry_after_seconds >= 1 && $retry_after_seconds <= 900 ? $retry_after_seconds : null;
 
-		return new self( $channel_id, self::FAILED, $attempts, $error_code );
+		return new self( $channel_id, self::FAILED, $attempts, $error_code, $retry_after_seconds );
 	}
 
 	public function channel_id(): string {
@@ -52,6 +54,10 @@ final class NotificationChannelResult {
 
 	public function error_code(): ?string {
 		return $this->error_code;
+	}
+
+	public function retry_after_seconds(): ?int {
+		return $this->retry_after_seconds;
 	}
 
 	public function succeeded(): bool {

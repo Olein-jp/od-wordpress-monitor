@@ -67,25 +67,49 @@ final class NotificationManager {
 	 * Dispatch an already sanitized message to every enabled channel.
 	 */
 	public function dispatch( NotificationMessage $message ): ?NotificationDeliveryResult {
-
 		$results = array();
 
 		foreach ( $this->senders as $channel_id => $sender ) {
-			try {
-				if ( ! $sender->enabled() ) {
-					continue;
-				}
-
-				$result    = $sender->send( $message );
-				$results[] = $channel_id === $result->channel_id()
-					? $result
-					: NotificationChannelResult::failed( $channel_id, 'CHANNEL_ID_MISMATCH' );
-			} catch ( Throwable $exception ) {
-				unset( $exception );
-				$results[] = NotificationChannelResult::failed( $channel_id, 'DELIVERY_EXCEPTION' );
+			$result = $this->send_to_channel( $sender, $channel_id, $message );
+			if ( null !== $result ) {
+				$results[] = $result;
 			}
 		}
 
 		return array() === $results ? null : new NotificationDeliveryResult( $results );
+	}
+
+	/**
+	 * Rebuild a single event message and use the channel's current settings.
+	 */
+	public function retry_channel( MonitoringEvent $event, string $channel_id ): ?NotificationChannelResult {
+		$sender = $this->senders[ $channel_id ] ?? null;
+		if ( null === $sender ) {
+			return null;
+		}
+
+		$notification_type = $this->rule->classify( $event );
+		if ( null === $notification_type ) {
+			return null;
+		}
+
+		$message = $this->messages->create( $event, $notification_type );
+		return null === $message ? null : $this->send_to_channel( $sender, $channel_id, $message );
+	}
+
+	private function send_to_channel( NotificationSenderInterface $sender, string $channel_id, NotificationMessage $message ): ?NotificationChannelResult {
+		try {
+			if ( ! $sender->enabled() ) {
+				return null;
+			}
+
+			$result = $sender->send( $message );
+			return $channel_id === $result->channel_id()
+				? $result
+				: NotificationChannelResult::failed( $channel_id, 'CHANNEL_ID_MISMATCH' );
+		} catch ( Throwable $exception ) {
+			unset( $exception );
+			return NotificationChannelResult::failed( $channel_id, 'DELIVERY_EXCEPTION' );
+		}
 	}
 }

@@ -10,6 +10,7 @@ namespace Olein\WordPressMonitor\Scheduler;
 use Olein\WordPressMonitor\Monitor\CheckResult;
 use Olein\WordPressMonitor\Notification\DailyDigest;
 use Olein\WordPressMonitor\Notification\NotificationDeliveryResult;
+use Olein\WordPressMonitor\Notification\NotificationDeliveryRetry;
 use Throwable;
 use WP_Error;
 
@@ -34,7 +35,8 @@ final class Scheduler {
 		private readonly CheckRunner $runner,
 		private readonly ?CheckRetention $retention = null,
 		private readonly ?SchedulerHeartbeat $heartbeat = null,
-		private readonly ?DailyDigest $daily_digest = null
+		private readonly ?DailyDigest $daily_digest = null,
+		private readonly ?NotificationDeliveryRetry $notification_retry = null
 	) {
 	}
 
@@ -43,6 +45,9 @@ final class Scheduler {
 		add_action( self::HOOK, array( $this, 'run' ) );
 		add_action( RetryScheduler::HOOK, array( $this, 'retry' ), 10, 4 );
 		add_action( BatchScheduler::HOOK, array( $this, 'continue_batch' ), 10, 2 );
+		if ( null !== $this->notification_retry ) {
+			add_action( NotificationDeliveryRetry::HOOK, array( $this->notification_retry, 'run' ), 10, 2 );
+		}
 
 		if ( null !== $this->retention ) {
 			add_action( self::CLEANUP_HOOK, array( $this, 'cleanup' ) );
@@ -119,6 +124,7 @@ final class Scheduler {
 		wp_clear_scheduled_hook( self::DIGEST_HOOK );
 		wp_unschedule_hook( RetryScheduler::HOOK );
 		wp_unschedule_hook( BatchScheduler::HOOK );
+		wp_unschedule_hook( NotificationDeliveryRetry::HOOK );
 	}
 
 	/**

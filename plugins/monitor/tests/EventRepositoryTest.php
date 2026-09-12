@@ -78,19 +78,42 @@ final class EventRepositoryTest extends \WP_UnitTestCase {
 					'timestamp' => '2026-09-10T00:30:00Z',
 					'channels'  => array(
 						'email' => array(
-							'status'   => 'sent',
-							'attempts' => 1,
+							'status'       => 'sent',
+							'attempts'     => 1,
+							'attempted_at' => '2026-09-10T00:30:00Z',
 						),
 						'slack' => array(
-							'status'     => 'failed',
-							'attempts'   => 1,
-							'error_code' => 'HTTP_503',
+							'status'       => 'failed',
+							'attempts'     => 1,
+							'attempted_at' => '2026-09-10T00:30:00Z',
+							'error_code'   => 'HTTP_503',
 						),
 					),
 				),
 			),
 			$this->repository->find( $id )->metadata()
 		);
+	}
+
+	public function test_retry_result_updates_only_the_failed_channel_once(): void {
+		$id = $this->repository->create( $this->event( 'SITE_DOWN', 'healthy', 'critical', '2026-09-09T00:00:00Z' ) );
+		$this->assertIsInt( $id );
+		$this->assertTrue(
+			$this->repository->record_notification_result(
+				$id,
+				new NotificationDeliveryResult( array( NotificationChannelResult::sent( 'email' ), NotificationChannelResult::failed( 'slack', 'HTTP_503' ) ) ),
+				new DateTimeImmutable( '2026-09-09T00:01:00Z' )
+			)
+		);
+		$this->assertTrue( $this->repository->record_channel_retry_result( $id, 'slack', NotificationChannelResult::failed( 'slack', 'HTTP_429' ), new DateTimeImmutable( '2026-09-09T00:02:00Z' ) ) );
+		$this->assertFalse( $this->repository->record_channel_retry_result( $id, 'slack', NotificationChannelResult::sent( 'slack' ), new DateTimeImmutable( '2026-09-09T00:03:00Z' ) ) );
+		$metadata = $this->repository->find( $id )->metadata();
+		$this->assertSame( 'http', $metadata['source'] );
+		$this->assertSame( 'partial', $metadata['notification']['status'] );
+		$this->assertSame( 1, $metadata['notification']['channels']['email']['attempts'] );
+		$this->assertSame( 2, $metadata['notification']['channels']['slack']['attempts'] );
+		$this->assertSame( 'HTTP_429', $metadata['notification']['channels']['slack']['error_code'] );
+		$this->assertSame( '2026-09-09T00:02:00Z', $metadata['notification']['channels']['slack']['attempted_at'] );
 	}
 
 	private function event( string $type, string $previous_status, string $current_status, string $time ): MonitoringEvent {

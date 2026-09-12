@@ -10,7 +10,9 @@ namespace Olein\WordPressMonitor\Event;
 use DateTimeImmutable;
 use DateTimeZone;
 use Olein\WordPressMonitor\Notification\NotificationDeliveryResult;
+use Olein\WordPressMonitor\Notification\NotificationChannelResult;
 use Olein\WordPressMonitor\Support\MetadataCodec;
+use Throwable;
 use WP_Error;
 use wpdb;
 
@@ -77,12 +79,16 @@ final class EventRepository {
 			return new WP_Error( 'EVENT_NOT_FOUND', __( 'The notification event could not be found.', 'od-wordpress-monitor' ) );
 		}
 
-		$channels = array();
+		$channels  = array();
+		$timestamp = ( $attempted_at ?? new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ) )
+			->setTimezone( new DateTimeZone( 'UTC' ) )
+			->format( 'Y-m-d\TH:i:s\Z' );
 
 		foreach ( $delivery->channels() as $channel_id => $channel ) {
 			$channels[ $channel_id ] = array(
-				'status'   => $channel->status(),
-				'attempts' => $channel->attempts(),
+				'status'       => $channel->status(),
+				'attempts'     => $channel->attempts(),
+				'attempted_at' => $timestamp,
 			);
 
 			if ( null !== $channel->error_code() ) {
@@ -93,9 +99,7 @@ final class EventRepository {
 		$metadata                 = $event->metadata();
 		$metadata['notification'] = array(
 			'status'    => $delivery->status(),
-			'timestamp' => ( $attempted_at ?? new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ) )
-				->setTimezone( new DateTimeZone( 'UTC' ) )
-				->format( 'Y-m-d\TH:i:s\Z' ),
+			'timestamp' => $timestamp,
 			'channels'  => $channels,
 		);
 		$encoded                  = $this->metadata_codec->encode( $metadata );
@@ -117,6 +121,73 @@ final class EventRepository {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Merge one retry result while holding the event row lock, preserving other channels.
+	 *
+	 * @return bool|WP_Error False when the channel is no longer eligible.
+	 */
+	public function record_channel_retry_result( int $id, string $channel_id, NotificationChannelResult $result, DateTimeImmutable $attempted_at ): bool|WP_Error {
+		if ( $result->channel_id() !== $channel_id || false === $this->database->query( 'START TRANSACTION' ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			return new WP_Error( 'DATABASE_ERROR', __( 'The notification result could not be saved.', 'od-wordpress-monitor' ) );
+		}
+
+		try {
+			$sql   = $this->database->prepare( "SELECT * FROM {$this->table} WHERE id = %d FOR UPDATE", $id ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$row   = $this->database->get_row( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$event = is_array( $row ) ? $this->hydrate( $row ) : null;
+			if ( null === $event ) {
+				return $this->abort_retry( false );
+			}
+
+			$metadata     = $event->metadata();
+			$notification = $metadata['notification'] ?? null;
+			$channels     = is_array( $notification ) ? ( $notification['channels'] ?? null ) : null;
+			$previous     = is_array( $channels ) ? ( $channels[ $channel_id ] ?? null ) : null;
+			if ( ! is_array( $previous ) || NotificationChannelResult::FAILED !== ( $previous['status'] ?? null ) || 1 !== ( $previous['attempts'] ?? null ) ) {
+				return $this->abort_retry( false );
+			}
+
+			$timestamp               = $attempted_at->setTimezone( new DateTimeZone( 'UTC' ) )->format( 'Y-m-d\TH:i:s\Z' );
+			$channels[ $channel_id ] = array(
+				'status'       => $result->status(),
+				'attempts'     => 2,
+				'attempted_at' => $timestamp,
+			);
+			if ( null !== $result->error_code() ) {
+				$channels[ $channel_id ]['error_code'] = $result->error_code();
+			}
+
+			$sent                      = count( array_filter( $channels, static fn( array $channel ): bool => NotificationChannelResult::SENT === ( $channel['status'] ?? null ) ) );
+			$notification['status']    = count( $channels ) === $sent ? NotificationDeliveryResult::SENT : ( 0 === $sent ? NotificationDeliveryResult::FAILED : NotificationDeliveryResult::PARTIAL );
+			$notification['timestamp'] = $timestamp;
+			$notification['channels']  = $channels;
+			$metadata['notification']  = $notification;
+			$encoded                   = $this->metadata_codec->encode( $metadata );
+			if ( is_wp_error( $encoded ) ) {
+				return $this->abort_retry( $encoded );
+			}
+
+			$updated = $this->database->update( $this->table, array( 'metadata' => $encoded ), array( 'id' => $id ), array( '%s' ), array( '%d' ) );
+			if ( false === $updated || false === $this->database->query( 'COMMIT' ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+				return $this->abort_retry( new WP_Error( 'DATABASE_ERROR', __( 'The notification result could not be saved.', 'od-wordpress-monitor' ) ) );
+			}
+
+			return true;
+		} catch ( Throwable $exception ) {
+			unset( $exception );
+			return $this->abort_retry( new WP_Error( 'DATABASE_ERROR', __( 'The notification result could not be saved.', 'od-wordpress-monitor' ) ) );
+		}
+	}
+
+	/**
+	 * @param bool|WP_Error $result Safe failure result.
+	 * @return bool|WP_Error
+	 */
+	private function abort_retry( bool|WP_Error $result ): bool|WP_Error {
+		$this->database->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		return $result;
 	}
 
 	/**

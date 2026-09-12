@@ -10,11 +10,18 @@ namespace Olein\WordPressMonitor\Tests;
 use Olein\WordPressMonitor\Activation\Activator;
 use Olein\WordPressMonitor\Activation\DatabaseMigrator;
 use Olein\WordPressMonitor\Check\CheckRepository;
+use Olein\WordPressMonitor\Event\EventRepository;
+use Olein\WordPressMonitor\Event\MonitoringEvent;
+use Olein\WordPressMonitor\Notification\NotificationManager;
+use Olein\WordPressMonitor\Notification\NotificationMessage;
+use Olein\WordPressMonitor\Notification\NotificationMessageFactoryInterface;
+use Olein\WordPressMonitor\Notification\NotificationRule;
 use Olein\WordPressMonitor\Scheduler\BatchScheduler;
 use Olein\WordPressMonitor\Scheduler\CheckLockInterface;
 use Olein\WordPressMonitor\Scheduler\CheckRetention;
 use Olein\WordPressMonitor\Scheduler\CheckRunner;
 use Olein\WordPressMonitor\Scheduler\RetryScheduler;
+use Olein\WordPressMonitor\Notification\NotificationDeliveryRetry;
 use Olein\WordPressMonitor\Scheduler\Scheduler;
 use Olein\WordPressMonitor\Site\Site;
 use Olein\WordPressMonitor\Site\SiteRepository;
@@ -69,6 +76,7 @@ final class SchedulerTest extends \WP_UnitTestCase {
 
 	public function test_activation_schedules_and_deactivation_clears_plugin_events(): void {
 		wp_schedule_single_event( time() + MINUTE_IN_SECONDS, RetryScheduler::HOOK, array( 1, 'site-uuid', 'http', 2 ) );
+		wp_schedule_single_event( time() + MINUTE_IN_SECONDS, NotificationDeliveryRetry::HOOK, array( 1, 'slack' ) );
 		$generation = wp_generate_uuid4();
 		wp_schedule_single_event( time() + MINUTE_IN_SECONDS, BatchScheduler::HOOK, array( 'http', $generation ) );
 		$this->assertTrue( Activator::activate() );
@@ -78,6 +86,7 @@ final class SchedulerTest extends \WP_UnitTestCase {
 		}
 		$this->assertIsInt( wp_next_scheduled( Scheduler::CLEANUP_HOOK ) );
 		$this->assertIsInt( wp_next_scheduled( RetryScheduler::HOOK, array( 1, 'site-uuid', 'http', 2 ) ) );
+		$this->assertIsInt( wp_next_scheduled( NotificationDeliveryRetry::HOOK, array( 1, 'slack' ) ) );
 		$this->assertIsInt( wp_next_scheduled( BatchScheduler::HOOK, array( 'http', $generation ) ) );
 
 		Activator::deactivate();
@@ -87,6 +96,7 @@ final class SchedulerTest extends \WP_UnitTestCase {
 		}
 		$this->assertFalse( wp_next_scheduled( Scheduler::CLEANUP_HOOK ) );
 		$this->assertFalse( wp_next_scheduled( RetryScheduler::HOOK, array( 1, 'site-uuid', 'http', 2 ) ) );
+		$this->assertFalse( wp_next_scheduled( NotificationDeliveryRetry::HOOK, array( 1, 'slack' ) ) );
 		$this->assertFalse( wp_next_scheduled( BatchScheduler::HOOK, array( 'http', $generation ) ) );
 	}
 
@@ -94,8 +104,8 @@ final class SchedulerTest extends \WP_UnitTestCase {
 		global $wpdb;
 
 		( new DatabaseMigrator( $wpdb ) )->migrate();
-		$repository = new SiteRepository( $wpdb );
-		$lock       = new class() implements CheckLockInterface {
+		$repository         = new SiteRepository( $wpdb );
+		$lock               = new class() implements CheckLockInterface {
 			public function acquire( Site $site, string $check_type ): ?string {
 				unset( $site, $check_type );
 				return 'owner';
@@ -105,12 +115,26 @@ final class SchedulerTest extends \WP_UnitTestCase {
 				unset( $site, $check_type, $token );
 			}
 		};
-		$scheduler  = new Scheduler( new CheckRunner( $repository, $lock, array() ) );
+		$notification_retry = new NotificationDeliveryRetry(
+			new EventRepository( $wpdb ),
+			new NotificationManager(
+				new NotificationRule(),
+				new class() implements NotificationMessageFactoryInterface {
+					public function create( MonitoringEvent $event, string $notification_type ): ?NotificationMessage {
+						unset( $event, $notification_type );
+						return null;
+					}
+				},
+				array()
+			)
+		);
+		$scheduler          = new Scheduler( new CheckRunner( $repository, $lock, array() ), null, null, null, $notification_retry );
 		$scheduler->register_hooks();
 
 		$this->assertSame( 10, has_action( Scheduler::HOOK, array( $scheduler, 'run' ) ) );
 		$this->assertSame( 10, has_action( RetryScheduler::HOOK, array( $scheduler, 'retry' ) ) );
 		$this->assertSame( 10, has_action( BatchScheduler::HOOK, array( $scheduler, 'continue_batch' ) ) );
+		$this->assertSame( 10, has_action( NotificationDeliveryRetry::HOOK, array( $notification_retry, 'run' ) ) );
 		$this->assertFalse( has_action( Scheduler::CLEANUP_HOOK, array( $scheduler, 'cleanup' ) ) );
 	}
 

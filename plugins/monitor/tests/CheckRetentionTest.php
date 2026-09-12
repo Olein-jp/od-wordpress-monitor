@@ -145,6 +145,13 @@ final class CheckRetentionTest extends \WP_UnitTestCase {
 		$this->assertSame( 0, $this->options->delete_expired_locks( $this->now, 1 ) );
 	}
 
+	public function test_cleanup_removes_expired_notification_retry_claim(): void {
+		$claim = 'odm_lock_notification_retry_7_slack';
+		add_option( $claim, ( $this->now - 1 ) . ':claimed', '', false );
+		$this->assertSame( 1, $this->options->delete_expired_locks( $this->now, 10 ) );
+		$this->assertFalse( get_option( $claim, false ) );
+	}
+
 	public function test_cleanup_resumes_after_database_failure_without_reprocessing_deleted_checks(): void {
 		global $wpdb;
 		$this->assertIsInt( $this->checks->create( $this->result( '2026-01-01T00:00:00Z' ) ) );
@@ -191,6 +198,7 @@ final class CheckRetentionTest extends \WP_UnitTestCase {
 				'odm_lock_active_http',
 				'odm_lock_expired_one_http',
 				'odm_lock_expired_two_http',
+				'odm_lock_notification_retry_7_slack',
 			) as $option
 		) {
 			delete_option( $option );
