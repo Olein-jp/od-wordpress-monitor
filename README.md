@@ -261,6 +261,7 @@ CIでは、最小対応環境のWordPress 6.8／PHP 8.1と、現行WordPress／P
 - [アーキテクチャ](docs/architecture.md)
 - [通信プロトコル](docs/protocol.md)
 - [セキュリティ](docs/security.md)
+- [複数チャネル通知の設計方針](docs/notification-design.md)
 - [アンインストール・バックアップ・復元](docs/backup-and-restore.md)
 - [Site Health API 安全利用調査](docs/site-health-investigation.md)
 - [リリース手順](docs/releases.md)
