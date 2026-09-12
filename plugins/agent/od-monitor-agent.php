@@ -11,6 +11,7 @@
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       od-monitor-agent
+ * Domain Path:       /languages
  *
  * @package OD_Monitor_Agent
  */
@@ -18,6 +19,19 @@
 defined( 'ABSPATH' ) || exit;
 
 define( 'OD_MONITOR_AGENT_VERSION', '1.0.3' );
+
+/**
+ * Load the bundled translations before Agent endpoints are registered.
+ */
+function od_monitor_agent_load_textdomain(): void {
+	load_plugin_textdomain(
+		'od-monitor-agent',
+		false,
+		dirname( plugin_basename( __FILE__ ) ) . '/languages'
+	);
+}
+
+add_action( 'plugins_loaded', 'od_monitor_agent_load_textdomain', -100 );
 
 $od_monitor_agent_autoloader = __DIR__ . '/vendor/autoload.php';
 

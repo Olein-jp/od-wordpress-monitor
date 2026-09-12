@@ -16,11 +16,13 @@ case "$plugin_key" in
 		plugin_slug="od-wordpress-monitor"
 		main_file="od-wordpress-monitor.php"
 		version_constant="OD_WORDPRESS_MONITOR_VERSION"
+		text_domain="od-wordpress-monitor"
 		;;
 	agent)
 		plugin_slug="od-monitor-agent"
 		main_file="od-monitor-agent.php"
 		version_constant="OD_MONITOR_AGENT_VERSION"
+		text_domain="od-monitor-agent"
 		;;
 	*)
 		echo "Unknown plugin: $plugin_key" >&2
@@ -58,6 +60,16 @@ if [[ ! -f "$plugin_file" || ! -f "$package_directory/vendor/autoload.php" ]]; t
 	echo "Archive is missing its plugin bootstrap or production autoloader." >&2
 	exit 65
 fi
+
+for translation_file in \
+	"$package_directory/languages/$text_domain.pot" \
+	"$package_directory/languages/$text_domain-ja.po" \
+	"$package_directory/languages/$text_domain-ja.mo"; do
+	if [[ ! -s "$translation_file" ]]; then
+		echo "Archive is missing a required translation file: ${translation_file#"$package_directory/"}" >&2
+		exit 65
+	fi
+done
 
 while IFS= read -r entry; do
 	case "$entry" in

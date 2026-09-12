@@ -1,0 +1,1092 @@
+# Copyright (C) 2026 Koji Kuno
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: OD WordPress Monitor 1.0.7\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/monitor\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-09-12T06:51:15+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: od-wordpress-monitor\n"
+
+#. Plugin Name of the plugin
+#: od-wordpress-monitor.php
+msgid "OD WordPress Monitor"
+msgstr ""
+
+#. Description of the plugin
+#: od-wordpress-monitor.php
+msgid "Registers and checks WordPress sites running OD Monitor Agent."
+msgstr ""
+
+#. Author of the plugin
+#: od-wordpress-monitor.php
+msgid "Koji Kuno"
+msgstr ""
+
+#. Author URI of the plugin
+#: od-wordpress-monitor.php
+msgid "https://olein-design.com"
+msgstr ""
+
+#: od-wordpress-monitor.php:43
+msgid "OD WordPress Monitor requires its Composer dependencies. Run composer install in the plugin directory."
+msgstr ""
+
+#: src/Activation/DatabaseMigrator.php:57
+msgid "A database migration is already in progress."
+msgstr ""
+
+#: src/Activation/DatabaseMigrator.php:84
+msgid "The database schema version could not be saved."
+msgstr ""
+
+#: src/Activation/DatabaseMigrator.php:97
+msgid "The database migration stopped unexpectedly."
+msgstr ""
+
+#: src/Activation/DatabaseMigrator.php:139
+msgid "A monitor database table could not be updated."
+msgstr ""
+
+#: src/Activation/DatabaseMigrator.php:161
+msgid "A required monitor database table is missing."
+msgstr ""
+
+#: src/Activation/DatabaseMigrator.php:172
+msgid "A monitor database table is incomplete."
+msgstr ""
+
+#: src/Activation/DatabaseMigrator.php:342
+msgid "The database migration lock could not be saved."
+msgstr ""
+
+#: src/Admin/AddSitePage.php:18
+#: src/Admin/AddSitePage.php:53
+#: src/Admin/SitesPage.php:26
+#: src/Admin/SitesPage.php:79
+msgid "You are not allowed to manage monitored sites."
+msgstr ""
+
+#: src/Admin/AddSitePage.php:22
+#: src/Admin/Admin.php:66
+#: src/Admin/Admin.php:67
+#: src/Admin/SitesPage.php:38
+msgid "Add Site"
+msgstr ""
+
+#: src/Admin/AddSitePage.php:23
+msgid "Connect to a WordPress site running OD Monitor Agent."
+msgstr ""
+
+#: src/Admin/AddSitePage.php:29
+msgid "Site Name"
+msgstr ""
+
+#: src/Admin/AddSitePage.php:33
+msgid "Site URL"
+msgstr ""
+
+#: src/Admin/AddSitePage.php:37
+msgid "Agent Username"
+msgstr ""
+
+#: src/Admin/AddSitePage.php:41
+msgid "Application Password"
+msgstr ""
+
+#: src/Admin/AddSitePage.php:45
+msgid "Connect and Add Site"
+msgstr ""
+
+#. translators: 1: Site name, 2: WordPress version, 3: PHP version, 4: Agent version.
+#: src/Admin/AddSitePage.php:77
+#, php-format
+msgid "Connected successfully. Site: %1$s — WordPress: %2$s — PHP: %3$s — Agent: %4$s"
+msgstr ""
+
+#: src/Admin/Admin.php:29
+#: src/Admin/Admin.php:30
+msgid "WordPress Monitor"
+msgstr ""
+
+#: src/Admin/Admin.php:39
+#: src/Admin/Admin.php:40
+#: src/Admin/DashboardPage.php:55
+msgid "Dashboard"
+msgstr ""
+
+#: src/Admin/Admin.php:48
+#: src/Admin/Admin.php:49
+#: src/Admin/DashboardPage.php:28
+#: src/Admin/SitesPage.php:37
+msgid "Sites"
+msgstr ""
+
+#: src/Admin/Admin.php:57
+#: src/Admin/Admin.php:58
+#: src/Admin/SiteDetailPage.php:287
+msgid "Site Details"
+msgstr ""
+
+#: src/Admin/Admin.php:75
+#: src/Admin/NotificationSettingsPage.php:48
+msgid "Notification Settings"
+msgstr ""
+
+#: src/Admin/Admin.php:76
+#: src/Admin/NotificationSettingsPage.php:28
+msgid "Notifications"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:21
+msgid "You are not allowed to view the monitoring dashboard."
+msgstr ""
+
+#: src/Admin/DashboardPage.php:33
+#: src/Admin/DashboardPage.php:138
+#: src/Admin/SitesPage.php:109
+#: src/Admin/StatusLabel.php:26
+msgid "Healthy"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:38
+#: src/Admin/SitesPage.php:108
+#: src/Admin/StatusLabel.php:28
+msgid "Attention"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:43
+#: src/Admin/SitesPage.php:107
+#: src/Admin/StatusLabel.php:30
+msgid "Problem"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:48
+#: src/Admin/SiteDetailPage.php:178
+#: src/Admin/SiteDetailPage.php:259
+#: src/Admin/SiteDetailPage.php:404
+#: src/Admin/SitesPage.php:110
+#: src/Admin/StatusLabel.php:32
+msgid "Unknown"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:56
+msgid "Current status of all monitored sites."
+msgstr ""
+
+#: src/Admin/DashboardPage.php:58
+msgid "Monitoring status summary"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:80
+msgid "Scheduler Health"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:81
+msgid "A stale job has missed at least two expected execution intervals or is no longer scheduled."
+msgstr ""
+
+#: src/Admin/DashboardPage.php:83
+msgid "Scheduler job health and latest execution"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:86
+msgid "Job"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:87
+msgid "Health"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:88
+msgid "Last started"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:89
+msgid "Last completed"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:90
+msgid "Last result"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:91
+msgid "Processed"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:92
+msgid "Next run"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:125
+#: src/Admin/SiteDetailPage.php:298
+#: src/Admin/SiteDetailPage.php:470
+#: src/Admin/SitesPage.php:47
+msgid "HTTP"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:126
+#: src/Admin/SiteDetailPage.php:471
+msgid "Agent ping"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:127
+#: src/Admin/SiteDetailPage.php:472
+msgid "Agent status"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:128
+#: src/Admin/SiteDetailPage.php:302
+#: src/Admin/SiteDetailPage.php:459
+#: src/Admin/SiteDetailPage.php:473
+#: src/Admin/SitesPage.php:49
+msgid "Updates"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:129
+#: src/Admin/SiteDetailPage.php:303
+#: src/Admin/SiteDetailPage.php:474
+#: src/Admin/SitesPage.php:50
+msgid "Site Health"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:130
+#: src/Admin/SiteDetailPage.php:304
+#: src/Admin/SiteDetailPage.php:463
+#: src/Admin/SiteDetailPage.php:475
+#: src/Admin/SitesPage.php:51
+msgid "SSL"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:131
+msgid "Check history cleanup"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:132
+msgid "Unknown job"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:139
+msgid "Stale"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:144
+msgid "Running"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:145
+msgid "Succeeded"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:146
+msgid "Failed"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:147
+msgid "Not run"
+msgstr ""
+
+#: src/Admin/ErrorMessages.php:15
+msgid "Enter a valid public site URL."
+msgstr ""
+
+#: src/Admin/ErrorMessages.php:16
+msgid "The site URL must use HTTPS."
+msgstr ""
+
+#: src/Admin/ErrorMessages.php:17
+msgid "The connection to the Agent timed out."
+msgstr ""
+
+#: src/Admin/ErrorMessages.php:18
+msgid "The Agent API was not found. Make sure the plugin is active."
+msgstr ""
+
+#: src/Admin/ErrorMessages.php:19
+msgid "Agent authentication failed. Check the username and Application Password."
+msgstr ""
+
+#: src/Admin/ErrorMessages.php:20
+msgid "The Agent user does not have the required permission."
+msgstr ""
+
+#: src/Admin/ErrorMessages.php:21
+msgid "The Agent did not return a valid JSON response."
+msgstr ""
+
+#: src/Admin/ErrorMessages.php:22
+msgid "The Agent response format is invalid."
+msgstr ""
+
+#: src/Admin/ErrorMessages.php:23
+msgid "The Agent API version is not supported."
+msgstr ""
+
+#: src/Admin/ErrorMessages.php:24
+msgid "Could not connect to the Agent."
+msgstr ""
+
+#: src/Admin/NotificationSettingsPage.php:22
+msgid "Email notifications"
+msgstr ""
+
+#: src/Admin/NotificationSettingsPage.php:35
+msgid "Notification email"
+msgstr ""
+
+#: src/Admin/NotificationSettingsPage.php:44
+msgid "You are not allowed to manage notification settings."
+msgstr ""
+
+#: src/Admin/NotificationSettingsPage.php:60
+msgid "Configure the global recipient for monitoring outage and recovery notifications."
+msgstr ""
+
+#: src/Admin/NotificationSettingsPage.php:73
+msgid "Enable email notifications"
+msgstr ""
+
+#: src/Admin/NotificationSettingsPage.php:88
+msgid "Notifications remain suppressed until a valid email address is saved."
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:38
+msgid "You are not allowed to view monitored site details."
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:61
+#: src/Admin/SiteDetailPage.php:289
+msgid "Back to Sites"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:63
+msgid "Current Status"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:66
+msgid "Agent Site Health Snapshot"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:69
+msgid "Site Software"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:72
+msgid "Recent Events"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:75
+msgid "Recent Checks"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:85
+msgid "This snapshot contains only the safe synchronous Site Health tests run by the Agent. The included tests and collection time differ from the complete WordPress Site Health screen, so the totals may not match."
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:88
+msgid "An Agent Site Health snapshot has not yet been collected."
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:97
+msgid "Agent collected at:"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:100
+msgid "Monitor checked at:"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:106
+msgid "Agent critical results"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:107
+msgid "Agent recommended results"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:108
+msgid "Agent good results"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:112
+msgid "Legacy representative test ID"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:116
+msgid "Latest Agent Site Health snapshot summary"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:118
+#: src/Admin/SiteDetailPage.php:312
+msgid "Item"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:119
+msgid "Value"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:132
+msgid "The full issue list is unavailable for this snapshot because it was collected by an earlier Monitor version."
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:137
+msgid "The Agent found no critical or recommended results in this snapshot."
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:141
+msgid "Detected issues"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:143
+msgid "Critical and recommended results detected by the Agent"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:145
+#: src/Admin/SiteDetailPage.php:381
+msgid "Status"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:146
+msgid "Finding"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:147
+msgid "Test ID"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:176
+msgid "Critical"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:177
+msgid "Recommended"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:188
+msgid "Software information has not yet been collected."
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:197
+msgid "Last collected:"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:201
+msgid "Active theme and plugins with update availability"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:203
+msgid "Type"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:204
+msgid "Name"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:205
+msgid "Current version"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:206
+msgid "Update status"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:207
+msgid "Available version"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:212
+msgid "Theme"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:226
+msgid "Plugin"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:236
+msgid "Only the first 100 active plugins are shown."
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:271
+msgid "Update available"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:271
+msgid "Latest"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:288
+msgid "The monitored site could not be found."
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:297
+#: src/Admin/SitesPage.php:46
+msgid "Overall"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:299
+#: src/Admin/SiteDetailPage.php:458
+#: src/Admin/SitesPage.php:48
+msgid "Agent"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:300
+msgid "WordPress"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:301
+msgid "PHP"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:305
+msgid "Last checked"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:309
+msgid "Current monitoring status and check times"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:313
+msgid "Status or version"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:314
+#: src/Admin/SiteDetailPage.php:379
+msgid "Checked at"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:334
+msgid "Recent Events is a history of state changes and may include problems that are no longer active."
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:337
+msgid "No events have been recorded."
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:342
+msgid "Recent monitoring events, newest first"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:344
+msgid "Occurred at"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:345
+msgid "Event"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:346
+msgid "Previous"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:347
+msgid "Current"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:348
+#: src/Admin/SiteDetailPage.php:383
+msgid "Error"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:349
+#: src/Admin/SiteDetailPage.php:384
+msgid "Message"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:372
+msgid "No checks have been recorded."
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:377
+msgid "Recent monitoring checks, newest first"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:380
+msgid "Check"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:382
+msgid "Duration"
+msgstr ""
+
+#. translators: %d: request duration in milliseconds.
+#: src/Admin/SiteDetailPage.php:392
+#, php-format
+msgid "%d ms"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:456
+msgid "Site down"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:457
+msgid "Recovered"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:460
+msgid "Site Health problem"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:461
+msgid "Site Health partially recovered"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:462
+msgid "Site Health recovered"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:464
+msgid "Unknown event"
+msgstr ""
+
+#: src/Admin/SiteDetailPage.php:476
+msgid "Unknown check"
+msgstr ""
+
+#: src/Admin/SitesPage.php:42
+msgid "Monitored sites and their current status"
+msgstr ""
+
+#: src/Admin/SitesPage.php:45
+msgid "Site"
+msgstr ""
+
+#: src/Admin/SitesPage.php:52
+msgid "Last Check"
+msgstr ""
+
+#: src/Admin/SitesPage.php:61
+msgid "No sites have been added."
+msgstr ""
+
+#: src/Admin/SitesPage.php:62
+msgid "No sites match this status."
+msgstr ""
+
+#: src/Admin/SitesPage.php:93
+msgid "Connected successfully."
+msgstr ""
+
+#: src/Admin/SitesPage.php:106
+msgid "All"
+msgstr ""
+
+#: src/Admin/SitesPage.php:113
+msgid "Filter sites by status"
+msgstr ""
+
+#: src/Admin/SitesPage.php:135
+msgid "Test Connection"
+msgstr ""
+
+#: src/Check/CheckRepository.php:58
+msgid "The check result could not be saved."
+msgstr ""
+
+#: src/Check/CheckRepository.php:75
+msgid "Old check results could not be deleted."
+msgstr ""
+
+#: src/Credential/CredentialRepository.php:40
+msgid "The credential could not be saved."
+msgstr ""
+
+#: src/Credential/CredentialService.php:30
+msgid "The credential could not be encrypted."
+msgstr ""
+
+#: src/Credential/CredentialService.php:45
+msgid "No credential is stored for this site."
+msgstr ""
+
+#: src/Credential/CredentialService.php:54
+msgid "The stored credential could not be decrypted."
+msgstr ""
+
+#: src/Evaluation/CheckResultRecorder.php:107
+msgid "The check result could not be persisted."
+msgstr ""
+
+#: src/Event/EventRepository.php:54
+msgid "The event could not be saved."
+msgstr ""
+
+#: src/Event/EventRepository.php:76
+msgid "The notification event could not be found."
+msgstr ""
+
+#: src/Event/EventRepository.php:101
+msgid "The notification result could not be saved."
+msgstr ""
+
+#: src/Http/AgentClient.php:83
+msgid "The Agent request was blocked by the outbound URL policy."
+msgstr ""
+
+#: src/Http/AgentClient.php:89
+#: src/Monitor/Monitoring/AgentPingMonitor.php:106
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:102
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:118
+#: src/Monitor/Monitoring/UpdateMonitor.php:165
+msgid "The Agent could not be reached."
+msgstr ""
+
+#: src/Http/AgentClient.php:101
+msgid "The Agent returned invalid JSON."
+msgstr ""
+
+#: src/Http/AgentClient.php:124
+msgid "The Agent request failed."
+msgstr ""
+
+#: src/Http/HttpClient.php:71
+msgid "The request exceeded the redirect limit."
+msgstr ""
+
+#: src/Http/HttpClient.php:78
+msgid "The request was redirected to an unsafe destination."
+msgstr ""
+
+#: src/Http/UrlValidator.php:44
+msgid "Only public HTTPS URLs are allowed."
+msgstr ""
+
+#: src/Http/UrlValidator.php:171
+msgid "The URL must resolve only to public network addresses."
+msgstr ""
+
+#: src/Monitor/Monitoring/AgentPingMonitor.php:86
+msgid "The Agent is reachable."
+msgstr ""
+
+#: src/Monitor/Monitoring/AgentPingMonitor.php:103
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:99
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:115
+#: src/Monitor/Monitoring/UpdateMonitor.php:162
+msgid "Agent authentication failed."
+msgstr ""
+
+#: src/Monitor/Monitoring/AgentPingMonitor.php:104
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:100
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:116
+#: src/Monitor/Monitoring/UpdateMonitor.php:163
+msgid "The Agent credential lacks the required permission."
+msgstr ""
+
+#: src/Monitor/Monitoring/AgentPingMonitor.php:105
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:101
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:117
+#: src/Monitor/Monitoring/UpdateMonitor.php:164
+msgid "The Agent request timed out."
+msgstr ""
+
+#: src/Monitor/Monitoring/AgentPingMonitor.php:107
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:103
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:119
+#: src/Monitor/Monitoring/UpdateMonitor.php:166
+msgid "The Agent endpoint was not found."
+msgstr ""
+
+#: src/Monitor/Monitoring/AgentPingMonitor.php:108
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:104
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:120
+#: src/Monitor/Monitoring/UpdateMonitor.php:167
+msgid "The Agent URL must use HTTPS."
+msgstr ""
+
+#: src/Monitor/Monitoring/AgentPingMonitor.php:111
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:107
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:123
+#: src/Monitor/Monitoring/UpdateMonitor.php:170
+msgid "The Agent URL was blocked by the outbound security policy."
+msgstr ""
+
+#: src/Monitor/Monitoring/AgentPingMonitor.php:113
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:109
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:125
+#: src/Monitor/Monitoring/UpdateMonitor.php:172
+msgid "The stored Agent credential is unavailable."
+msgstr ""
+
+#: src/Monitor/Monitoring/AgentPingMonitor.php:116
+msgid "The Agent returned an invalid response."
+msgstr ""
+
+#: src/Monitor/Monitoring/AgentPingMonitor.php:117
+msgid "The Agent check failed."
+msgstr ""
+
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:82
+msgid "The Agent status is available."
+msgstr ""
+
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:112
+msgid "The Agent returned an invalid status response."
+msgstr ""
+
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:113
+msgid "The Agent status check failed."
+msgstr ""
+
+#: src/Monitor/Monitoring/HttpMonitor.php:52
+msgid "The registered site URL is not a valid public HTTP URL."
+msgstr ""
+
+#: src/Monitor/Monitoring/HttpMonitor.php:88
+msgid "The site exceeded the allowed redirect limit."
+msgstr ""
+
+#: src/Monitor/Monitoring/HttpMonitor.php:103
+msgid "The site redirected to an unsafe URL."
+msgstr ""
+
+#: src/Monitor/Monitoring/HttpMonitor.php:130
+msgid "The site is reachable."
+msgstr ""
+
+#: src/Monitor/Monitoring/HttpMonitor.php:142
+msgid "The site returned a non-success HTTP status."
+msgstr ""
+
+#: src/Monitor/Monitoring/HttpMonitor.php:166
+msgid "The site request was blocked by the outbound URL policy."
+msgstr ""
+
+#: src/Monitor/Monitoring/HttpMonitor.php:168
+msgid "The site request timed out."
+msgstr ""
+
+#: src/Monitor/Monitoring/HttpMonitor.php:169
+msgid "The site could not be reached."
+msgstr ""
+
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:78
+msgid "Site Health reports no problems."
+msgstr ""
+
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:88
+msgid "Site Health reports a critical problem."
+msgstr ""
+
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:91
+msgid "Site Health reports a recommended improvement."
+msgstr ""
+
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:128
+msgid "The Agent returned an invalid Site Health response."
+msgstr ""
+
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:129
+msgid "The Site Health check failed."
+msgstr ""
+
+#: src/Monitor/Monitoring/SslMonitor.php:77
+msgid "The registered site URL is not a valid public HTTPS URL."
+msgstr ""
+
+#: src/Monitor/Monitoring/SslMonitor.php:111
+msgid "The SSL certificate is not yet valid."
+msgstr ""
+
+#: src/Monitor/Monitoring/SslMonitor.php:123
+#: src/Monitor/Monitoring/SslMonitor.php:210
+msgid "The SSL certificate has expired."
+msgstr ""
+
+#: src/Monitor/Monitoring/SslMonitor.php:135
+msgid "The SSL certificate is within the failure threshold."
+msgstr ""
+
+#: src/Monitor/Monitoring/SslMonitor.php:147
+msgid "The SSL certificate is approaching expiration."
+msgstr ""
+
+#: src/Monitor/Monitoring/SslMonitor.php:158
+msgid "The SSL certificate is valid."
+msgstr ""
+
+#: src/Monitor/Monitoring/SslMonitor.php:208
+msgid "The SSL certificate check timed out."
+msgstr ""
+
+#: src/Monitor/Monitoring/SslMonitor.php:209
+msgid "The SSL endpoint could not be reached."
+msgstr ""
+
+#: src/Monitor/Monitoring/SslMonitor.php:211
+msgid "The SSL certificate could not be verified."
+msgstr ""
+
+#: src/Monitor/Monitoring/SslMonitor.php:212
+msgid "SSL certificate inspection is unavailable."
+msgstr ""
+
+#: src/Monitor/Monitoring/SslMonitor.php:213
+msgid "The SSL endpoint returned an invalid certificate."
+msgstr ""
+
+#: src/Monitor/Monitoring/SslMonitor.php:214
+msgid "The SSL certificate check failed."
+msgstr ""
+
+#: src/Monitor/Monitoring/UpdateMonitor.php:94
+msgid "Updates are available."
+msgstr ""
+
+#: src/Monitor/Monitoring/UpdateMonitor.php:95
+msgid "No updates are currently reported."
+msgstr ""
+
+#: src/Monitor/Monitoring/UpdateMonitor.php:175
+msgid "The Agent returned an invalid update response."
+msgstr ""
+
+#: src/Monitor/Monitoring/UpdateMonitor.php:176
+msgid "The update check failed."
+msgstr ""
+
+#: src/Notification/EmailNotifier.php:38
+msgid "Outage"
+msgstr ""
+
+#: src/Notification/EmailNotifier.php:40
+msgid "Recovery"
+msgstr ""
+
+#. translators: 1: Notification type, 2: monitored site name.
+#: src/Notification/EmailNotifier.php:47
+#, php-format
+msgid "[OD Monitor] %1$s: %2$s"
+msgstr ""
+
+#. translators: %s: outage or recovery.
+#: src/Notification/EmailNotifier.php:54
+#, php-format
+msgid "Notification: %s"
+msgstr ""
+
+#. translators: %s: monitored site name.
+#: src/Notification/EmailNotifier.php:55
+#, php-format
+msgid "Site: %s"
+msgstr ""
+
+#. translators: %s: monitored public URL.
+#: src/Notification/EmailNotifier.php:56
+#, php-format
+msgid "URL: %s"
+msgstr ""
+
+#. translators: %s: monitoring event type.
+#: src/Notification/EmailNotifier.php:57
+#, php-format
+msgid "Event: %s"
+msgstr ""
+
+#. translators: %s: previous monitoring status.
+#: src/Notification/EmailNotifier.php:58
+#, php-format
+msgid "Previous status: %s"
+msgstr ""
+
+#. translators: %s: current monitoring status.
+#: src/Notification/EmailNotifier.php:59
+#, php-format
+msgid "Current status: %s"
+msgstr ""
+
+#. translators: %s: UTC detection time.
+#: src/Notification/EmailNotifier.php:62
+#, php-format
+msgid "Detected at: %s"
+msgstr ""
+
+#. translators: %s: safe monitoring error code or dash.
+#: src/Notification/EmailNotifier.php:65
+#, php-format
+msgid "Error code: %s"
+msgstr ""
+
+#. translators: %s: safe monitoring result message.
+#: src/Notification/EmailNotifier.php:66
+#, php-format
+msgid "Message: %s"
+msgstr ""
+
+#: src/Plugin.php:166
+msgid "OD WordPress Monitor requires the sodium PHP extension to protect credentials."
+msgstr ""
+
+#: src/Plugin.php:214
+msgid "OD WordPress Monitor is temporarily paused while its database is being updated by another request."
+msgstr ""
+
+#: src/Plugin.php:216
+msgid "OD WordPress Monitor could not update its database. Monitoring is paused; reload this page to retry after checking database permissions and logs."
+msgstr ""
+
+#. translators: 1: previous database schema version, 2: target database schema version.
+#: src/Plugin.php:224
+#, php-format
+msgid "Schema version: %1$s → %2$s."
+msgstr ""
+
+#: src/Protocol/ResponseValidator.php:265
+msgid "The Agent protocol version is not supported."
+msgstr ""
+
+#: src/Protocol/ResponseValidator.php:276
+msgid "The Agent returned an unexpected response."
+msgstr ""
+
+#: src/Scheduler/CheckRunner.php:247
+msgid "The scheduled check could not be completed."
+msgstr ""
+
+#: src/Scheduler/OptionCleanupRepository.php:158
+msgid "Expired temporary data could not be deleted."
+msgstr ""
+
+#: src/Scheduler/Scheduler.php:58
+msgid "Every five minutes"
+msgstr ""
+
+#: src/Scheduler/Scheduler.php:62
+msgid "Every fifteen minutes"
+msgstr ""
+
+#: src/Scheduler/Scheduler.php:159
+msgid "Check cleanup is unavailable."
+msgstr ""
+
+#: src/Site/SiteRepository.php:42
+msgid "The site could not be saved."
+msgstr ""
+
+#: src/Site/SiteService.php:41
+msgid "All fields are required."
+msgstr ""
+
+#: src/Site/SiteService.php:98
+msgid "The monitored site was not found."
+msgstr ""
+
+#: src/Status/SiteStatusRepository.php:69
+msgid "The site status could not be saved."
+msgstr ""
+
+#: src/Support/MetadataCodec.php:40
+msgid "Metadata could not be encoded."
+msgstr ""
+
+#: src/Support/MetadataCodec.php:44
+msgid "Metadata contains unsupported or sensitive data."
+msgstr ""
+
+#: src/Support/MetadataCodec.php:48
+msgid "Metadata is too large to persist."
+msgstr ""

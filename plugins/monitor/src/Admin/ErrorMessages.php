@@ -12,16 +12,16 @@ use Olein\WordPressMonitor\Support\ErrorCode;
 final class ErrorMessages {
 	public static function for_code( string $code ): string {
 		return match ( $code ) {
-			ErrorCode::INVALID_URL           => __( '有効な公開サイトURLを入力してください。', 'od-wordpress-monitor' ),
-			ErrorCode::HTTPS_REQUIRED        => __( 'Site URLにはHTTPSが必要です。', 'od-wordpress-monitor' ),
-			ErrorCode::TIMEOUT               => __( 'Agentへの接続がタイムアウトしました。', 'od-wordpress-monitor' ),
-			ErrorCode::AGENT_NOT_FOUND       => __( 'Agent APIが見つかりません。プラグインが有効か確認してください。', 'od-wordpress-monitor' ),
-			ErrorCode::AUTHENTICATION_FAILED => __( 'Agentへの認証に失敗しました。ユーザー名とApplication Passwordを確認してください。', 'od-wordpress-monitor' ),
-			ErrorCode::PERMISSION_DENIED     => __( 'Agentユーザーに必要な権限がありません。', 'od-wordpress-monitor' ),
-			ErrorCode::INVALID_JSON          => __( 'Agentから有効なJSON応答を取得できませんでした。', 'od-wordpress-monitor' ),
-			ErrorCode::INVALID_RESPONSE      => __( 'Agentの応答形式が正しくありません。', 'od-wordpress-monitor' ),
-			ErrorCode::UNSUPPORTED_SCHEMA    => __( 'AgentのAPIバージョンに対応していません。', 'od-wordpress-monitor' ),
-			default                          => __( 'Agentへ接続できませんでした。', 'od-wordpress-monitor' ),
+			ErrorCode::INVALID_URL           => __( 'Enter a valid public site URL.', 'od-wordpress-monitor' ),
+			ErrorCode::HTTPS_REQUIRED        => __( 'The site URL must use HTTPS.', 'od-wordpress-monitor' ),
+			ErrorCode::TIMEOUT               => __( 'The connection to the Agent timed out.', 'od-wordpress-monitor' ),
+			ErrorCode::AGENT_NOT_FOUND       => __( 'The Agent API was not found. Make sure the plugin is active.', 'od-wordpress-monitor' ),
+			ErrorCode::AUTHENTICATION_FAILED => __( 'Agent authentication failed. Check the username and Application Password.', 'od-wordpress-monitor' ),
+			ErrorCode::PERMISSION_DENIED     => __( 'The Agent user does not have the required permission.', 'od-wordpress-monitor' ),
+			ErrorCode::INVALID_JSON          => __( 'The Agent did not return a valid JSON response.', 'od-wordpress-monitor' ),
+			ErrorCode::INVALID_RESPONSE      => __( 'The Agent response format is invalid.', 'od-wordpress-monitor' ),
+			ErrorCode::UNSUPPORTED_SCHEMA    => __( 'The Agent API version is not supported.', 'od-wordpress-monitor' ),
+			default                          => __( 'Could not connect to the Agent.', 'od-wordpress-monitor' ),
 		};
 	}
 }

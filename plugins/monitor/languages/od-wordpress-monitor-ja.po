@@ -1,0 +1,1101 @@
+# Copyright (C) 2026 Koji Kuno
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: OD WordPress Monitor 1.0.7\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/monitor\n"
+"POT-Creation-Date: 2026-09-12T06:51:15+00:00\n"
+"PO-Revision-Date: 2026-09-12T06:43:36+00:00\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: od-wordpress-monitor\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#. Plugin Name of the plugin
+#: od-wordpress-monitor.php
+msgid "OD WordPress Monitor"
+msgstr "OD WordPress Monitor"
+
+#. Description of the plugin
+#: od-wordpress-monitor.php
+msgid "Registers and checks WordPress sites running OD Monitor Agent."
+msgstr "OD Monitor Agentが動作するWordPressサイトを登録して監視します。"
+
+#. Author of the plugin
+#: od-wordpress-monitor.php
+msgid "Koji Kuno"
+msgstr "Koji Kuno"
+
+#. Author URI of the plugin
+#: od-wordpress-monitor.php
+msgid "https://olein-design.com"
+msgstr "https://olein-design.com"
+
+#: od-wordpress-monitor.php:43
+msgid ""
+"OD WordPress Monitor requires its Composer dependencies. Run composer "
+"install in the plugin directory."
+msgstr ""
+"OD WordPress MonitorにはComposer依存関係が必要です。プラグインディレクトリで"
+"composer installを実行してください。"
+
+#: src/Activation/DatabaseMigrator.php:57
+msgid "A database migration is already in progress."
+msgstr "データベース移行はすでに進行中です。"
+
+#: src/Activation/DatabaseMigrator.php:84
+msgid "The database schema version could not be saved."
+msgstr "データベーススキーマのバージョンを保存できませんでした。"
+
+#: src/Activation/DatabaseMigrator.php:97
+msgid "The database migration stopped unexpectedly."
+msgstr "データベース移行が予期せず停止しました。"
+
+#: src/Activation/DatabaseMigrator.php:139
+msgid "A monitor database table could not be updated."
+msgstr "Monitorのデータベーステーブルを更新できませんでした。"
+
+#: src/Activation/DatabaseMigrator.php:161
+msgid "A required monitor database table is missing."
+msgstr "必要なMonitorのデータベーステーブルがありません。"
+
+#: src/Activation/DatabaseMigrator.php:172
+msgid "A monitor database table is incomplete."
+msgstr "Monitorのデータベーステーブルが不完全です。"
+
+#: src/Activation/DatabaseMigrator.php:342
+msgid "The database migration lock could not be saved."
+msgstr "データベース移行ロックを保存できませんでした。"
+
+#: src/Admin/AddSitePage.php:18 src/Admin/AddSitePage.php:53
+#: src/Admin/SitesPage.php:26 src/Admin/SitesPage.php:79
+msgid "You are not allowed to manage monitored sites."
+msgstr "監視対象サイトを管理する権限がありません。"
+
+#: src/Admin/AddSitePage.php:22 src/Admin/Admin.php:66 src/Admin/Admin.php:67
+#: src/Admin/SitesPage.php:38
+msgid "Add Site"
+msgstr "サイトを追加"
+
+#: src/Admin/AddSitePage.php:23
+msgid "Connect to a WordPress site running OD Monitor Agent."
+msgstr "OD Monitor Agentが動作するWordPressサイトへ接続します。"
+
+#: src/Admin/AddSitePage.php:29
+msgid "Site Name"
+msgstr "サイト名"
+
+#: src/Admin/AddSitePage.php:33
+msgid "Site URL"
+msgstr "サイトURL"
+
+#: src/Admin/AddSitePage.php:37
+msgid "Agent Username"
+msgstr "Agentユーザー名"
+
+#: src/Admin/AddSitePage.php:41
+msgid "Application Password"
+msgstr "アプリケーションパスワード"
+
+#: src/Admin/AddSitePage.php:45
+msgid "Connect and Add Site"
+msgstr "接続してサイトを追加"
+
+#. translators: 1: Site name, 2: WordPress version, 3: PHP version, 4: Agent version.
+#: src/Admin/AddSitePage.php:77
+#, php-format
+msgid ""
+"Connected successfully. Site: %1$s — WordPress: %2$s — PHP: %3$s — Agent: "
+"%4$s"
+msgstr ""
+"接続に成功しました。サイト: %1$s — WordPress: %2$s — PHP: %3$s — Agent: %4$s"
+
+#: src/Admin/Admin.php:29 src/Admin/Admin.php:30
+msgid "WordPress Monitor"
+msgstr "WordPress Monitor"
+
+#: src/Admin/Admin.php:39 src/Admin/Admin.php:40 src/Admin/DashboardPage.php:55
+msgid "Dashboard"
+msgstr "ダッシュボード"
+
+#: src/Admin/Admin.php:48 src/Admin/Admin.php:49 src/Admin/DashboardPage.php:28
+#: src/Admin/SitesPage.php:37
+msgid "Sites"
+msgstr "サイト"
+
+#: src/Admin/Admin.php:57 src/Admin/Admin.php:58
+#: src/Admin/SiteDetailPage.php:287
+msgid "Site Details"
+msgstr "サイト詳細"
+
+#: src/Admin/Admin.php:75 src/Admin/NotificationSettingsPage.php:48
+msgid "Notification Settings"
+msgstr "通知設定"
+
+#: src/Admin/Admin.php:76 src/Admin/NotificationSettingsPage.php:28
+msgid "Notifications"
+msgstr "通知"
+
+#: src/Admin/DashboardPage.php:21
+msgid "You are not allowed to view the monitoring dashboard."
+msgstr "監視ダッシュボードを表示する権限がありません。"
+
+#: src/Admin/DashboardPage.php:33 src/Admin/DashboardPage.php:138
+#: src/Admin/SitesPage.php:109 src/Admin/StatusLabel.php:26
+msgid "Healthy"
+msgstr "正常"
+
+#: src/Admin/DashboardPage.php:38 src/Admin/SitesPage.php:108
+#: src/Admin/StatusLabel.php:28
+msgid "Attention"
+msgstr "注意"
+
+#: src/Admin/DashboardPage.php:43 src/Admin/SitesPage.php:107
+#: src/Admin/StatusLabel.php:30
+msgid "Problem"
+msgstr "問題"
+
+#: src/Admin/DashboardPage.php:48 src/Admin/SiteDetailPage.php:178
+#: src/Admin/SiteDetailPage.php:259 src/Admin/SiteDetailPage.php:404
+#: src/Admin/SitesPage.php:110 src/Admin/StatusLabel.php:32
+msgid "Unknown"
+msgstr "不明"
+
+#: src/Admin/DashboardPage.php:56
+msgid "Current status of all monitored sites."
+msgstr "すべての監視対象サイトの現在の状態です。"
+
+#: src/Admin/DashboardPage.php:58
+msgid "Monitoring status summary"
+msgstr "監視状態の概要"
+
+#: src/Admin/DashboardPage.php:80
+msgid "Scheduler Health"
+msgstr "スケジューラーの状態"
+
+#: src/Admin/DashboardPage.php:81
+msgid ""
+"A stale job has missed at least two expected execution intervals or is no "
+"longer scheduled."
+msgstr ""
+"遅延中のジョブは、予定された実行間隔を2回以上過ぎているか、次回の実行が設定さ"
+"れていません。"
+
+#: src/Admin/DashboardPage.php:83
+msgid "Scheduler job health and latest execution"
+msgstr "スケジューラージョブの状態と最新の実行"
+
+#: src/Admin/DashboardPage.php:86
+msgid "Job"
+msgstr "ジョブ"
+
+#: src/Admin/DashboardPage.php:87
+msgid "Health"
+msgstr "状態"
+
+#: src/Admin/DashboardPage.php:88
+msgid "Last started"
+msgstr "最終開始"
+
+#: src/Admin/DashboardPage.php:89
+msgid "Last completed"
+msgstr "最終完了"
+
+#: src/Admin/DashboardPage.php:90
+msgid "Last result"
+msgstr "最終結果"
+
+#: src/Admin/DashboardPage.php:91
+msgid "Processed"
+msgstr "処理済み"
+
+#: src/Admin/DashboardPage.php:92
+msgid "Next run"
+msgstr "次回実行"
+
+#: src/Admin/DashboardPage.php:125 src/Admin/SiteDetailPage.php:298
+#: src/Admin/SiteDetailPage.php:470 src/Admin/SitesPage.php:47
+msgid "HTTP"
+msgstr "HTTP"
+
+#: src/Admin/DashboardPage.php:126 src/Admin/SiteDetailPage.php:471
+msgid "Agent ping"
+msgstr "Agent Ping"
+
+#: src/Admin/DashboardPage.php:127 src/Admin/SiteDetailPage.php:472
+msgid "Agent status"
+msgstr "Agent状態"
+
+#: src/Admin/DashboardPage.php:128 src/Admin/SiteDetailPage.php:302
+#: src/Admin/SiteDetailPage.php:459 src/Admin/SiteDetailPage.php:473
+#: src/Admin/SitesPage.php:49
+msgid "Updates"
+msgstr "更新"
+
+#: src/Admin/DashboardPage.php:129 src/Admin/SiteDetailPage.php:303
+#: src/Admin/SiteDetailPage.php:474 src/Admin/SitesPage.php:50
+msgid "Site Health"
+msgstr "サイトヘルス"
+
+#: src/Admin/DashboardPage.php:130 src/Admin/SiteDetailPage.php:304
+#: src/Admin/SiteDetailPage.php:463 src/Admin/SiteDetailPage.php:475
+#: src/Admin/SitesPage.php:51
+msgid "SSL"
+msgstr "SSL"
+
+#: src/Admin/DashboardPage.php:131
+msgid "Check history cleanup"
+msgstr "チェック履歴の削除"
+
+#: src/Admin/DashboardPage.php:132
+msgid "Unknown job"
+msgstr "不明なジョブ"
+
+#: src/Admin/DashboardPage.php:139
+msgid "Stale"
+msgstr "遅延"
+
+#: src/Admin/DashboardPage.php:144
+msgid "Running"
+msgstr "実行中"
+
+#: src/Admin/DashboardPage.php:145
+msgid "Succeeded"
+msgstr "成功"
+
+#: src/Admin/DashboardPage.php:146
+msgid "Failed"
+msgstr "失敗"
+
+#: src/Admin/DashboardPage.php:147
+msgid "Not run"
+msgstr "未実行"
+
+#: src/Admin/ErrorMessages.php:15
+msgid "Enter a valid public site URL."
+msgstr "有効な公開サイトURLを入力してください。"
+
+#: src/Admin/ErrorMessages.php:16
+msgid "The site URL must use HTTPS."
+msgstr "サイトURLにはHTTPSが必要です。"
+
+#: src/Admin/ErrorMessages.php:17
+msgid "The connection to the Agent timed out."
+msgstr "Agentへの接続がタイムアウトしました。"
+
+#: src/Admin/ErrorMessages.php:18
+msgid "The Agent API was not found. Make sure the plugin is active."
+msgstr "Agent APIが見つかりません。プラグインが有効か確認してください。"
+
+#: src/Admin/ErrorMessages.php:19
+msgid ""
+"Agent authentication failed. Check the username and Application Password."
+msgstr ""
+"Agent認証に失敗しました。ユーザー名とアプリケーションパスワードを確認してくだ"
+"さい。"
+
+#: src/Admin/ErrorMessages.php:20
+msgid "The Agent user does not have the required permission."
+msgstr "Agentユーザーに必要な権限がありません。"
+
+#: src/Admin/ErrorMessages.php:21
+msgid "The Agent did not return a valid JSON response."
+msgstr "Agentから有効なJSON応答を取得できませんでした。"
+
+#: src/Admin/ErrorMessages.php:22
+msgid "The Agent response format is invalid."
+msgstr "Agentの応答形式が正しくありません。"
+
+#: src/Admin/ErrorMessages.php:23
+msgid "The Agent API version is not supported."
+msgstr "AgentのAPIバージョンに対応していません。"
+
+#: src/Admin/ErrorMessages.php:24
+msgid "Could not connect to the Agent."
+msgstr "Agentへ接続できませんでした。"
+
+#: src/Admin/NotificationSettingsPage.php:22
+msgid "Email notifications"
+msgstr "メール通知"
+
+#: src/Admin/NotificationSettingsPage.php:35
+msgid "Notification email"
+msgstr "通知先メールアドレス"
+
+#: src/Admin/NotificationSettingsPage.php:44
+msgid "You are not allowed to manage notification settings."
+msgstr "通知設定を管理する権限がありません。"
+
+#: src/Admin/NotificationSettingsPage.php:60
+msgid ""
+"Configure the global recipient for monitoring outage and recovery "
+"notifications."
+msgstr "監視障害と復旧通知の共通送信先を設定します。"
+
+#: src/Admin/NotificationSettingsPage.php:73
+msgid "Enable email notifications"
+msgstr "メール通知を有効化"
+
+#: src/Admin/NotificationSettingsPage.php:88
+msgid "Notifications remain suppressed until a valid email address is saved."
+msgstr "有効なメールアドレスが保存されるまで通知は送信されません。"
+
+#: src/Admin/SiteDetailPage.php:38
+msgid "You are not allowed to view monitored site details."
+msgstr "監視対象サイトの詳細を表示する権限がありません。"
+
+#: src/Admin/SiteDetailPage.php:61 src/Admin/SiteDetailPage.php:289
+msgid "Back to Sites"
+msgstr "サイト一覧へ戻る"
+
+#: src/Admin/SiteDetailPage.php:63
+msgid "Current Status"
+msgstr "現在の状態"
+
+#: src/Admin/SiteDetailPage.php:66
+msgid "Agent Site Health Snapshot"
+msgstr "Agentサイトヘルスのスナップショット"
+
+#: src/Admin/SiteDetailPage.php:69
+msgid "Site Software"
+msgstr "サイトのソフトウェア"
+
+#: src/Admin/SiteDetailPage.php:72
+msgid "Recent Events"
+msgstr "最近のイベント"
+
+#: src/Admin/SiteDetailPage.php:75
+msgid "Recent Checks"
+msgstr "最近のチェック"
+
+#: src/Admin/SiteDetailPage.php:85
+msgid ""
+"This snapshot contains only the safe synchronous Site Health tests run by "
+"the Agent. The included tests and collection time differ from the complete "
+"WordPress Site Health screen, so the totals may not match."
+msgstr ""
+"このスナップショットには、Agentが実行した安全な同期サイトヘルステストだけが含"
+"まれます。対象テストと取得時刻はWordPressのサイトヘルス画面全体とは異なるた"
+"め、合計が一致しない場合があります。"
+
+#: src/Admin/SiteDetailPage.php:88
+msgid "An Agent Site Health snapshot has not yet been collected."
+msgstr "Agentのサイトヘルススナップショットはまだ取得されていません。"
+
+#: src/Admin/SiteDetailPage.php:97
+msgid "Agent collected at:"
+msgstr "Agent取得日時:"
+
+#: src/Admin/SiteDetailPage.php:100
+msgid "Monitor checked at:"
+msgstr "Monitor確認日時:"
+
+#: src/Admin/SiteDetailPage.php:106
+msgid "Agent critical results"
+msgstr "Agentの致命的な問題"
+
+#: src/Admin/SiteDetailPage.php:107
+msgid "Agent recommended results"
+msgstr "Agentのおすすめの改善"
+
+#: src/Admin/SiteDetailPage.php:108
+msgid "Agent good results"
+msgstr "Agentの良好な結果"
+
+#: src/Admin/SiteDetailPage.php:112
+msgid "Legacy representative test ID"
+msgstr "旧形式の代表テストID"
+
+#: src/Admin/SiteDetailPage.php:116
+msgid "Latest Agent Site Health snapshot summary"
+msgstr "最新のAgentサイトヘルススナップショット概要"
+
+#: src/Admin/SiteDetailPage.php:118 src/Admin/SiteDetailPage.php:312
+msgid "Item"
+msgstr "項目"
+
+#: src/Admin/SiteDetailPage.php:119
+msgid "Value"
+msgstr "値"
+
+#: src/Admin/SiteDetailPage.php:132
+msgid ""
+"The full issue list is unavailable for this snapshot because it was "
+"collected by an earlier Monitor version."
+msgstr ""
+"このスナップショットは以前のMonitorで取得されたため、問題の全一覧は利用できま"
+"せん。"
+
+#: src/Admin/SiteDetailPage.php:137
+msgid "The Agent found no critical or recommended results in this snapshot."
+msgstr ""
+"このスナップショットでは、Agentは致命的な問題やおすすめの改善を検出しませんで"
+"た。"
+
+#: src/Admin/SiteDetailPage.php:141
+msgid "Detected issues"
+msgstr "検出された問題"
+
+#: src/Admin/SiteDetailPage.php:143
+msgid "Critical and recommended results detected by the Agent"
+msgstr "Agentが検出した致命的な問題とおすすめの改善"
+
+#: src/Admin/SiteDetailPage.php:145 src/Admin/SiteDetailPage.php:381
+msgid "Status"
+msgstr "状態"
+
+#: src/Admin/SiteDetailPage.php:146
+msgid "Finding"
+msgstr "検出内容"
+
+#: src/Admin/SiteDetailPage.php:147
+msgid "Test ID"
+msgstr "テストID"
+
+#: src/Admin/SiteDetailPage.php:176
+msgid "Critical"
+msgstr "致命的な問題"
+
+#: src/Admin/SiteDetailPage.php:177
+msgid "Recommended"
+msgstr "おすすめの改善"
+
+#: src/Admin/SiteDetailPage.php:188
+msgid "Software information has not yet been collected."
+msgstr "ソフトウェア情報はまだ取得されていません。"
+
+#: src/Admin/SiteDetailPage.php:197
+msgid "Last collected:"
+msgstr "最終取得:"
+
+#: src/Admin/SiteDetailPage.php:201
+msgid "Active theme and plugins with update availability"
+msgstr "有効なテーマとプラグイン、および更新状況"
+
+#: src/Admin/SiteDetailPage.php:203
+msgid "Type"
+msgstr "種類"
+
+#: src/Admin/SiteDetailPage.php:204
+msgid "Name"
+msgstr "名前"
+
+#: src/Admin/SiteDetailPage.php:205
+msgid "Current version"
+msgstr "現在のバージョン"
+
+#: src/Admin/SiteDetailPage.php:206
+msgid "Update status"
+msgstr "更新状態"
+
+#: src/Admin/SiteDetailPage.php:207
+msgid "Available version"
+msgstr "更新可能なバージョン"
+
+#: src/Admin/SiteDetailPage.php:212
+msgid "Theme"
+msgstr "テーマ"
+
+#: src/Admin/SiteDetailPage.php:226
+msgid "Plugin"
+msgstr "プラグイン"
+
+#: src/Admin/SiteDetailPage.php:236
+msgid "Only the first 100 active plugins are shown."
+msgstr "有効なプラグインは先頭100件のみ表示しています。"
+
+#: src/Admin/SiteDetailPage.php:271
+msgid "Update available"
+msgstr "更新可能"
+
+#: src/Admin/SiteDetailPage.php:271
+msgid "Latest"
+msgstr "最新"
+
+#: src/Admin/SiteDetailPage.php:288
+msgid "The monitored site could not be found."
+msgstr "監視対象サイトが見つかりませんでした。"
+
+#: src/Admin/SiteDetailPage.php:297 src/Admin/SitesPage.php:46
+msgid "Overall"
+msgstr "総合"
+
+#: src/Admin/SiteDetailPage.php:299 src/Admin/SiteDetailPage.php:458
+#: src/Admin/SitesPage.php:48
+msgid "Agent"
+msgstr "Agent"
+
+#: src/Admin/SiteDetailPage.php:300
+msgid "WordPress"
+msgstr "WordPress"
+
+#: src/Admin/SiteDetailPage.php:301
+msgid "PHP"
+msgstr "PHP"
+
+#: src/Admin/SiteDetailPage.php:305
+msgid "Last checked"
+msgstr "最終確認"
+
+#: src/Admin/SiteDetailPage.php:309
+msgid "Current monitoring status and check times"
+msgstr "現在の監視状態と確認日時"
+
+#: src/Admin/SiteDetailPage.php:313
+msgid "Status or version"
+msgstr "状態またはバージョン"
+
+#: src/Admin/SiteDetailPage.php:314 src/Admin/SiteDetailPage.php:379
+msgid "Checked at"
+msgstr "確認日時"
+
+#: src/Admin/SiteDetailPage.php:334
+msgid ""
+"Recent Events is a history of state changes and may include problems that "
+"are no longer active."
+msgstr ""
+"最近のイベントは状態変化の履歴であり、すでに解消した問題が含まれる場合があり"
+"ます。"
+
+#: src/Admin/SiteDetailPage.php:337
+msgid "No events have been recorded."
+msgstr "イベントはまだ記録されていません。"
+
+#: src/Admin/SiteDetailPage.php:342
+msgid "Recent monitoring events, newest first"
+msgstr "最近の監視イベント（新しい順）"
+
+#: src/Admin/SiteDetailPage.php:344
+msgid "Occurred at"
+msgstr "発生日時"
+
+#: src/Admin/SiteDetailPage.php:345
+msgid "Event"
+msgstr "イベント"
+
+#: src/Admin/SiteDetailPage.php:346
+msgid "Previous"
+msgstr "以前"
+
+#: src/Admin/SiteDetailPage.php:347
+msgid "Current"
+msgstr "現在"
+
+#: src/Admin/SiteDetailPage.php:348 src/Admin/SiteDetailPage.php:383
+msgid "Error"
+msgstr "エラー"
+
+#: src/Admin/SiteDetailPage.php:349 src/Admin/SiteDetailPage.php:384
+msgid "Message"
+msgstr "メッセージ"
+
+#: src/Admin/SiteDetailPage.php:372
+msgid "No checks have been recorded."
+msgstr "チェックはまだ記録されていません。"
+
+#: src/Admin/SiteDetailPage.php:377
+msgid "Recent monitoring checks, newest first"
+msgstr "最近の監視チェック（新しい順）"
+
+#: src/Admin/SiteDetailPage.php:380
+msgid "Check"
+msgstr "チェック"
+
+#: src/Admin/SiteDetailPage.php:382
+msgid "Duration"
+msgstr "所要時間"
+
+#. translators: %d: request duration in milliseconds.
+#: src/Admin/SiteDetailPage.php:392
+#, php-format
+msgid "%d ms"
+msgstr "%dミリ秒"
+
+#: src/Admin/SiteDetailPage.php:456
+msgid "Site down"
+msgstr "サイト停止"
+
+#: src/Admin/SiteDetailPage.php:457
+msgid "Recovered"
+msgstr "復旧"
+
+#: src/Admin/SiteDetailPage.php:460
+msgid "Site Health problem"
+msgstr "サイトヘルスの問題"
+
+#: src/Admin/SiteDetailPage.php:461
+msgid "Site Health partially recovered"
+msgstr "サイトヘルスが一部復旧"
+
+#: src/Admin/SiteDetailPage.php:462
+msgid "Site Health recovered"
+msgstr "サイトヘルスが復旧"
+
+#: src/Admin/SiteDetailPage.php:464
+msgid "Unknown event"
+msgstr "不明なイベント"
+
+#: src/Admin/SiteDetailPage.php:476
+msgid "Unknown check"
+msgstr "不明なチェック"
+
+#: src/Admin/SitesPage.php:42
+msgid "Monitored sites and their current status"
+msgstr "監視対象サイトと現在の状態"
+
+#: src/Admin/SitesPage.php:45
+msgid "Site"
+msgstr "サイト"
+
+#: src/Admin/SitesPage.php:52
+msgid "Last Check"
+msgstr "最終確認"
+
+#: src/Admin/SitesPage.php:61
+msgid "No sites have been added."
+msgstr "サイトはまだ追加されていません。"
+
+#: src/Admin/SitesPage.php:62
+msgid "No sites match this status."
+msgstr "この状態に一致するサイトはありません。"
+
+#: src/Admin/SitesPage.php:93
+msgid "Connected successfully."
+msgstr "接続に成功しました。"
+
+#: src/Admin/SitesPage.php:106
+msgid "All"
+msgstr "すべて"
+
+#: src/Admin/SitesPage.php:113
+msgid "Filter sites by status"
+msgstr "状態でサイトを絞り込む"
+
+#: src/Admin/SitesPage.php:135
+msgid "Test Connection"
+msgstr "接続テスト"
+
+#: src/Check/CheckRepository.php:58
+msgid "The check result could not be saved."
+msgstr "チェック結果を保存できませんでした。"
+
+#: src/Check/CheckRepository.php:75
+msgid "Old check results could not be deleted."
+msgstr "古いチェック結果を削除できませんでした。"
+
+#: src/Credential/CredentialRepository.php:40
+msgid "The credential could not be saved."
+msgstr "認証情報を保存できませんでした。"
+
+#: src/Credential/CredentialService.php:30
+msgid "The credential could not be encrypted."
+msgstr "認証情報を暗号化できませんでした。"
+
+#: src/Credential/CredentialService.php:45
+msgid "No credential is stored for this site."
+msgstr "このサイトの認証情報は保存されていません。"
+
+#: src/Credential/CredentialService.php:54
+msgid "The stored credential could not be decrypted."
+msgstr "保存された認証情報を復号できませんでした。"
+
+#: src/Evaluation/CheckResultRecorder.php:107
+msgid "The check result could not be persisted."
+msgstr "チェック結果を永続化できませんでした。"
+
+#: src/Event/EventRepository.php:54
+msgid "The event could not be saved."
+msgstr "イベントを保存できませんでした。"
+
+#: src/Event/EventRepository.php:76
+msgid "The notification event could not be found."
+msgstr "通知イベントが見つかりませんでした。"
+
+#: src/Event/EventRepository.php:101
+msgid "The notification result could not be saved."
+msgstr "通知結果を保存できませんでした。"
+
+#: src/Http/AgentClient.php:83
+msgid "The Agent request was blocked by the outbound URL policy."
+msgstr "Agentへのリクエストが外向きURLポリシーによってブロックされました。"
+
+#: src/Http/AgentClient.php:89 src/Monitor/Monitoring/AgentPingMonitor.php:106
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:102
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:118
+#: src/Monitor/Monitoring/UpdateMonitor.php:165
+msgid "The Agent could not be reached."
+msgstr "Agentへ接続できませんでした。"
+
+#: src/Http/AgentClient.php:101
+msgid "The Agent returned invalid JSON."
+msgstr "Agentが無効なJSONを返しました。"
+
+#: src/Http/AgentClient.php:124
+msgid "The Agent request failed."
+msgstr "Agentへのリクエストに失敗しました。"
+
+#: src/Http/HttpClient.php:71
+msgid "The request exceeded the redirect limit."
+msgstr "リクエストがリダイレクト上限を超えました。"
+
+#: src/Http/HttpClient.php:78
+msgid "The request was redirected to an unsafe destination."
+msgstr "リクエストが安全でない宛先へリダイレクトされました。"
+
+#: src/Http/UrlValidator.php:44
+msgid "Only public HTTPS URLs are allowed."
+msgstr "公開HTTPS URLのみ使用できます。"
+
+#: src/Http/UrlValidator.php:171
+msgid "The URL must resolve only to public network addresses."
+msgstr "URLは公開ネットワークアドレスだけに名前解決される必要があります。"
+
+#: src/Monitor/Monitoring/AgentPingMonitor.php:86
+msgid "The Agent is reachable."
+msgstr "Agentへ接続できます。"
+
+#: src/Monitor/Monitoring/AgentPingMonitor.php:103
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:99
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:115
+#: src/Monitor/Monitoring/UpdateMonitor.php:162
+msgid "Agent authentication failed."
+msgstr "Agent認証に失敗しました。"
+
+#: src/Monitor/Monitoring/AgentPingMonitor.php:104
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:100
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:116
+#: src/Monitor/Monitoring/UpdateMonitor.php:163
+msgid "The Agent credential lacks the required permission."
+msgstr "Agentの認証情報に必要な権限がありません。"
+
+#: src/Monitor/Monitoring/AgentPingMonitor.php:105
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:101
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:117
+#: src/Monitor/Monitoring/UpdateMonitor.php:164
+msgid "The Agent request timed out."
+msgstr "Agentへのリクエストがタイムアウトしました。"
+
+#: src/Monitor/Monitoring/AgentPingMonitor.php:107
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:103
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:119
+#: src/Monitor/Monitoring/UpdateMonitor.php:166
+msgid "The Agent endpoint was not found."
+msgstr "Agentエンドポイントが見つかりませんでした。"
+
+#: src/Monitor/Monitoring/AgentPingMonitor.php:108
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:104
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:120
+#: src/Monitor/Monitoring/UpdateMonitor.php:167
+msgid "The Agent URL must use HTTPS."
+msgstr "Agent URLにはHTTPSが必要です。"
+
+#: src/Monitor/Monitoring/AgentPingMonitor.php:111
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:107
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:123
+#: src/Monitor/Monitoring/UpdateMonitor.php:170
+msgid "The Agent URL was blocked by the outbound security policy."
+msgstr ""
+"Agent URLが外向き通信のセキュリティポリシーによってブロックされました。"
+
+#: src/Monitor/Monitoring/AgentPingMonitor.php:113
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:109
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:125
+#: src/Monitor/Monitoring/UpdateMonitor.php:172
+msgid "The stored Agent credential is unavailable."
+msgstr "保存されたAgent認証情報を利用できません。"
+
+#: src/Monitor/Monitoring/AgentPingMonitor.php:116
+msgid "The Agent returned an invalid response."
+msgstr "Agentが無効な応答を返しました。"
+
+#: src/Monitor/Monitoring/AgentPingMonitor.php:117
+msgid "The Agent check failed."
+msgstr "Agentのチェックに失敗しました。"
+
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:82
+msgid "The Agent status is available."
+msgstr "Agentの状態を取得できました。"
+
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:112
+msgid "The Agent returned an invalid status response."
+msgstr "Agentが無効な状態応答を返しました。"
+
+#: src/Monitor/Monitoring/AgentStatusMonitor.php:113
+msgid "The Agent status check failed."
+msgstr "Agentの状態チェックに失敗しました。"
+
+#: src/Monitor/Monitoring/HttpMonitor.php:52
+msgid "The registered site URL is not a valid public HTTP URL."
+msgstr "登録されたサイトURLは有効な公開HTTP URLではありません。"
+
+#: src/Monitor/Monitoring/HttpMonitor.php:88
+msgid "The site exceeded the allowed redirect limit."
+msgstr "サイトが許可されたリダイレクト上限を超えました。"
+
+#: src/Monitor/Monitoring/HttpMonitor.php:103
+msgid "The site redirected to an unsafe URL."
+msgstr "サイトが安全でないURLへリダイレクトしました。"
+
+#: src/Monitor/Monitoring/HttpMonitor.php:130
+msgid "The site is reachable."
+msgstr "サイトへ接続できます。"
+
+#: src/Monitor/Monitoring/HttpMonitor.php:142
+msgid "The site returned a non-success HTTP status."
+msgstr "サイトが成功以外のHTTPステータスを返しました。"
+
+#: src/Monitor/Monitoring/HttpMonitor.php:166
+msgid "The site request was blocked by the outbound URL policy."
+msgstr "サイトへのリクエストが外向きURLポリシーによってブロックされました。"
+
+#: src/Monitor/Monitoring/HttpMonitor.php:168
+msgid "The site request timed out."
+msgstr "サイトへのリクエストがタイムアウトしました。"
+
+#: src/Monitor/Monitoring/HttpMonitor.php:169
+msgid "The site could not be reached."
+msgstr "サイトへ接続できませんでした。"
+
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:78
+msgid "Site Health reports no problems."
+msgstr "サイトヘルスで問題は報告されていません。"
+
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:88
+msgid "Site Health reports a critical problem."
+msgstr "サイトヘルスで致命的な問題が報告されています。"
+
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:91
+msgid "Site Health reports a recommended improvement."
+msgstr "サイトヘルスでおすすめの改善が報告されています。"
+
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:128
+msgid "The Agent returned an invalid Site Health response."
+msgstr "Agentが無効なサイトヘルス応答を返しました。"
+
+#: src/Monitor/Monitoring/SiteHealthMonitor.php:129
+msgid "The Site Health check failed."
+msgstr "サイトヘルスのチェックに失敗しました。"
+
+#: src/Monitor/Monitoring/SslMonitor.php:77
+msgid "The registered site URL is not a valid public HTTPS URL."
+msgstr "登録されたサイトURLは有効な公開HTTPS URLではありません。"
+
+#: src/Monitor/Monitoring/SslMonitor.php:111
+msgid "The SSL certificate is not yet valid."
+msgstr "SSL証明書はまだ有効ではありません。"
+
+#: src/Monitor/Monitoring/SslMonitor.php:123
+#: src/Monitor/Monitoring/SslMonitor.php:210
+msgid "The SSL certificate has expired."
+msgstr "SSL証明書の有効期限が切れています。"
+
+#: src/Monitor/Monitoring/SslMonitor.php:135
+msgid "The SSL certificate is within the failure threshold."
+msgstr "SSL証明書が障害判定の期限内に入っています。"
+
+#: src/Monitor/Monitoring/SslMonitor.php:147
+msgid "The SSL certificate is approaching expiration."
+msgstr "SSL証明書の有効期限が近づいています。"
+
+#: src/Monitor/Monitoring/SslMonitor.php:158
+msgid "The SSL certificate is valid."
+msgstr "SSL証明書は有効です。"
+
+#: src/Monitor/Monitoring/SslMonitor.php:208
+msgid "The SSL certificate check timed out."
+msgstr "SSL証明書のチェックがタイムアウトしました。"
+
+#: src/Monitor/Monitoring/SslMonitor.php:209
+msgid "The SSL endpoint could not be reached."
+msgstr "SSLエンドポイントへ接続できませんでした。"
+
+#: src/Monitor/Monitoring/SslMonitor.php:211
+msgid "The SSL certificate could not be verified."
+msgstr "SSL証明書を検証できませんでした。"
+
+#: src/Monitor/Monitoring/SslMonitor.php:212
+msgid "SSL certificate inspection is unavailable."
+msgstr "SSL証明書の検査を利用できません。"
+
+#: src/Monitor/Monitoring/SslMonitor.php:213
+msgid "The SSL endpoint returned an invalid certificate."
+msgstr "SSLエンドポイントが無効な証明書を返しました。"
+
+#: src/Monitor/Monitoring/SslMonitor.php:214
+msgid "The SSL certificate check failed."
+msgstr "SSL証明書のチェックに失敗しました。"
+
+#: src/Monitor/Monitoring/UpdateMonitor.php:94
+msgid "Updates are available."
+msgstr "利用可能な更新があります。"
+
+#: src/Monitor/Monitoring/UpdateMonitor.php:95
+msgid "No updates are currently reported."
+msgstr "現在、更新は報告されていません。"
+
+#: src/Monitor/Monitoring/UpdateMonitor.php:175
+msgid "The Agent returned an invalid update response."
+msgstr "Agentが無効な更新情報の応答を返しました。"
+
+#: src/Monitor/Monitoring/UpdateMonitor.php:176
+msgid "The update check failed."
+msgstr "更新チェックに失敗しました。"
+
+#: src/Notification/EmailNotifier.php:38
+msgid "Outage"
+msgstr "障害"
+
+#: src/Notification/EmailNotifier.php:40
+msgid "Recovery"
+msgstr "復旧"
+
+#. translators: 1: Notification type, 2: monitored site name.
+#: src/Notification/EmailNotifier.php:47
+#, php-format
+msgid "[OD Monitor] %1$s: %2$s"
+msgstr "[OD Monitor] %1$s: %2$s"
+
+#. translators: %s: outage or recovery.
+#: src/Notification/EmailNotifier.php:54
+#, php-format
+msgid "Notification: %s"
+msgstr "通知: %s"
+
+#. translators: %s: monitored site name.
+#: src/Notification/EmailNotifier.php:55
+#, php-format
+msgid "Site: %s"
+msgstr "サイト: %s"
+
+#. translators: %s: monitored public URL.
+#: src/Notification/EmailNotifier.php:56
+#, php-format
+msgid "URL: %s"
+msgstr "URL: %s"
+
+#. translators: %s: monitoring event type.
+#: src/Notification/EmailNotifier.php:57
+#, php-format
+msgid "Event: %s"
+msgstr "イベント: %s"
+
+#. translators: %s: previous monitoring status.
+#: src/Notification/EmailNotifier.php:58
+#, php-format
+msgid "Previous status: %s"
+msgstr "以前の状態: %s"
+
+#. translators: %s: current monitoring status.
+#: src/Notification/EmailNotifier.php:59
+#, php-format
+msgid "Current status: %s"
+msgstr "現在の状態: %s"
+
+#. translators: %s: UTC detection time.
+#: src/Notification/EmailNotifier.php:62
+#, php-format
+msgid "Detected at: %s"
+msgstr "検出日時: %s"
+
+#. translators: %s: safe monitoring error code or dash.
+#: src/Notification/EmailNotifier.php:65
+#, php-format
+msgid "Error code: %s"
+msgstr "エラーコード: %s"
+
+#. translators: %s: safe monitoring result message.
+#: src/Notification/EmailNotifier.php:66
+#, php-format
+msgid "Message: %s"
+msgstr "メッセージ: %s"
+
+#: src/Plugin.php:166
+msgid ""
+"OD WordPress Monitor requires the sodium PHP extension to protect "
+"credentials."
+msgstr ""
+"認証情報を保護するため、OD WordPress MonitorにはPHPのsodium拡張が必要です。"
+
+#: src/Plugin.php:214
+msgid ""
+"OD WordPress Monitor is temporarily paused while its database is being "
+"updated by another request."
+msgstr ""
+"別のリクエストでデータベースを更新しているため、OD WordPress Monitorは一時停"
+"止しています。"
+
+#: src/Plugin.php:216
+msgid ""
+"OD WordPress Monitor could not update its database. Monitoring is paused; "
+"reload this page to retry after checking database permissions and logs."
+msgstr ""
+"OD WordPress Monitorはデータベースを更新できませんでした。監視は停止していま"
+"す。データベース権限とログを確認してから、このページを再読み込みして再試行し"
+"てください。"
+
+#. translators: 1: previous database schema version, 2: target database schema version.
+#: src/Plugin.php:224
+#, php-format
+msgid "Schema version: %1$s → %2$s."
+msgstr "スキーマバージョン: %1$s → %2$s。"
+
+#: src/Protocol/ResponseValidator.php:265
+msgid "The Agent protocol version is not supported."
+msgstr "Agentのプロトコルバージョンに対応していません。"
+
+#: src/Protocol/ResponseValidator.php:276
+msgid "The Agent returned an unexpected response."
+msgstr "Agentが予期しない応答を返しました。"
+
+#: src/Scheduler/CheckRunner.php:247
+msgid "The scheduled check could not be completed."
+msgstr "予定されたチェックを完了できませんでした。"
+
+#: src/Scheduler/OptionCleanupRepository.php:158
+msgid "Expired temporary data could not be deleted."
+msgstr "期限切れの一時データを削除できませんでした。"
+
+#: src/Scheduler/Scheduler.php:58
+msgid "Every five minutes"
+msgstr "5分ごと"
+
+#: src/Scheduler/Scheduler.php:62
+msgid "Every fifteen minutes"
+msgstr "15分ごと"
+
+#: src/Scheduler/Scheduler.php:159
+msgid "Check cleanup is unavailable."
+msgstr "チェックの削除処理を利用できません。"
+
+#: src/Site/SiteRepository.php:42
+msgid "The site could not be saved."
+msgstr "サイトを保存できませんでした。"
+
+#: src/Site/SiteService.php:41
+msgid "All fields are required."
+msgstr "すべての項目を入力してください。"
+
+#: src/Site/SiteService.php:98
+msgid "The monitored site was not found."
+msgstr "監視対象サイトが見つかりませんでした。"
+
+#: src/Status/SiteStatusRepository.php:69
+msgid "The site status could not be saved."
+msgstr "サイトの状態を保存できませんでした。"
+
+#: src/Support/MetadataCodec.php:40
+msgid "Metadata could not be encoded."
+msgstr "メタデータをエンコードできませんでした。"
+
+#: src/Support/MetadataCodec.php:44
+msgid "Metadata contains unsupported or sensitive data."
+msgstr "メタデータに未対応または機密性の高いデータが含まれています。"
+
+#: src/Support/MetadataCodec.php:48
+msgid "Metadata is too large to persist."
+msgstr "メタデータが大きすぎるため保存できません。"
