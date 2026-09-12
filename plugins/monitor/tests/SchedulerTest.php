@@ -38,6 +38,7 @@ final class SchedulerTest extends \WP_UnitTestCase {
 		$this->assertSame( 5 * MINUTE_IN_SECONDS, $schedules['odm_five_minutes']['interval'] );
 		$this->assertSame( 15 * MINUTE_IN_SECONDS, $schedules['odm_fifteen_minutes']['interval'] );
 		$this->assertSame( 'hourly', Scheduler::CHECK_SCHEDULES['site_health'] );
+		$this->assertSame( 'hourly', Scheduler::DIGEST_RECURRENCE );
 	}
 
 	public function test_each_check_type_is_scheduled_exactly_once(): void {
@@ -63,6 +64,7 @@ final class SchedulerTest extends \WP_UnitTestCase {
 		}
 
 		$this->assertSame( $cleanup_timestamp, wp_next_scheduled( Scheduler::CLEANUP_HOOK ) );
+		$this->assertIsInt( wp_next_scheduled( Scheduler::DIGEST_HOOK ) );
 	}
 
 	public function test_activation_schedules_and_deactivation_clears_plugin_events(): void {

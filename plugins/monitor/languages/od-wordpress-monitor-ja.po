@@ -1224,3 +1224,49 @@ msgstr "メタデータに未対応または機密性の高いデータが含ま
 #: src/Support/MetadataCodec.php:48
 msgid "Metadata is too large to persist."
 msgstr "メタデータが大きすぎるため保存できません。"
+
+#: src/Admin/NotificationSettingsPage.php
+msgid "Notification rules"
+msgstr "通知ルール"
+
+msgid "SSL expiration warning"
+msgstr "SSL有効期限の警告"
+
+msgid "Available updates"
+msgstr "利用可能な更新"
+
+msgid "Site Health recommendations"
+msgstr "Site Healthの推奨事項"
+
+msgid "Daily digest time"
+msgstr "日次まとめの時刻"
+
+msgid "These rules apply globally to every enabled notification channel. Daily digests include only newly detected or changed warning details; unchanged warnings are not repeated."
+msgstr "これらのルールは有効なすべての通知先に適用されます。日次まとめには新しく検出された、または内容が変わった警告だけを含め、変化のない警告は繰り返しません。"
+
+msgid "Notify once when a healthy SSL certificate enters the warning period."
+msgstr "正常なSSL証明書が警告期間に入ったときに1回通知します。"
+
+msgid "Include newly detected or changed available updates in the daily digest."
+msgstr "新しく検出された、または内容が変わった利用可能な更新を日次まとめに含めます。"
+
+msgid "Include newly detected or changed Site Health recommendations in the daily digest."
+msgstr "新しく検出された、または内容が変わったSite Healthの推奨事項を日次まとめに含めます。"
+
+msgid "Daily digest hour"
+msgstr "日次まとめの時刻"
+
+msgid "Uses the timezone configured in WordPress. WP-Cron sends the digest on the first run during the selected hour."
+msgstr "WordPressで設定したタイムゾーンを使用します。WP-Cronが選択した時間帯に最初に実行されたときにまとめを送信します。"
+
+msgid "SSL certificate expiry warning"
+msgstr "SSL証明書の有効期限警告"
+
+msgid "Daily digest"
+msgstr "日次まとめ"
+
+msgid "Monitoring summary"
+msgstr "監視まとめ"
+
+msgid "Site Health recommended"
+msgstr "Site Healthの推奨"

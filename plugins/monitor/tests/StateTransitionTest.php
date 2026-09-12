@@ -95,6 +95,38 @@ final class StateTransitionTest extends \WP_UnitTestCase {
 		);
 	}
 
+	/**
+	 * @dataProvider warning_transition_provider
+	 */
+	public function test_warning_transition_policy_is_explicit( string $type, string $previous, string $current, ?string $event_type ): void {
+		$event = $this->transition->detect( $this->status( $type, $previous ), $this->status( $type, $current ), $this->result( $type, $current ) );
+		if ( null === $event_type ) {
+			$this->assertNull( $event );
+			return;
+		}
+		$this->assertNotNull( $event );
+		$this->assertSame( $event_type, $event->type() );
+	}
+
+	/**
+	 * @return array<string,array{string,string,string,?string}>
+	 */
+	public function warning_transition_provider(): array {
+		return array(
+			'ssl unknown warning'          => array( 'ssl', Status::UNKNOWN, Status::WARNING, EventType::SSL ),
+			'ssl healthy warning'          => array( 'ssl', Status::HEALTHY, Status::WARNING, EventType::SSL ),
+			'ssl warning warning'          => array( 'ssl', Status::WARNING, Status::WARNING, null ),
+			'ssl critical warning'         => array( 'ssl', Status::CRITICAL, Status::WARNING, null ),
+			'updates unknown warning'      => array( 'updates', Status::UNKNOWN, Status::WARNING, EventType::UPDATES ),
+			'updates warning warning'      => array( 'updates', Status::WARNING, Status::WARNING, null ),
+			'updates warning healthy'      => array( 'updates', Status::WARNING, Status::HEALTHY, EventType::RECOVERED ),
+			'site health unknown warning'  => array( 'site_health', Status::UNKNOWN, Status::WARNING, null ),
+			'site health warning warning'  => array( 'site_health', Status::WARNING, Status::WARNING, null ),
+			'site health warning healthy'  => array( 'site_health', Status::WARNING, Status::HEALTHY, null ),
+			'site health critical warning' => array( 'site_health', Status::CRITICAL, Status::WARNING, EventType::SITE_HEALTH_PARTIALLY_RECOVERED ),
+		);
+	}
+
 	public function test_creates_a_recovery_event(): void {
 		$result = $this->result( 'http', Status::HEALTHY );
 		$event  = $this->transition->detect(

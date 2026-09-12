@@ -9,6 +9,7 @@ namespace Olein\WordPressMonitor\Tests;
 
 use DateTimeImmutable;
 use Olein\WordPressMonitor\Event\MonitoringEvent;
+use Olein\WordPressMonitor\Event\EventType;
 use Olein\WordPressMonitor\Notification\NotificationChannelResult;
 use Olein\WordPressMonitor\Notification\NotificationDeliveryResult;
 use Olein\WordPressMonitor\Notification\NotificationManager;
@@ -51,6 +52,14 @@ final class NotificationManagerTest extends \WP_UnitTestCase {
 		$this->assertNull( $manager->notify( $this->event( 'critical', 'critical' ) ) );
 		$this->assertNull( $manager->notify( $this->event( 'unknown', 'critical' ) ) );
 		$this->assertSame( 0, $sender->calls );
+	}
+
+	public function test_dispatches_ssl_warning_transition(): void {
+		$sender  = $this->sender( 'email' );
+		$manager = new NotificationManager( new NotificationRule(), $this->message_factory(), array( $sender ) );
+		$result  = $manager->notify( $this->event( 'healthy', 'warning', EventType::SSL ) );
+		$this->assertInstanceOf( NotificationDeliveryResult::class, $result );
+		$this->assertSame( NotificationRule::SSL_WARNING, $sender->message->notification_type() );
 	}
 
 	public function test_does_not_dispatch_when_every_channel_is_disabled(): void {
@@ -136,11 +145,11 @@ final class NotificationManagerTest extends \WP_UnitTestCase {
 		$this->assertSame( 'DELIVERY_FAILED', $result->error_code() );
 	}
 
-	private function event( string $previous, string $current ): MonitoringEvent {
+	private function event( string $previous, string $current, string $type = 'SITE_DOWN' ): MonitoringEvent {
 		return new MonitoringEvent(
 			null,
 			1,
-			'SITE_DOWN',
+			$type,
 			$previous,
 			$current,
 			null,

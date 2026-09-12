@@ -1210,3 +1210,51 @@ msgstr ""
 #: src/Support/MetadataCodec.php:48
 msgid "Metadata is too large to persist."
 msgstr ""
+
+#: src/Admin/NotificationSettingsPage.php
+msgid "Notification rules"
+msgstr ""
+
+msgid "SSL expiration warning"
+msgstr ""
+
+msgid "Available updates"
+msgstr ""
+
+msgid "Site Health recommendations"
+msgstr ""
+
+msgid "Daily digest time"
+msgstr ""
+
+msgid "These rules apply globally to every enabled notification channel. Daily digests include only newly detected or changed warning details; unchanged warnings are not repeated."
+msgstr ""
+
+msgid "Notify once when a healthy SSL certificate enters the warning period."
+msgstr ""
+
+msgid "Include newly detected or changed available updates in the daily digest."
+msgstr ""
+
+msgid "Include newly detected or changed Site Health recommendations in the daily digest."
+msgstr ""
+
+msgid "Daily digest hour"
+msgstr ""
+
+msgid "Uses the timezone configured in WordPress. WP-Cron sends the digest on the first run during the selected hour."
+msgstr ""
+
+#: src/Notification/EmailNotifier.php src/Notification/NotificationTextFormatter.php
+msgid "SSL certificate expiry warning"
+msgstr ""
+
+msgid "Daily digest"
+msgstr ""
+
+#: src/Notification/DailyDigest.php
+msgid "Monitoring summary"
+msgstr ""
+
+msgid "Site Health recommended"
+msgstr ""

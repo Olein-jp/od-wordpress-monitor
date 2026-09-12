@@ -9,6 +9,7 @@ namespace Olein\WordPressMonitor\Tests;
 
 use DateTimeImmutable;
 use Olein\WordPressMonitor\Event\MonitoringEvent;
+use Olein\WordPressMonitor\Event\EventType;
 use Olein\WordPressMonitor\Notification\NotificationRule;
 
 final class NotificationRuleTest extends \WP_UnitTestCase {
@@ -44,6 +45,14 @@ final class NotificationRuleTest extends \WP_UnitTestCase {
 		$this->assertNull( $this->rule->classify( $this->event( $previous, $current ) ) );
 	}
 
+	public function test_notifies_once_when_ssl_enters_warning(): void {
+		$rule = new NotificationRule();
+		$this->assertSame( NotificationRule::SSL_WARNING, $rule->classify( $this->event( 'healthy', 'warning', EventType::SSL ) ) );
+		$this->assertNull( $rule->classify( $this->event( 'unknown', 'warning', EventType::SSL ) ) );
+		$this->assertNull( $rule->classify( $this->event( 'warning', 'warning', EventType::SSL ) ) );
+		$this->assertNull( $rule->classify( $this->event( 'critical', 'warning', EventType::SSL ) ) );
+	}
+
 	/**
 	 * @return array<string,array{string,string}>
 	 */
@@ -57,11 +66,11 @@ final class NotificationRuleTest extends \WP_UnitTestCase {
 		);
 	}
 
-	private function event( string $previous, string $current ): MonitoringEvent {
+	private function event( string $previous, string $current, string $type = 'SITE_DOWN' ): MonitoringEvent {
 		return new MonitoringEvent(
 			null,
 			1,
-			'SITE_DOWN',
+			$type,
 			$previous,
 			$current,
 			null,

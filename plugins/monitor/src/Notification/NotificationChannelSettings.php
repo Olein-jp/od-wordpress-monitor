@@ -80,6 +80,22 @@ final class NotificationChannelSettings {
 		return 1 === preg_match( '/^[A-Za-z0-9._~-]{1,255}$/', $token ) ? $token : '';
 	}
 
+	public function ssl_warning_enabled(): bool {
+		return '1' === $this->get()['rules']['ssl_warning'];
+	}
+
+	public function updates_digest_enabled(): bool {
+		return '1' === $this->get()['rules']['updates_digest'];
+	}
+
+	public function site_health_digest_enabled(): bool {
+		return '1' === $this->get()['rules']['site_health_recommended_digest'];
+	}
+
+	public function digest_hour(): int {
+		return (int) $this->get()['rules']['digest_hour'];
+	}
+
 	/**
 	 * Preserve blank secrets, and only replace or delete them explicitly.
 	 *
@@ -131,7 +147,39 @@ final class NotificationChannelSettings {
 				: '0';
 		}
 
-		return $this->sanitize_chatwork( $input, $settings );
+		$settings = $this->sanitize_chatwork( $input, $settings );
+
+		return $this->sanitize_rules( $input, $settings );
+	}
+
+	/**
+	 * @param array<string,mixed>                $input Submitted settings.
+	 * @param array<string,array<string,string>> $settings Current sanitized settings.
+	 * @return array<string,array<string,string>>
+	 */
+	private function sanitize_rules( array $input, array $settings ): array {
+		if ( ! isset( $input['rules'] ) || ! is_array( $input['rules'] ) ) {
+			return $settings;
+		}
+
+		$rules = $input['rules'];
+		$hour  = isset( $rules['digest_hour'] ) && is_scalar( $rules['digest_hour'] )
+			? (string) wp_unslash( $rules['digest_hour'] )
+			: $settings['rules']['digest_hour'];
+
+		if ( 1 !== preg_match( '/^(?:[0-9]|1[0-9]|2[0-3])$/', $hour ) ) {
+			add_settings_error( self::OPTION, 'invalid_digest_hour', __( 'Daily digest hour must be between 0 and 23.', 'od-wordpress-monitor' ) );
+			$hour = $settings['rules']['digest_hour'];
+		}
+
+		$settings['rules'] = array(
+			'ssl_warning'                    => isset( $rules['ssl_warning'] ) && '1' === (string) $rules['ssl_warning'] ? '1' : '0',
+			'updates_digest'                 => isset( $rules['updates_digest'] ) && '1' === (string) $rules['updates_digest'] ? '1' : '0',
+			'site_health_recommended_digest' => isset( $rules['site_health_recommended_digest'] ) && '1' === (string) $rules['site_health_recommended_digest'] ? '1' : '0',
+			'digest_hour'                    => (string) (int) $hour,
+		);
+
+		return $settings;
 	}
 
 	/**
@@ -207,6 +255,13 @@ final class NotificationChannelSettings {
 			'room_id'             => isset( $chatwork['room_id'] ) && is_string( $chatwork['room_id'] ) && 1 === preg_match( '/^[1-9][0-9]{0,19}$/', $chatwork['room_id'] ) ? $chatwork['room_id'] : '',
 			'encrypted_api_token' => isset( $chatwork['encrypted_api_token'] ) && is_string( $chatwork['encrypted_api_token'] ) ? $chatwork['encrypted_api_token'] : '',
 		);
+		$rules                                  = isset( $stored['rules'] ) && is_array( $stored['rules'] ) ? $stored['rules'] : array();
+		$result['rules']                        = array(
+			'ssl_warning'                    => ! isset( $rules['ssl_warning'] ) || '1' === (string) $rules['ssl_warning'] ? '1' : '0',
+			'updates_digest'                 => isset( $rules['updates_digest'] ) && '1' === (string) $rules['updates_digest'] ? '1' : '0',
+			'site_health_recommended_digest' => isset( $rules['site_health_recommended_digest'] ) && '1' === (string) $rules['site_health_recommended_digest'] ? '1' : '0',
+			'digest_hour'                    => isset( $rules['digest_hour'] ) && 1 === preg_match( '/^(?:[0-9]|1[0-9]|2[0-3])$/', (string) $rules['digest_hour'] ) ? (string) (int) $rules['digest_hour'] : '9',
+		);
 
 		return $result;
 	}
@@ -228,6 +283,12 @@ final class NotificationChannelSettings {
 				'enabled'             => '0',
 				'room_id'             => '',
 				'encrypted_api_token' => '',
+			),
+			'rules'                      => array(
+				'ssl_warning'                    => '1',
+				'updates_digest'                 => '0',
+				'site_health_recommended_digest' => '0',
+				'digest_hour'                    => '9',
 			),
 		);
 	}

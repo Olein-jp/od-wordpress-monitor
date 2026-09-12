@@ -89,6 +89,18 @@ final class SiteStatusRepository {
 	}
 
 	/**
+	 * Return a bounded set of current status rows in stable site order.
+	 *
+	 * @return list<SiteStatus>
+	 */
+	public function bounded( int $limit ): array {
+		$sql  = $this->database->prepare( "SELECT * FROM {$this->table} ORDER BY site_id ASC LIMIT %d", max( 1, $limit ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $this->database->get_results( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+
+		return array_map( array( $this, 'hydrate' ), $rows );
+	}
+
+	/**
 	 * Find and lock a site's current row during a persistence transaction.
 	 */
 	public function find_for_update( int $site_id ): ?SiteStatus {

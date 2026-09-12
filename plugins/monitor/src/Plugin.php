@@ -35,9 +35,11 @@ use Olein\WordPressMonitor\Monitor\Monitoring\SslCertificateClient;
 use Olein\WordPressMonitor\Monitor\Monitoring\SslMonitor;
 use Olein\WordPressMonitor\Monitor\Monitoring\UpdateMonitor;
 use Olein\WordPressMonitor\Notification\ChatworkNotifier;
+use Olein\WordPressMonitor\Notification\DailyDigest;
 use Olein\WordPressMonitor\Notification\EmailNotifier;
 use Olein\WordPressMonitor\Notification\DiscordNotifier;
 use Olein\WordPressMonitor\Notification\NotificationChannelSettings;
+use Olein\WordPressMonitor\Notification\NotificationDigestSignature;
 use Olein\WordPressMonitor\Notification\NotificationManager;
 use Olein\WordPressMonitor\Notification\NotificationMessageFactory;
 use Olein\WordPressMonitor\Notification\NotificationRule;
@@ -117,7 +119,7 @@ final class Plugin {
 			$discord_notifier      = new DiscordNotifier( $channel_settings, $webhook_client, $text_formatter );
 			$chatwork_notifier     = new ChatworkNotifier( $channel_settings, $webhook_client, $text_formatter );
 			$notifications         = new NotificationManager(
-				new NotificationRule(),
+				new NotificationRule( $channel_settings ),
 				new NotificationMessageFactory( $sites ),
 				array( $email_notifier, $slack_notifier, $discord_notifier, $chatwork_notifier )
 			);
@@ -151,7 +153,14 @@ final class Plugin {
 					$batch_limit
 				),
 				new CheckRetention( $checks, null, new OptionCleanupRepository( $wpdb ) ),
-				$heartbeat
+				$heartbeat,
+				new DailyDigest(
+					$channel_settings,
+					$statuses,
+					$sites,
+					$notifications,
+					new NotificationDigestSignature()
+				)
 			);
 			$scheduler->register_hooks();
 

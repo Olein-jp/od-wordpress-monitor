@@ -28,6 +28,13 @@ final class NotificationSettingsPage {
 	public function register_settings(): void {
 		$this->settings->register();
 		$this->channel_settings?->register();
+		if ( null !== $this->channel_settings ) {
+			add_settings_section( 'odm_notification_rules_section', __( 'Notification rules', 'od-wordpress-monitor' ), array( $this, 'render_rules_section' ), self::SLUG );
+			add_settings_field( 'odm_ssl_warning', __( 'SSL expiration warning', 'od-wordpress-monitor' ), array( $this, 'render_ssl_warning_field' ), self::SLUG, 'odm_notification_rules_section' );
+			add_settings_field( 'odm_updates_digest', __( 'Available updates', 'od-wordpress-monitor' ), array( $this, 'render_updates_digest_field' ), self::SLUG, 'odm_notification_rules_section' );
+			add_settings_field( 'odm_site_health_digest', __( 'Site Health recommendations', 'od-wordpress-monitor' ), array( $this, 'render_site_health_digest_field' ), self::SLUG, 'odm_notification_rules_section' );
+			add_settings_field( 'odm_digest_hour', __( 'Daily digest time', 'od-wordpress-monitor' ), array( $this, 'render_digest_hour_field' ), self::SLUG, 'odm_notification_rules_section' );
+		}
 		add_settings_section( 'odm_notifications_section', __( 'Email notifications', 'od-wordpress-monitor' ), array( $this, 'render_section' ), self::SLUG );
 		add_settings_field( 'odm_notifications_enabled', __( 'Notifications', 'od-wordpress-monitor' ), array( $this, 'render_enabled_field' ), self::SLUG, 'odm_notifications_section' );
 		add_settings_field( 'odm_notification_email', __( 'Notification email', 'od-wordpress-monitor' ), array( $this, 'render_email_field' ), self::SLUG, 'odm_notifications_section' );
@@ -93,6 +100,35 @@ final class NotificationSettingsPage {
 
 	public function render_section(): void {
 		echo '<p>' . esc_html__( 'Configure the global recipient for monitoring outage and recovery notifications.', 'od-wordpress-monitor' ) . '</p>';
+	}
+
+	public function render_rules_section(): void {
+		echo '<p>' . esc_html__( 'These rules apply globally to every enabled notification channel. Daily digests include only newly detected or changed warning details; unchanged warnings are not repeated.', 'od-wordpress-monitor' ) . '</p>';
+	}
+
+	public function render_ssl_warning_field(): void {
+		$this->render_rule_checkbox( 'ssl-warning', 'ssl_warning', $this->channel_settings?->ssl_warning_enabled() ?? true, __( 'Notify once when a healthy SSL certificate enters the warning period.', 'od-wordpress-monitor' ) );
+	}
+
+	public function render_updates_digest_field(): void {
+		$this->render_rule_checkbox( 'updates-digest', 'updates_digest', $this->channel_settings?->updates_digest_enabled() ?? false, __( 'Include newly detected or changed available updates in the daily digest.', 'od-wordpress-monitor' ) );
+	}
+
+	public function render_site_health_digest_field(): void {
+		$this->render_rule_checkbox( 'site-health-digest', 'site_health_recommended_digest', $this->channel_settings?->site_health_digest_enabled() ?? false, __( 'Include newly detected or changed Site Health recommendations in the daily digest.', 'od-wordpress-monitor' ) );
+	}
+
+	public function render_digest_hour_field(): void {
+		$hour = $this->channel_settings?->digest_hour() ?? 9;
+		?>
+		<label for="odm-digest-hour" class="screen-reader-text"><?php echo esc_html__( 'Daily digest hour', 'od-wordpress-monitor' ); ?></label>
+		<select id="odm-digest-hour" name="<?php echo esc_attr( NotificationChannelSettings::OPTION ); ?>[rules][digest_hour]">
+			<?php for ( $candidate = 0; $candidate < 24; ++$candidate ) : ?>
+				<option value="<?php echo esc_attr( (string) $candidate ); ?>" <?php selected( $hour, $candidate ); ?>><?php echo esc_html( sprintf( '%02d:00', $candidate ) ); ?></option>
+			<?php endfor; ?>
+		</select>
+		<p class="description"><?php echo esc_html__( 'Uses the timezone configured in WordPress. WP-Cron sends the digest on the first run during the selected hour.', 'od-wordpress-monitor' ); ?></p>
+		<?php
 	}
 
 	public function render_enabled_field(): void {
@@ -177,6 +213,15 @@ final class NotificationSettingsPage {
 		$section_id = 'odm_' . $channel_id . '_notifications_section';
 		add_settings_section( $section_id, $title, '__return_null', self::SLUG );
 		add_settings_field( 'odm_' . $channel_id . '_webhook', $title, array( $this, 'render_webhook_field' ), self::SLUG, $section_id, array( 'channel' => $channel_id ) );
+	}
+
+	private function render_rule_checkbox( string $id, string $key, bool $checked, string $label ): void {
+		?>
+		<label for="odm-<?php echo esc_attr( $id ); ?>">
+			<input id="odm-<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( NotificationChannelSettings::OPTION ); ?>[rules][<?php echo esc_attr( $key ); ?>]" type="checkbox" value="1" <?php checked( $checked ); ?>>
+			<?php echo esc_html( $label ); ?>
+		</label>
+		<?php
 	}
 
 	private function register_chatwork_section(): void {

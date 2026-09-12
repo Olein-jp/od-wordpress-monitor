@@ -60,6 +60,14 @@ final class NotificationManager {
 			return null;
 		}
 
+		return $this->dispatch( $message );
+	}
+
+	/**
+	 * Dispatch an already sanitized message to every enabled channel.
+	 */
+	public function dispatch( NotificationMessage $message ): ?NotificationDeliveryResult {
+
 		$results = array();
 
 		foreach ( $this->senders as $channel_id => $sender ) {

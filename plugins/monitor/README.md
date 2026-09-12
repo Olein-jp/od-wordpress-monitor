@@ -39,7 +39,7 @@ OD Monitor Agent を導入したWordPressサイトを登録し、接続状況、
 
 ## Email・Slack・Discord・Chatwork通知
 
-管理画面の「WordPress Monitor」→「Notifications」で、Email、Slack Incoming Webhook、Discord Incoming Webhook、Chatworkを個別に設定・有効化できます。Chatworkはroom IDと個人APIトークンを使用します。正常または警告から異常へ変化したときに障害通知を送り、異常から正常へ戻ったときに復旧通知を送ります。同じ異常状態が続いている間は再送しません。Webhook URLとChatwork APIトークンは暗号化して保存され、設定画面へ値を再表示しません。
+管理画面の「WordPress Monitor」→「Notifications」で、Email、Slack Incoming Webhook、Discord Incoming Webhook、Chatworkを個別に設定・有効化できます。Chatworkはroom IDと個人APIトークンを使用します。正常または警告から異常へ変化したときに障害通知を送り、異常から正常へ戻ったときに復旧通知を送ります。同じ異常状態が続いている間は再送しません。SSL証明書の`healthy -> warning`は既定で1回だけ即時通知します。更新ありとSite Healthのrecommendedは既定で無効で、必要な場合はサイトのタイムゾーンに合わせた日次まとめを個別に有効化できます。まとめは新規または内容が変わった警告だけを含み、同じ内容を毎日繰り返しません。Webhook URLとChatwork APIトークンは暗号化して保存され、設定画面へ値を再表示しません。
 
 メール送信にはWordPress標準の `wp_mail()` を使用します。実際にメールを配送するには、Monitorサイト側でWordPressのメール送信環境が正しく設定されている必要があります。
 

@@ -60,6 +60,31 @@ final class NotificationChannelSettingsTest extends \WP_UnitTestCase {
 		$this->assertContains( $autoload, array( 'no', 'off' ), true );
 	}
 
+	public function test_warning_is_enabled_and_digests_are_disabled_by_default(): void {
+		$this->settings->register();
+		$this->assertTrue( $this->settings->ssl_warning_enabled() );
+		$this->assertFalse( $this->settings->updates_digest_enabled() );
+		$this->assertFalse( $this->settings->site_health_digest_enabled() );
+		$this->assertSame( 9, $this->settings->digest_hour() );
+	}
+
+	public function test_digest_rules_and_hour_are_sanitized(): void {
+		$value = $this->settings->sanitize(
+			array(
+				'rules' => array(
+					'ssl_warning'                    => '1',
+					'updates_digest'                 => '1',
+					'site_health_recommended_digest' => '1',
+					'digest_hour'                    => '23',
+				),
+			)
+		);
+		$this->assertSame( '1', $value['rules']['updates_digest'] );
+		$this->assertSame( '23', $value['rules']['digest_hour'] );
+		$invalid = $this->settings->sanitize( array( 'rules' => array( 'digest_hour' => '99' ) ) );
+		$this->assertSame( '9', $invalid['rules']['digest_hour'] );
+	}
+
 	public function test_blank_input_preserves_secret_and_explicit_delete_removes_it(): void {
 		$initial = $this->settings->sanitize(
 			array(

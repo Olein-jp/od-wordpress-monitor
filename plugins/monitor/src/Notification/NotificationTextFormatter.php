@@ -15,6 +15,10 @@ final class NotificationTextFormatter {
 			$label = __( 'Outage', 'od-wordpress-monitor' );
 		} elseif ( NotificationRule::RECOVERY === $message->notification_type() ) {
 			$label = __( 'Recovery', 'od-wordpress-monitor' );
+		} elseif ( NotificationRule::SSL_WARNING === $message->notification_type() ) {
+			$label = __( 'SSL certificate expiry warning', 'od-wordpress-monitor' );
+		} elseif ( NotificationRule::DAILY_DIGEST === $message->notification_type() ) {
+			$label = __( 'Daily digest', 'od-wordpress-monitor' );
 		} else {
 			return '';
 		}

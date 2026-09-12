@@ -15,7 +15,7 @@ final class NotificationMessageFactory implements NotificationMessageFactoryInte
 	}
 
 	public function create( MonitoringEvent $event, string $notification_type ): ?NotificationMessage {
-		if ( ! in_array( $notification_type, array( NotificationRule::OUTAGE, NotificationRule::RECOVERY ), true ) ) {
+		if ( ! in_array( $notification_type, array( NotificationRule::OUTAGE, NotificationRule::RECOVERY, NotificationRule::SSL_WARNING ), true ) ) {
 			return null;
 		}
 
