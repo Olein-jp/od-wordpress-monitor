@@ -77,6 +77,21 @@ final class NotificationManagerTest extends \WP_UnitTestCase {
 		$this->assertSame( 1, $succeeded->calls );
 	}
 
+	public function test_chatwork_failure_does_not_stop_email_delivery(): void {
+		$chatwork = $this->sender( 'chatwork', true, false );
+		$email    = $this->sender( 'email' );
+		$manager  = new NotificationManager( new NotificationRule(), $this->message_factory(), array( $chatwork, $email ) );
+
+		$result = $manager->notify( $this->event( 'healthy', 'critical' ) );
+
+		$this->assertInstanceOf( NotificationDeliveryResult::class, $result );
+		$this->assertSame( NotificationDeliveryResult::PARTIAL, $result->status() );
+		$this->assertSame( NotificationChannelResult::FAILED, $result->channels()['chatwork']->status() );
+		$this->assertSame( NotificationChannelResult::SENT, $result->channels()['email']->status() );
+		$this->assertSame( 1, $chatwork->calls );
+		$this->assertSame( 1, $email->calls );
+	}
+
 	public function test_returns_sent_when_every_enabled_channel_succeeds(): void {
 		$email   = $this->sender( 'email' );
 		$slack   = $this->sender( 'slack' );

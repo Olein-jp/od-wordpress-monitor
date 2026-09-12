@@ -8,6 +8,7 @@
 namespace Olein\WordPressMonitor\Tests;
 
 use Olein\WordPressMonitor\Admin\NotificationSettingsPage;
+use Olein\WordPressMonitor\Notification\ChatworkNotifier;
 use Olein\WordPressMonitor\Notification\DiscordNotifier;
 use Olein\WordPressMonitor\Notification\NotificationChannelSettings;
 use Olein\WordPressMonitor\Notification\NotificationSecretEncryptor;
@@ -35,10 +36,11 @@ final class NotificationSettingsPageWebhookTest extends \WP_UnitTestCase {
 		$formatter              = new NotificationTextFormatter();
 		$slack                  = new SlackNotifier( $this->channel_settings, $client, $formatter );
 		$discord                = new DiscordNotifier( $this->channel_settings, $client, $formatter );
+		$chatwork               = new ChatworkNotifier( $this->channel_settings, $client, $formatter );
 		$this->page             = new NotificationSettingsPage(
 			new NotificationSettings(),
 			$this->channel_settings,
-			new NotificationTestService( array( $slack, $discord ) )
+			new NotificationTestService( array( $slack, $discord, $chatwork ) )
 		);
 	}
 
@@ -51,11 +53,17 @@ final class NotificationSettingsPageWebhookTest extends \WP_UnitTestCase {
 	public function test_render_never_exposes_plaintext_or_ciphertext_and_has_separate_test_forms(): void {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		$plain  = 'https://hooks.slack.com/services/T000/B000/private-token';
+		$token  = 'chatwork-private-token';
 		$stored = $this->channel_settings->sanitize(
 			array(
-				SlackNotifier::CHANNEL_ID => array(
+				SlackNotifier::CHANNEL_ID    => array(
 					'enabled'     => '1',
 					'webhook_url' => $plain,
+				),
+				ChatworkNotifier::CHANNEL_ID => array(
+					'enabled'   => '1',
+					'room_id'   => '12345',
+					'api_token' => $token,
 				),
 			)
 		);
@@ -68,11 +76,15 @@ final class NotificationSettingsPageWebhookTest extends \WP_UnitTestCase {
 
 		$this->assertStringContainsString( 'Slack notifications', $output );
 		$this->assertStringContainsString( 'Discord notifications', $output );
+		$this->assertStringContainsString( 'Chatwork notifications', $output );
+		$this->assertStringContainsString( 'value="12345"', $output );
 		$this->assertStringContainsString( 'Configured. Leave blank', $output );
 		$this->assertStringContainsString( 'value="odm_test_notification"', $output );
-		$this->assertSame( 2, substr_count( $output, 'admin-post.php' ) );
+		$this->assertSame( 3, substr_count( $output, 'admin-post.php' ) );
 		$this->assertStringNotContainsString( $plain, $output );
 		$this->assertStringNotContainsString( $stored['slack']['encrypted_webhook_url'], $output );
+		$this->assertStringNotContainsString( $token, $output );
+		$this->assertStringNotContainsString( $stored['chatwork']['encrypted_api_token'], $output );
 	}
 
 	public function test_test_action_requires_manage_options(): void {
@@ -85,7 +97,7 @@ final class NotificationSettingsPageWebhookTest extends \WP_UnitTestCase {
 
 	public function test_test_action_requires_a_channel_specific_nonce(): void {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
-		$_POST['channel'] = DiscordNotifier::CHANNEL_ID;
+		$_POST['channel'] = ChatworkNotifier::CHANNEL_ID;
 
 		$this->expectException( \WPDieException::class );
 		$this->page->handle_test();

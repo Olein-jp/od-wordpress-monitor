@@ -34,6 +34,7 @@ use Olein\WordPressMonitor\Monitor\Monitoring\SiteHealthMonitor;
 use Olein\WordPressMonitor\Monitor\Monitoring\SslCertificateClient;
 use Olein\WordPressMonitor\Monitor\Monitoring\SslMonitor;
 use Olein\WordPressMonitor\Monitor\Monitoring\UpdateMonitor;
+use Olein\WordPressMonitor\Notification\ChatworkNotifier;
 use Olein\WordPressMonitor\Notification\EmailNotifier;
 use Olein\WordPressMonitor\Notification\DiscordNotifier;
 use Olein\WordPressMonitor\Notification\NotificationChannelSettings;
@@ -114,10 +115,11 @@ final class Plugin {
 			$email_notifier        = new EmailNotifier( $notification_settings );
 			$slack_notifier        = new SlackNotifier( $channel_settings, $webhook_client, $text_formatter );
 			$discord_notifier      = new DiscordNotifier( $channel_settings, $webhook_client, $text_formatter );
+			$chatwork_notifier     = new ChatworkNotifier( $channel_settings, $webhook_client, $text_formatter );
 			$notifications         = new NotificationManager(
 				new NotificationRule(),
 				new NotificationMessageFactory( $sites ),
-				array( $email_notifier, $slack_notifier, $discord_notifier )
+				array( $email_notifier, $slack_notifier, $discord_notifier, $chatwork_notifier )
 			);
 			$recorder              = new CheckResultRecorder(
 				$wpdb,
@@ -175,7 +177,7 @@ final class Plugin {
 				new NotificationSettingsPage(
 					$notification_settings,
 					$channel_settings,
-					new NotificationTestService( array( $slack_notifier, $discord_notifier ) )
+					new NotificationTestService( array( $slack_notifier, $discord_notifier, $chatwork_notifier ) )
 				)
 			) )->register_hooks();
 		} catch ( RuntimeException $exception ) {

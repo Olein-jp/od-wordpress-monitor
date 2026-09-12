@@ -8,6 +8,7 @@
 namespace Olein\WordPressMonitor\Tests;
 
 use Olein\WordPressMonitor\Notification\DiscordNotifier;
+use Olein\WordPressMonitor\Notification\ChatworkNotifier;
 use Olein\WordPressMonitor\Notification\NotificationChannelSettings;
 use Olein\WordPressMonitor\Notification\NotificationSecretEncryptor;
 use Olein\WordPressMonitor\Notification\SlackNotifier;
@@ -126,5 +127,88 @@ final class NotificationChannelSettingsTest extends \WP_UnitTestCase {
 
 		$this->assertSame( '', $this->settings->webhook_url( SlackNotifier::CHANNEL_ID ) );
 		$this->assertFalse( $this->settings->enabled( SlackNotifier::CHANNEL_ID ) );
+	}
+
+	public function test_chatwork_token_is_encrypted_and_blank_input_preserves_it(): void {
+		$plain   = 'chatwork-private-token-1234567890';
+		$initial = $this->settings->sanitize(
+			array(
+				ChatworkNotifier::CHANNEL_ID => array(
+					'enabled'   => '1',
+					'room_id'   => '123456789',
+					'api_token' => $plain,
+				),
+			)
+		);
+
+		$this->assertSame( '123456789', $initial['chatwork']['room_id'] );
+		$this->assertNotSame( $plain, $initial['chatwork']['encrypted_api_token'] );
+		$this->assertStringNotContainsString( $plain, (string) wp_json_encode( $initial ) );
+		update_option( NotificationChannelSettings::OPTION, $initial );
+		$this->assertTrue( $this->settings->enabled( ChatworkNotifier::CHANNEL_ID ) );
+		$this->assertSame( $plain, $this->settings->api_token() );
+
+		$preserved = $this->settings->sanitize(
+			array(
+				ChatworkNotifier::CHANNEL_ID => array(
+					'enabled'   => '1',
+					'room_id'   => '123456789',
+					'api_token' => '',
+				),
+			)
+		);
+		$this->assertSame( $initial['chatwork']['encrypted_api_token'], $preserved['chatwork']['encrypted_api_token'] );
+	}
+
+	public function test_chatwork_requires_positive_room_id_and_supports_explicit_token_deletion(): void {
+		$initial = $this->settings->sanitize(
+			array(
+				ChatworkNotifier::CHANNEL_ID => array(
+					'enabled'   => '1',
+					'room_id'   => '42',
+					'api_token' => 'valid-token',
+				),
+			)
+		);
+		update_option( NotificationChannelSettings::OPTION, $initial );
+
+		$this->assertSame(
+			$initial,
+			$this->settings->sanitize(
+				array(
+					ChatworkNotifier::CHANNEL_ID => array(
+						'enabled' => '1',
+						'room_id' => '0',
+					),
+				)
+			)
+		);
+
+		$deleted = $this->settings->sanitize(
+			array(
+				ChatworkNotifier::CHANNEL_ID => array(
+					'enabled' => '1',
+					'room_id' => '42',
+					'delete'  => '1',
+				),
+			)
+		);
+		$this->assertSame( '0', $deleted['chatwork']['enabled'] );
+		$this->assertSame( '', $deleted['chatwork']['encrypted_api_token'] );
+	}
+
+	public function test_chatwork_rejects_a_token_that_is_unsafe_for_an_http_header(): void {
+		$settings = $this->settings->sanitize(
+			array(
+				ChatworkNotifier::CHANNEL_ID => array(
+					'enabled'   => '1',
+					'room_id'   => '42',
+					'api_token' => "token\nInjected: value",
+				),
+			)
+		);
+
+		$this->assertSame( '0', $settings['chatwork']['enabled'] );
+		$this->assertSame( '', $settings['chatwork']['encrypted_api_token'] );
 	}
 }

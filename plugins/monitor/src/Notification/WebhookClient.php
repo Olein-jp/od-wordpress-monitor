@@ -8,6 +8,8 @@
 namespace Olein\WordPressMonitor\Notification;
 
 final class WebhookClient {
+	private const CHATWORK_ENDPOINT = 'https://api.chatwork.com/v2/rooms/%s/messages';
+
 	public function __construct( private readonly WebhookUrlValidator $validator ) {
 	}
 
@@ -29,7 +31,8 @@ final class WebhookClient {
 			return NotificationChannelResult::failed( $channel_id, 'PAYLOAD_ENCODING_FAILED' );
 		}
 
-		$response = wp_safe_remote_post(
+		return $this->request(
+			$channel_id,
 			$validated,
 			array(
 				'body'                => $body,
@@ -43,6 +46,35 @@ final class WebhookClient {
 				'timeout'             => 10,
 			)
 		);
+	}
+
+	public function post_chatwork( string $room_id, string $api_token, string $body ): NotificationChannelResult {
+		if ( 1 !== preg_match( '/^[1-9][0-9]{0,19}$/', $room_id ) || 1 !== preg_match( '/^[A-Za-z0-9._~-]{1,255}$/', $api_token ) ) {
+			return NotificationChannelResult::failed( ChatworkNotifier::CHANNEL_ID, 'CHATWORK_SETTINGS_INVALID' );
+		}
+
+		return $this->request(
+			ChatworkNotifier::CHANNEL_ID,
+			sprintf( self::CHATWORK_ENDPOINT, $room_id ),
+			array(
+				'body'                => array( 'body' => $body ),
+				'headers'             => array(
+					'Accept'          => 'application/json',
+					'x-chatworktoken' => $api_token,
+				),
+				'limit_response_size' => 4096,
+				'redirection'         => 0,
+				'reject_unsafe_urls'  => true,
+				'timeout'             => 10,
+			)
+		);
+	}
+
+	/**
+	 * @param array<string,mixed> $arguments WordPress HTTP API arguments.
+	 */
+	private function request( string $channel_id, string $url, array $arguments ): NotificationChannelResult {
+		$response = wp_safe_remote_post( $url, $arguments );
 
 		if ( is_wp_error( $response ) ) {
 			$error = strtolower( $response->get_error_code() . ' ' . $response->get_error_message() );

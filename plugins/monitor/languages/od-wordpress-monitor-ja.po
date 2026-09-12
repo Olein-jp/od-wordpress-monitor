@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OD WordPress Monitor 1.0.8\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/monitor\n"
-"POT-Creation-Date: 2026-09-12T13:46:15+00:00\n"
+"POT-Creation-Date: 2026-09-12T13:53:31+00:00\n"
 "PO-Revision-Date: 2026-09-12T06:43:36+00:00\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -133,11 +133,11 @@ msgstr "サイト"
 msgid "Site Details"
 msgstr "サイト詳細"
 
-#: src/Admin/Admin.php:76 src/Admin/NotificationSettingsPage.php:46
+#: src/Admin/Admin.php:76 src/Admin/NotificationSettingsPage.php:48
 msgid "Notification Settings"
 msgstr "通知設定"
 
-#: src/Admin/Admin.php:77 src/Admin/NotificationSettingsPage.php:31
+#: src/Admin/Admin.php:77 src/Admin/NotificationSettingsPage.php:32
 msgid "Notifications"
 msgstr "通知"
 
@@ -319,86 +319,119 @@ msgstr "AgentのAPIバージョンに対応していません。"
 msgid "Could not connect to the Agent."
 msgstr "Agentへ接続できませんでした。"
 
-#: src/Admin/NotificationSettingsPage.php:30
+#: src/Admin/NotificationSettingsPage.php:31
 msgid "Email notifications"
 msgstr "メール通知"
 
-#: src/Admin/NotificationSettingsPage.php:32
+#: src/Admin/NotificationSettingsPage.php:33
 msgid "Notification email"
 msgstr "通知先メールアドレス"
 
-#: src/Admin/NotificationSettingsPage.php:35
+#: src/Admin/NotificationSettingsPage.php:36
 msgid "Slack notifications"
 msgstr "Slack通知"
 
-#: src/Admin/NotificationSettingsPage.php:36
+#: src/Admin/NotificationSettingsPage.php:37
 msgid "Discord notifications"
 msgstr "Discord通知"
 
-#: src/Admin/NotificationSettingsPage.php:42
+#: src/Admin/NotificationSettingsPage.php:44
 msgid "You are not allowed to manage notification settings."
 msgstr "通知設定を管理する権限がありません。"
 
-#: src/Admin/NotificationSettingsPage.php:61
+#: src/Admin/NotificationSettingsPage.php:63
 msgid "You are not allowed to test notification settings."
 msgstr "通知設定をテストする権限がありません。"
 
-#: src/Admin/NotificationSettingsPage.php:66
+#: src/Admin/NotificationSettingsPage.php:68
 msgid "The notification channel is invalid."
 msgstr "通知チャネルが無効です。"
 
-#: src/Admin/NotificationSettingsPage.php:93
+#: src/Admin/NotificationSettingsPage.php:95
 msgid ""
 "Configure the global recipient for monitoring outage and recovery "
 "notifications."
 msgstr "監視障害と復旧通知の共通送信先を設定します。"
 
-#: src/Admin/NotificationSettingsPage.php:100
+#: src/Admin/NotificationSettingsPage.php:102
 msgid "Enable email notifications"
 msgstr "メール通知を有効化"
 
-#: src/Admin/NotificationSettingsPage.php:108
+#: src/Admin/NotificationSettingsPage.php:110
 msgid "Notifications remain suppressed until a valid email address is saved."
 msgstr "有効なメールアドレスが保存されるまで通知は送信されません。"
 
 #. translators: %s: service name.
-#: src/Admin/NotificationSettingsPage.php:129
+#: src/Admin/NotificationSettingsPage.php:131
 #, php-format
 msgid "Enable %s notifications"
 msgstr "%s通知を有効化"
 
-#: src/Admin/NotificationSettingsPage.php:132
+#: src/Admin/NotificationSettingsPage.php:134
 msgid "Webhook URL"
 msgstr "Webhook URL"
 
-#: src/Admin/NotificationSettingsPage.php:135
+#: src/Admin/NotificationSettingsPage.php:137
 msgid "Configured. Leave blank to keep the saved webhook."
-msgstr "設定済みです。保存済みのWebhookを維持する場合は空欄のままにしてください。"
+msgstr ""
+"設定済みです。保存済みのWebhookを維持する場合は空欄のままにしてください。"
 
-#: src/Admin/NotificationSettingsPage.php:135
+#: src/Admin/NotificationSettingsPage.php:137
 msgid "Not configured."
 msgstr "未設定です。"
 
-#: src/Admin/NotificationSettingsPage.php:137
+#: src/Admin/NotificationSettingsPage.php:139
 msgid "Delete the saved webhook"
 msgstr "保存済みのWebhookを削除する"
 
+#: src/Admin/NotificationSettingsPage.php:155
+msgid "Chatwork settings"
+msgstr "Chatwork設定"
+
+#: src/Admin/NotificationSettingsPage.php:158
+msgid "Enable Chatwork notifications"
+msgstr "Chatwork通知を有効化"
+
+#: src/Admin/NotificationSettingsPage.php:161
+msgid "Room ID"
+msgstr "ルームID"
+
+#: src/Admin/NotificationSettingsPage.php:165
+msgid "API token"
+msgstr "APIトークン"
+
+#: src/Admin/NotificationSettingsPage.php:168
+msgid "Configured. Leave blank to keep the saved API token."
+msgstr "設定済みです。保存済みのAPIトークンを維持する場合は空欄のままにしてください。"
+
+#: src/Admin/NotificationSettingsPage.php:168
+msgid "API token is not configured."
+msgstr "APIトークンは未設定です。"
+
+#: src/Admin/NotificationSettingsPage.php:170
+msgid "Delete the saved API token"
+msgstr "保存済みのAPIトークンを削除する"
+
+#: src/Admin/NotificationSettingsPage.php:184
+msgid "Chatwork notifications"
+msgstr "Chatwork通知"
+
 #. translators: %s: service name.
-#: src/Admin/NotificationSettingsPage.php:160
+#: src/Admin/NotificationSettingsPage.php:203
 #, php-format
 msgid "Send %s test notification"
 msgstr "%sへテスト通知を送信"
 
-#: src/Admin/NotificationSettingsPage.php:175
+#: src/Admin/NotificationSettingsPage.php:225
 msgid "The test notification was sent."
 msgstr "テスト通知を送信しました。"
 
-#: src/Admin/NotificationSettingsPage.php:176
+#: src/Admin/NotificationSettingsPage.php:226
 msgid ""
-"The test notification could not be sent. Check the saved webhook and try "
-"again."
+"The test notification could not be sent. Check the saved notification "
+"settings and try again."
 msgstr ""
-"テスト通知を送信できませんでした。保存済みのWebhookを確認して、もう一度お試し"
+"テスト通知を送信できませんでした。保存済みの通知設定を確認して、もう一度お試し"
 "ください。"
 
 #: src/Admin/SiteDetailPage.php:38
@@ -1081,10 +1114,18 @@ msgid "Message: %s"
 msgstr "メッセージ: %s"
 
 #. translators: %s: notification service name.
-#: src/Notification/NotificationChannelSettings.php:103
+#: src/Notification/NotificationChannelSettings.php:115
 #, php-format
 msgid "%s webhook URL was not changed because it is invalid."
 msgstr "%sのWebhook URLが無効なため変更しませんでした。"
+
+#: src/Notification/NotificationChannelSettings.php:148
+msgid "Chatwork room ID must be a positive integer."
+msgstr "ChatworkのルームIDは正の整数で入力してください。"
+
+#: src/Notification/NotificationChannelSettings.php:168
+msgid "Chatwork API token is invalid."
+msgstr "ChatworkのAPIトークンが無効です。"
 
 #: src/Notification/NotificationTestService.php:35
 msgid "Test notification"
@@ -1098,14 +1139,14 @@ msgstr "これはOD WordPress Monitorからのテスト通知です。"
 msgid "Enter a valid webhook URL for this service."
 msgstr "このサービスの有効なWebhook URLを入力してください。"
 
-#: src/Plugin.php:186
+#: src/Plugin.php:188
 msgid ""
 "OD WordPress Monitor requires the sodium PHP extension to protect "
 "credentials."
 msgstr ""
 "認証情報を保護するため、OD WordPress MonitorにはPHPのsodium拡張が必要です。"
 
-#: src/Plugin.php:234
+#: src/Plugin.php:236
 msgid ""
 "OD WordPress Monitor is temporarily paused while its database is being "
 "updated by another request."
@@ -1113,7 +1154,7 @@ msgstr ""
 "別のリクエストでデータベースを更新しているため、OD WordPress Monitorは一時停"
 "止しています。"
 
-#: src/Plugin.php:236
+#: src/Plugin.php:238
 msgid ""
 "OD WordPress Monitor could not update its database. Monitoring is paused; "
 "reload this page to retry after checking database permissions and logs."
@@ -1123,7 +1164,7 @@ msgstr ""
 "てください。"
 
 #. translators: 1: previous database schema version, 2: target database schema version.
-#: src/Plugin.php:244
+#: src/Plugin.php:246
 #, php-format
 msgid "Schema version: %1$s → %2$s."
 msgstr "スキーマバージョン: %1$s → %2$s。"

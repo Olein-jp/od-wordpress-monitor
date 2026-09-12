@@ -1,6 +1,6 @@
 <?php
 /**
- * Encrypted Slack and Discord notification settings.
+ * Encrypted Slack, Discord, and Chatwork notification settings.
  *
  * @package OD_WordPress_Monitor
  */
@@ -12,7 +12,7 @@ use Throwable;
 final class NotificationChannelSettings {
 	public const OPTION = 'odm_notification_channel_settings';
 
-	private const CHANNELS = array( SlackNotifier::CHANNEL_ID, DiscordNotifier::CHANNEL_ID );
+	private const WEBHOOK_CHANNELS = array( SlackNotifier::CHANNEL_ID, DiscordNotifier::CHANNEL_ID );
 
 	public function __construct(
 		private readonly NotificationSecretEncryptor $encryptor,
@@ -37,6 +37,12 @@ final class NotificationChannelSettings {
 	public function enabled( string $channel_id ): bool {
 		$settings = $this->get();
 
+		if ( ChatworkNotifier::CHANNEL_ID === $channel_id ) {
+			return '1' === $settings[ $channel_id ]['enabled']
+				&& '' !== $settings[ $channel_id ]['room_id']
+				&& '' !== $this->api_token();
+		}
+
 		return isset( $settings[ $channel_id ] )
 			&& '1' === $settings[ $channel_id ]['enabled']
 			&& '' !== $this->webhook_url( $channel_id );
@@ -50,34 +56,42 @@ final class NotificationChannelSettings {
 		$settings  = $this->get();
 		$encrypted = $settings[ $channel_id ]['encrypted_webhook_url'] ?? '';
 
-		if ( '' === $encrypted ) {
-			return '';
-		}
-
-		try {
-			$url       = $this->encryptor->decrypt( $encrypted );
+		$url = $this->decrypt( $encrypted );
+		if ( '' !== $url ) {
 			$validated = $this->validator->validate( $channel_id, $url );
 
 			return is_wp_error( $validated ) ? '' : $validated;
-		} catch ( Throwable $exception ) {
-			unset( $exception );
-
-			return '';
 		}
+
+		return '';
+	}
+
+	public function room_id(): string {
+		return $this->get()[ ChatworkNotifier::CHANNEL_ID ]['room_id'];
+	}
+
+	public function has_api_token(): bool {
+		return '' !== $this->api_token();
+	}
+
+	public function api_token(): string {
+		$token = $this->decrypt( $this->get()[ ChatworkNotifier::CHANNEL_ID ]['encrypted_api_token'] );
+
+		return 1 === preg_match( '/^[A-Za-z0-9._~-]{1,255}$/', $token ) ? $token : '';
 	}
 
 	/**
 	 * Preserve blank secrets, and only replace or delete them explicitly.
 	 *
 	 * @param mixed $input Submitted option value.
-	 * @return array<string,array{enabled:string,encrypted_webhook_url:string}>
+	 * @return array<string,array<string,string>>
 	 */
 	public function sanitize( $input ): array {
 		$input    = is_array( $input ) ? $input : array();
 		$current  = $this->get();
 		$settings = $current;
 
-		foreach ( self::CHANNELS as $channel_id ) {
+		foreach ( self::WEBHOOK_CHANNELS as $channel_id ) {
 			$submitted = isset( $input[ $channel_id ] ) && is_array( $input[ $channel_id ] ) ? $input[ $channel_id ] : array();
 			$delete    = isset( $submitted['delete'] ) && '1' === (string) $submitted['delete'];
 			$new_url   = isset( $submitted['webhook_url'] ) && is_scalar( $submitted['webhook_url'] )
@@ -117,18 +131,69 @@ final class NotificationChannelSettings {
 				: '0';
 		}
 
+		return $this->sanitize_chatwork( $input, $settings );
+	}
+
+	/**
+	 * @param array<string,mixed>                $input Submitted settings.
+	 * @param array<string,array<string,string>> $settings Current sanitized settings.
+	 * @return array<string,array<string,string>>
+	 */
+	private function sanitize_chatwork( array $input, array $settings ): array {
+		$channel_id = ChatworkNotifier::CHANNEL_ID;
+		$submitted  = isset( $input[ $channel_id ] ) && is_array( $input[ $channel_id ] ) ? $input[ $channel_id ] : array();
+		$room_input = isset( $submitted['room_id'] ) && is_scalar( $submitted['room_id'] )
+			? trim( (string) wp_unslash( $submitted['room_id'] ) )
+			: '';
+
+		if ( '' !== $room_input && ( 1 !== preg_match( '/^[1-9][0-9]*$/', $room_input ) || strlen( $room_input ) > 20 ) ) {
+			$this->add_invalid_setting_error( $channel_id, __( 'Chatwork room ID must be a positive integer.', 'od-wordpress-monitor' ) );
+
+			return $settings;
+		}
+
+		$delete    = isset( $submitted['delete'] ) && '1' === (string) $submitted['delete'];
+		$new_token = isset( $submitted['api_token'] ) && is_scalar( $submitted['api_token'] )
+			? trim( (string) wp_unslash( $submitted['api_token'] ) )
+			: '';
+		if ( '' !== $new_token && 1 !== preg_match( '/^[A-Za-z0-9._~-]{1,255}$/', $new_token ) ) {
+			$this->add_invalid_setting_error( $channel_id, __( 'Chatwork API token is invalid.', 'od-wordpress-monitor' ) );
+
+			return $settings;
+		}
+
+		$settings[ $channel_id ]['room_id'] = $room_input;
+
+		if ( $delete ) {
+			$settings[ $channel_id ]['enabled']             = '0';
+			$settings[ $channel_id ]['encrypted_api_token'] = '';
+
+			return $settings;
+		}
+
+		if ( '' !== $new_token ) {
+			$settings[ $channel_id ]['encrypted_api_token'] = $this->encryptor->encrypt( $new_token );
+		}
+
+		$settings[ $channel_id ]['enabled'] = isset( $submitted['enabled'] )
+			&& '1' === (string) $submitted['enabled']
+			&& '' !== $settings[ $channel_id ]['room_id']
+			&& '' !== $settings[ $channel_id ]['encrypted_api_token']
+			? '1'
+			: '0';
+
 		return $settings;
 	}
 
 	/**
-	 * @return array<string,array{enabled:string,encrypted_webhook_url:string}>
+	 * @return array<string,array<string,string>>
 	 */
 	private function get(): array {
 		$stored = get_option( self::OPTION, $this->defaults() );
 		$stored = is_array( $stored ) ? $stored : array();
 		$result = $this->defaults();
 
-		foreach ( self::CHANNELS as $channel_id ) {
+		foreach ( self::WEBHOOK_CHANNELS as $channel_id ) {
 			$channel               = isset( $stored[ $channel_id ] ) && is_array( $stored[ $channel_id ] ) ? $stored[ $channel_id ] : array();
 			$result[ $channel_id ] = array(
 				'enabled'               => isset( $channel['enabled'] ) && '1' === (string) $channel['enabled'] ? '1' : '0',
@@ -136,22 +201,52 @@ final class NotificationChannelSettings {
 			);
 		}
 
+		$chatwork                               = isset( $stored[ ChatworkNotifier::CHANNEL_ID ] ) && is_array( $stored[ ChatworkNotifier::CHANNEL_ID ] ) ? $stored[ ChatworkNotifier::CHANNEL_ID ] : array();
+		$result[ ChatworkNotifier::CHANNEL_ID ] = array(
+			'enabled'             => isset( $chatwork['enabled'] ) && '1' === (string) $chatwork['enabled'] ? '1' : '0',
+			'room_id'             => isset( $chatwork['room_id'] ) && is_string( $chatwork['room_id'] ) && 1 === preg_match( '/^[1-9][0-9]{0,19}$/', $chatwork['room_id'] ) ? $chatwork['room_id'] : '',
+			'encrypted_api_token' => isset( $chatwork['encrypted_api_token'] ) && is_string( $chatwork['encrypted_api_token'] ) ? $chatwork['encrypted_api_token'] : '',
+		);
+
 		return $result;
 	}
 
 	/**
-	 * @return array<string,array{enabled:string,encrypted_webhook_url:string}>
+	 * @return array<string,array<string,string>>
 	 */
 	private function defaults(): array {
 		return array(
-			SlackNotifier::CHANNEL_ID   => array(
+			SlackNotifier::CHANNEL_ID    => array(
 				'enabled'               => '0',
 				'encrypted_webhook_url' => '',
 			),
-			DiscordNotifier::CHANNEL_ID => array(
+			DiscordNotifier::CHANNEL_ID  => array(
 				'enabled'               => '0',
 				'encrypted_webhook_url' => '',
+			),
+			ChatworkNotifier::CHANNEL_ID => array(
+				'enabled'             => '0',
+				'room_id'             => '',
+				'encrypted_api_token' => '',
 			),
 		);
+	}
+
+	private function decrypt( string $encrypted ): string {
+		if ( '' === $encrypted ) {
+			return '';
+		}
+
+		try {
+			return $this->encryptor->decrypt( $encrypted );
+		} catch ( Throwable $exception ) {
+			unset( $exception );
+
+			return '';
+		}
+	}
+
+	private function add_invalid_setting_error( string $channel_id, string $message ): void {
+		add_settings_error( self::OPTION, 'invalid_' . $channel_id . '_setting', $message );
 	}
 }
