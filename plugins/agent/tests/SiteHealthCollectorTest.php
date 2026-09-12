@@ -12,13 +12,17 @@ use RuntimeException;
 use WP_Error;
 
 final class SiteHealthCollectorTest extends \WP_UnitTestCase {
+	private const LEGACY_CACHE_KEY = 'od_monitor_agent_site_health_v1';
+
 	public function set_up(): void {
 		parent::set_up();
 		delete_site_transient( SiteHealthCollector::CACHE_KEY );
+		delete_site_transient( self::LEGACY_CACHE_KEY );
 	}
 
 	public function tear_down(): void {
 		delete_site_transient( SiteHealthCollector::CACHE_KEY );
+		delete_site_transient( self::LEGACY_CACHE_KEY );
 		remove_all_filters( 'site_status_tests' );
 		remove_all_filters( 'pre_http_request' );
 		parent::tear_down();
@@ -57,6 +61,52 @@ final class SiteHealthCollectorTest extends \WP_UnitTestCase {
 			$this->assertContains( $test['status'], array( 'good', 'recommended', 'critical' ) );
 			$this->assertSame( wp_strip_all_tags( $test['label'] ), $test['label'] );
 		}
+	}
+
+	public function test_php_sessions_is_not_executed_or_counted(): void {
+		add_filter(
+			'site_status_tests',
+			static function ( array $tests ): array {
+				$tests['direct'] = array(
+					'php_sessions'   => array( 'test' => 'php_sessions' ),
+					'php_extensions' => array( 'test' => 'php_extensions' ),
+				);
+				return $tests;
+			}
+		);
+
+		$site_health = new class() {
+			public int $php_session_calls = 0;
+
+			public function get_test_php_sessions(): array {
+				++$this->php_session_calls;
+				return array(
+					'status' => 'critical',
+					'label'  => 'An active PHP session was detected',
+				);
+			}
+
+			public function get_test_php_extensions(): array {
+				return array(
+					'status' => 'good',
+					'label'  => 'Healthy',
+				);
+			}
+		};
+
+		$result = ( new SiteHealthCollector( $site_health ) )->collect();
+
+		$this->assertNotWPError( $result );
+		$this->assertSame( 0, $site_health->php_session_calls );
+		$this->assertSame( array( 'php_extensions' ), array_column( $result['tests'], 'id' ) );
+		$this->assertSame(
+			array(
+				'critical'    => 0,
+				'recommended' => 0,
+				'good'        => 1,
+			),
+			$result['summary']
+		);
 	}
 
 	public function test_invalid_replaced_and_failing_tests_are_skipped(): void {
@@ -165,6 +215,50 @@ final class SiteHealthCollectorTest extends \WP_UnitTestCase {
 		$this->assertNotWPError( $first );
 		$this->assertSame( $first, $second );
 		$this->assertSame( 1, $site_health->calls );
+	}
+
+	public function test_legacy_cache_with_php_sessions_is_not_reused(): void {
+		set_site_transient(
+			self::LEGACY_CACHE_KEY,
+			array(
+				'summary'   => array(
+					'critical'    => 1,
+					'recommended' => 0,
+					'good'        => 0,
+				),
+				'tests'     => array(
+					array(
+						'id'     => 'php_sessions',
+						'status' => 'critical',
+						'label'  => 'An active PHP session was detected',
+					),
+				),
+				'timestamp' => '2026-09-10T03:00:00Z',
+			),
+			SiteHealthCollector::CACHE_TTL
+		);
+		add_filter(
+			'site_status_tests',
+			static function ( array $tests ): array {
+				$tests['direct'] = array( 'php_extensions' => array( 'test' => 'php_extensions' ) );
+				return $tests;
+			}
+		);
+
+		$site_health = new class() {
+			public function get_test_php_extensions(): array {
+				return array(
+					'status' => 'good',
+					'label'  => 'Healthy',
+				);
+			}
+		};
+		$result      = ( new SiteHealthCollector( $site_health ) )->collect();
+
+		$this->assertNotWPError( $result );
+		$this->assertSame( 0, $result['summary']['critical'] );
+		$this->assertSame( array( 'php_extensions' ), array_column( $result['tests'], 'id' ) );
+		$this->assertNotSame( '2026-09-10T03:00:00Z', $result['timestamp'] );
 	}
 
 	public function test_soft_budget_stops_starting_more_tests(): void {

@@ -4,7 +4,7 @@
 
 この文書は、Agent の `/site-health` を実装する前提として、WordPress 標準の Site Health API を安全に利用する境界を定めるものです。調査対象は、このプロジェクトがサポートする最小バージョン WordPress 6.8.0 と、2026-09-10 時点の最新安定版 WordPress 7.1.0 です。
 
-初期実装では、`WP_Site_Health` の公開APIだけを利用し、13件の固定allowlistに含まれる同期テストだけを実行します。外部通信、loopback、ファイルシステム確認、大量データ走査を伴うテストは実行しません。WordPress Core の private method、Site Health 管理画面のHTML・JavaScript、Coreコードのコピーには依存しません。
+初期実装では、`WP_Site_Health` の公開APIだけを利用し、固定allowlistに含まれる同期テストだけを実行します。外部通信、loopback、ファイルシステム確認、大量データ走査を伴うテストは実行しません。WordPress Core の private method、Site Health 管理画面のHTML・JavaScript、Coreコードのコピーには依存しません。
 
 ## 根拠と利用する公開API
 
@@ -29,7 +29,7 @@ RESTリクエスト時は通常、WordPress Core自身が `WP_Site_Health` を�
 | `WP_Site_Health::get_tests()` | 利用可 | 利用可 | 採用 |
 | `direct` / `async` 構造 | 同一 | 同一 | 構造確認に利用 |
 | Core Site Health REST routes | 6種類の非同期診断 | 同じ6種類 | 初期実装では不採用 |
-| 初期allowlistの13テスト | すべて存在 | すべて存在 | 採用 |
+| 初期allowlistの13テスト | すべて存在 | すべて存在 | `php_sessions`を除く12件を採用 |
 | 新しい直接テスト | なし | `search_engine_visibility`、`insecure_registration`、`opcode_cache` | 6.8非対応のため初期allowlist外 |
 
 WordPress 7.1.0にある追加テストのうち、`search_engine_visibility` は6.9.0、`insecure_registration` と `opcode_cache` は7.0.0で導入されています。将来のCore追加を自動採用すると、最小バージョンとの応答差と実行コストを事前評価できなくなるため、自動採用はしません。
@@ -40,7 +40,8 @@ WordPress 7.1.0にある追加テストのうち、`search_engine_visibility` �
 
 | 分類 | 代表例 | 実行特性 | 初期実装 |
 | --- | --- | --- | --- |
-| 安全な同期処理 | `php_extensions`、`php_default_timezone`、`php_sessions`、`sql_server`、`ssl_support`、`scheduled_events`、`http_requests`、`debug_enabled`、`file_uploads` | PHP設定、DB version、cron配列、定数・filterなどを同一request内で確認する | allowlist対象 |
+| 安全な同期処理 | `php_extensions`、`php_default_timezone`、`sql_server`、`ssl_support`、`scheduled_events`、`http_requests`、`debug_enabled`、`file_uploads` | PHP設定、DB version、cron配列、定数・filterなどを同一request内で確認する | allowlist対象 |
+| request環境依存 | `php_sessions` | 現在のrequestでPHP sessionがactiveかを確認するため、Agent REST requestと管理画面で結果が異なり得る | 除外 |
 | 外部request | `dotorg_communication`、`php_version` | WordPress.orgへHTTP requestを送る。`php_version` はsite transientがない場合だけ送信する | 除外 |
 | loopback | `loopback_requests`、`rest_availability`、`authorization_header`、`page_cache` | 自サイトの管理画面、REST API、またはfront pageへHTTP requestを送る | 除外 |
 | 高負荷になり得る処理 | `background_updates`、`update_temp_backup_writable`、`available_updates_disk_space`、`autoloaded_options`、`persistent_object_cache`、`page_cache` | updater・filesystem初期化、空き容量確認、autoload data走査、DB規模判定、front pageへの3回requestを行い得る | 除外 |
@@ -49,7 +50,7 @@ WordPress 7.1.0にある追加テストのうち、`search_engine_visibility` �
 
 ## 初期allowlist
 
-次の13件だけを、表にある公開メソッドへ固定対応させて実行します。
+次の12件だけを、表にある公開メソッドへ固定対応させて実行します。
 
 | responseの`id` | Core定義の`test` | 呼び出す公開メソッド |
 | --- | --- | --- |
@@ -58,7 +59,6 @@ WordPress 7.1.0にある追加テストのうち、`search_engine_visibility` �
 | `theme_version` | `theme_version` | `get_test_theme_version()` |
 | `php_extensions` | `php_extensions` | `get_test_php_extensions()` |
 | `php_default_timezone` | `php_default_timezone` | `get_test_php_default_timezone()` |
-| `php_sessions` | `php_sessions` | `get_test_php_sessions()` |
 | `sql_server` | `sql_server` | `get_test_sql_server()` |
 | `ssl_support` | `ssl_support` | `get_test_ssl_support()` |
 | `scheduled_events` | `scheduled_events` | `get_test_scheduled_events()` |
@@ -73,6 +73,7 @@ WordPress 7.1.0にある追加テストのうち、`search_engine_visibility` �
 
 | テスト | 除外理由 |
 | --- | --- |
+| `php_sessions` | 現在のrequestのsession状態を検査するため、認証済みAgent REST requestでの結果がサイト管理画面の状態を代表せず、criticalを誤検知し得る |
 | `php_version` | Serve Happyのsite transientがない場合に外部HTTP requestを行う |
 | `rest_availability` | 自サイトREST APIへのloopback requestを行う |
 | `dotorg_communication` | WordPress.orgへ最大10秒の外部requestを行う |
@@ -165,7 +166,7 @@ Issue #13の実装時は、次を自動テストします。
 - negative HTTP test：`pre_http_request`で予期しないHTTP requestを失敗させ、allowlist実行中に外部requestとloopbackが一度も発生しないことを確認する。
 - REST test：未認証、専用capabilityなし、許可済みGET、schema一致、UTC timestampを確認する。
 - protocol test：有効fixtureと、summary count不一致・未知status・HTML labelを含む無効fixtureを確認する。
-- compatibility test：WordPress 6.8.0と最新安定版の両方で13件のID、Core `test`値、公開methodのcallableを確認する。最新Coreで差分が出た場合は自動採用せず、調査failureとしてreviewする。
+- compatibility test：WordPress 6.8.0と最新安定版の両方で12件のID、Core `test`値、公開methodのcallableを確認する。最新Coreで差分が出た場合は自動採用せず、調査failureとしてreviewする。
 - regression test：Agent REST/integration、AgentClient、ResponseValidatorの関連test後に、ルートの`composer lint`と`composer test`を実行する。
 
 ## 公式資料

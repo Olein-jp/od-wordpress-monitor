@@ -12,7 +12,7 @@ use Throwable;
 use WP_Error;
 
 final class SiteHealthCollector {
-	public const CACHE_KEY        = 'od_monitor_agent_site_health_v1';
+	public const CACHE_KEY        = 'od_monitor_agent_site_health_v2';
 	public const CACHE_TTL        = 15 * MINUTE_IN_SECONDS;
 	public const EXECUTION_BUDGET = 10.0;
 
@@ -41,10 +41,6 @@ final class SiteHealthCollector {
 		'php_default_timezone'      => array(
 			'test'   => 'php_default_timezone',
 			'method' => 'get_test_php_default_timezone',
-		),
-		'php_sessions'              => array(
-			'test'   => 'php_sessions',
-			'method' => 'get_test_php_sessions',
 		),
 		'sql_server'                => array(
 			'test'   => 'sql_server',
