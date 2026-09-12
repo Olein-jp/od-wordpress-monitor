@@ -87,10 +87,10 @@ final class CheckResultRecorder {
 		}
 
 		try {
-			$sent = $this->notifications->notify( $event );
+			$delivery = $this->notifications->notify( $event );
 
-			if ( null !== $sent ) {
-				$this->events->record_notification_result( $event_id, $sent );
+			if ( null !== $delivery ) {
+				$this->events->record_notification_result( $event_id, $delivery );
 			}
 		} catch ( Throwable $exception ) {
 			unset( $exception );

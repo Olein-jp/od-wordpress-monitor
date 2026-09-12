@@ -8,44 +8,76 @@
 namespace Olein\WordPressMonitor\Notification;
 
 use Olein\WordPressMonitor\Event\MonitoringEvent;
+use InvalidArgumentException;
 use Throwable;
 
 final class NotificationManager {
+	/** @var array<string,NotificationSenderInterface> */
+	private readonly array $senders;
+
+	/**
+	 * @param list<NotificationSenderInterface> $senders Available delivery channels.
+	 */
 	public function __construct(
-		private readonly NotificationSettings $settings,
 		private readonly NotificationRule $rule,
-		private readonly NotificationSenderInterface $sender
+		private readonly NotificationMessageFactoryInterface $messages,
+		array $senders
 	) {
+		$indexed = array();
+
+		foreach ( $senders as $sender ) {
+			if ( ! $sender instanceof NotificationSenderInterface ) {
+				throw new InvalidArgumentException( 'Notification senders must implement the sender interface.' );
+			}
+
+			$channel_id = $sender->channel_id();
+
+			if ( 1 !== preg_match( '/^[a-z0-9][a-z0-9_-]{0,63}$/', $channel_id ) || isset( $indexed[ $channel_id ] ) ) {
+				throw new InvalidArgumentException( 'Notification sender channel IDs must be valid and unique.' );
+			}
+
+			$indexed[ $channel_id ] = $sender;
+		}
+
+		$this->senders = $indexed;
 	}
 
 	/**
-	 * Dispatch only an allowed transition with a valid enabled recipient.
+	 * Dispatch an allowed transition to every enabled channel.
 	 *
-	 * @return bool|null True when sent, false on delivery failure, or null when suppressed.
+	 * @return NotificationDeliveryResult|null Results for attempted channels, or null when suppressed.
 	 */
-	public function notify( MonitoringEvent $event ): ?bool {
-		if ( ! $this->settings->enabled() ) {
-			return null;
-		}
-
-		$recipient = $this->settings->email();
-
-		if ( '' === $recipient ) {
-			return null;
-		}
-
+	public function notify( MonitoringEvent $event ): ?NotificationDeliveryResult {
 		$notification_type = $this->rule->classify( $event );
 
 		if ( null === $notification_type ) {
 			return null;
 		}
 
-		try {
-			return $this->sender->send( $recipient, $event, $notification_type );
-		} catch ( Throwable $exception ) {
-			unset( $exception );
+		$message = $this->messages->create( $event, $notification_type );
 
-			return false;
+		if ( null === $message ) {
+			return null;
 		}
+
+		$results = array();
+
+		foreach ( $this->senders as $channel_id => $sender ) {
+			try {
+				if ( ! $sender->enabled() ) {
+					continue;
+				}
+
+				$result    = $sender->send( $message );
+				$results[] = $channel_id === $result->channel_id()
+					? $result
+					: NotificationChannelResult::failed( $channel_id, 'CHANNEL_ID_MISMATCH' );
+			} catch ( Throwable $exception ) {
+				unset( $exception );
+				$results[] = NotificationChannelResult::failed( $channel_id, 'DELIVERY_EXCEPTION' );
+			}
+		}
+
+		return array() === $results ? null : new NotificationDeliveryResult( $results );
 	}
 }

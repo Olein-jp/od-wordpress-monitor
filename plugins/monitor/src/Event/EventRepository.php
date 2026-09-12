@@ -9,6 +9,7 @@ namespace Olein\WordPressMonitor\Event;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use Olein\WordPressMonitor\Notification\NotificationDeliveryResult;
 use Olein\WordPressMonitor\Support\MetadataCodec;
 use WP_Error;
 use wpdb;
@@ -69,19 +70,33 @@ final class EventRepository {
 	 *
 	 * @return bool|WP_Error
 	 */
-	public function record_notification_result( int $id, bool $sent, ?DateTimeImmutable $attempted_at = null ) {
+	public function record_notification_result( int $id, NotificationDeliveryResult $delivery, ?DateTimeImmutable $attempted_at = null ) {
 		$event = $this->find( $id );
 
 		if ( null === $event ) {
 			return new WP_Error( 'EVENT_NOT_FOUND', __( 'The notification event could not be found.', 'od-wordpress-monitor' ) );
 		}
 
+		$channels = array();
+
+		foreach ( $delivery->channels() as $channel_id => $channel ) {
+			$channels[ $channel_id ] = array(
+				'status'   => $channel->status(),
+				'attempts' => $channel->attempts(),
+			);
+
+			if ( null !== $channel->error_code() ) {
+				$channels[ $channel_id ]['error_code'] = $channel->error_code();
+			}
+		}
+
 		$metadata                 = $event->metadata();
 		$metadata['notification'] = array(
-			'status'    => $sent ? 'sent' : 'failed',
+			'status'    => $delivery->status(),
 			'timestamp' => ( $attempted_at ?? new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ) )
 				->setTimezone( new DateTimeZone( 'UTC' ) )
 				->format( 'Y-m-d\TH:i:s\Z' ),
+			'channels'  => $channels,
 		);
 		$encoded                  = $this->metadata_codec->encode( $metadata );
 

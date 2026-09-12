@@ -11,6 +11,8 @@ use DateTimeImmutable;
 use Olein\WordPressMonitor\Activation\DatabaseMigrator;
 use Olein\WordPressMonitor\Event\EventRepository;
 use Olein\WordPressMonitor\Event\MonitoringEvent;
+use Olein\WordPressMonitor\Notification\NotificationChannelResult;
+use Olein\WordPressMonitor\Notification\NotificationDeliveryResult;
 
 final class EventRepositoryTest extends \WP_UnitTestCase {
 	private EventRepository $repository;
@@ -52,14 +54,19 @@ final class EventRepositoryTest extends \WP_UnitTestCase {
 		$this->assertWPError( $this->repository->create( $event ) );
 	}
 
-	public function test_records_only_notification_status_and_utc_timestamp(): void {
+	public function test_records_only_channel_results_and_utc_timestamp(): void {
 		$id = $this->repository->create( $this->event( 'SITE_DOWN', 'healthy', 'critical', '2026-09-09T00:00:00Z' ) );
 
 		$this->assertIsInt( $id );
 		$this->assertTrue(
 			$this->repository->record_notification_result(
 				$id,
-				false,
+				new NotificationDeliveryResult(
+					array(
+						NotificationChannelResult::sent( 'email' ),
+						NotificationChannelResult::failed( 'slack', 'HTTP_503' ),
+					)
+				),
 				new DateTimeImmutable( '2026-09-10T09:30:00+09:00' )
 			)
 		);
@@ -67,8 +74,19 @@ final class EventRepositoryTest extends \WP_UnitTestCase {
 			array(
 				'source'       => 'http',
 				'notification' => array(
-					'status'    => 'failed',
+					'status'    => 'partial',
 					'timestamp' => '2026-09-10T00:30:00Z',
+					'channels'  => array(
+						'email' => array(
+							'status'   => 'sent',
+							'attempts' => 1,
+						),
+						'slack' => array(
+							'status'     => 'failed',
+							'attempts'   => 1,
+							'error_code' => 'HTTP_503',
+						),
+					),
 				),
 			),
 			$this->repository->find( $id )->metadata()

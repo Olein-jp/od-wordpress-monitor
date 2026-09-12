@@ -9,40 +9,28 @@ namespace Olein\WordPressMonitor\Tests;
 
 use DateTimeImmutable;
 use Olein\WordPressMonitor\Event\MonitoringEvent;
+use Olein\WordPressMonitor\Notification\NotificationChannelResult;
+use Olein\WordPressMonitor\Notification\NotificationDeliveryResult;
 use Olein\WordPressMonitor\Notification\NotificationManager;
+use Olein\WordPressMonitor\Notification\NotificationMessage;
+use Olein\WordPressMonitor\Notification\NotificationMessageFactoryInterface;
 use Olein\WordPressMonitor\Notification\NotificationRule;
 use Olein\WordPressMonitor\Notification\NotificationSenderInterface;
-use Olein\WordPressMonitor\Notification\NotificationSettings;
 
 final class NotificationManagerTest extends \WP_UnitTestCase {
-	private NotificationSettings $settings;
-
-	public function set_up(): void {
-		parent::set_up();
-		delete_option( NotificationSettings::OPTION );
-		$this->settings = new NotificationSettings();
-	}
-
 	/**
 	 * @dataProvider selected_transition_provider
 	 */
-	public function test_dispatches_selected_transitions_to_the_configured_recipient( string $previous, string $current, string $expected_type ): void {
-		update_option(
-			NotificationSettings::OPTION,
-			array(
-				'enabled' => '1',
-				'email'   => 'alerts@example.com',
-			)
-		);
-		$sender  = $this->sender();
-		$manager = new NotificationManager( $this->settings, new NotificationRule(), $sender );
-		$event   = $this->event( $previous, $current );
+	public function test_dispatches_selected_transitions( string $previous, string $current, string $expected_type ): void {
+		$sender  = $this->sender( 'email' );
+		$manager = new NotificationManager( new NotificationRule(), $this->message_factory(), array( $sender ) );
 
-		$this->assertTrue( $manager->notify( $event ) );
+		$result = $manager->notify( $this->event( $previous, $current ) );
+
+		$this->assertInstanceOf( NotificationDeliveryResult::class, $result );
+		$this->assertSame( NotificationDeliveryResult::SENT, $result->status() );
 		$this->assertSame( 1, $sender->calls );
-		$this->assertSame( 'alerts@example.com', $sender->recipient );
-		$this->assertSame( $event, $sender->event );
-		$this->assertSame( $expected_type, $sender->notification_type );
+		$this->assertSame( $expected_type, $sender->message->notification_type() );
 	}
 
 	/**
@@ -56,67 +44,81 @@ final class NotificationManagerTest extends \WP_UnitTestCase {
 		);
 	}
 
-	public function test_does_not_dispatch_an_ongoing_failure(): void {
-		update_option(
-			NotificationSettings::OPTION,
-			array(
-				'enabled' => '1',
-				'email'   => 'alerts@example.com',
-			)
-		);
-		$sender  = $this->sender();
-		$manager = new NotificationManager( $this->settings, new NotificationRule(), $sender );
+	public function test_does_not_dispatch_a_suppressed_transition(): void {
+		$sender  = $this->sender( 'email' );
+		$manager = new NotificationManager( new NotificationRule(), $this->message_factory(), array( $sender ) );
 
 		$this->assertNull( $manager->notify( $this->event( 'critical', 'critical' ) ) );
+		$this->assertNull( $manager->notify( $this->event( 'unknown', 'critical' ) ) );
 		$this->assertSame( 0, $sender->calls );
 	}
 
-	/**
-	 * @dataProvider unavailable_recipient_provider
-	 */
-	public function test_does_not_call_sender_when_disabled_or_recipient_is_invalid( string $enabled, string $email ): void {
-		update_option(
-			NotificationSettings::OPTION,
-			array(
-				'enabled' => $enabled,
-				'email'   => $email,
-			)
-		);
-		$sender  = $this->sender();
-		$manager = new NotificationManager( $this->settings, new NotificationRule(), $sender );
+	public function test_does_not_dispatch_when_every_channel_is_disabled(): void {
+		$sender  = $this->sender( 'email', false );
+		$manager = new NotificationManager( new NotificationRule(), $this->message_factory(), array( $sender ) );
 
 		$this->assertNull( $manager->notify( $this->event( 'healthy', 'critical' ) ) );
 		$this->assertSame( 0, $sender->calls );
 	}
 
-	public function test_sender_exception_becomes_a_safe_failure(): void {
-		update_option(
-			NotificationSettings::OPTION,
-			array(
-				'enabled' => '1',
-				'email'   => 'alerts@example.com',
-			)
-		);
-		$sender  = new class() implements NotificationSenderInterface {
-			public function send( string $recipient, MonitoringEvent $event, string $notification_type ): bool {
-				unset( $recipient, $event, $notification_type );
-				throw new \RuntimeException( 'Internal transport detail.' );
-			}
-		};
-		$manager = new NotificationManager( $this->settings, new NotificationRule(), $sender );
+	public function test_continues_after_failure_and_returns_a_partial_result(): void {
+		$failed    = $this->sender( 'slack', true, false );
+		$succeeded = $this->sender( 'email' );
+		$manager   = new NotificationManager( new NotificationRule(), $this->message_factory(), array( $failed, $succeeded ) );
 
-		$this->assertFalse( $manager->notify( $this->event( 'healthy', 'critical' ) ) );
+		$result = $manager->notify( $this->event( 'healthy', 'critical' ) );
+
+		$this->assertInstanceOf( NotificationDeliveryResult::class, $result );
+		$this->assertSame( NotificationDeliveryResult::PARTIAL, $result->status() );
+		$this->assertSame( NotificationChannelResult::FAILED, $result->channels()['slack']->status() );
+		$this->assertSame( 'TEST_SEND_FAILED', $result->channels()['slack']->error_code() );
+		$this->assertSame( NotificationChannelResult::SENT, $result->channels()['email']->status() );
+		$this->assertSame( 1, $failed->calls );
+		$this->assertSame( 1, $succeeded->calls );
 	}
 
-	/**
-	 * @return array<string,array{string,string}>
-	 */
-	public function unavailable_recipient_provider(): array {
-		return array(
-			'disabled'      => array( '0', 'alerts@example.com' ),
-			'invalid email' => array( '1', 'not-an-email' ),
-			'empty email'   => array( '1', '' ),
+	public function test_returns_sent_when_every_enabled_channel_succeeds(): void {
+		$email   = $this->sender( 'email' );
+		$slack   = $this->sender( 'slack' );
+		$manager = new NotificationManager( new NotificationRule(), $this->message_factory(), array( $email, $slack ) );
+
+		$result = $manager->notify( $this->event( 'healthy', 'critical' ) );
+
+		$this->assertInstanceOf( NotificationDeliveryResult::class, $result );
+		$this->assertSame( NotificationDeliveryResult::SENT, $result->status() );
+		$this->assertSame( array( 'email', 'slack' ), array_keys( $result->channels() ) );
+		$this->assertSame( 1, $email->calls );
+		$this->assertSame( 1, $slack->calls );
+	}
+
+	public function test_continues_after_exception_and_returns_a_failed_result(): void {
+		$exception = $this->sender( 'slack', true, true, true );
+		$failed    = $this->sender( 'discord', true, false );
+		$manager   = new NotificationManager( new NotificationRule(), $this->message_factory(), array( $exception, $failed ) );
+
+		$result = $manager->notify( $this->event( 'healthy', 'critical' ) );
+
+		$this->assertInstanceOf( NotificationDeliveryResult::class, $result );
+		$this->assertSame( NotificationDeliveryResult::FAILED, $result->status() );
+		$this->assertSame( 'DELIVERY_EXCEPTION', $result->channels()['slack']->error_code() );
+		$this->assertSame( 'TEST_SEND_FAILED', $result->channels()['discord']->error_code() );
+		$this->assertSame( 1, $failed->calls );
+	}
+
+	public function test_rejects_duplicate_channel_ids(): void {
+		$this->expectException( \InvalidArgumentException::class );
+
+		new NotificationManager(
+			new NotificationRule(),
+			$this->message_factory(),
+			array( $this->sender( 'email' ), $this->sender( 'email' ) )
 		);
+	}
+
+	public function test_channel_result_replaces_an_unsafe_error_code(): void {
+		$result = NotificationChannelResult::failed( 'email', 'Bearer secret-value' );
+
+		$this->assertSame( 'DELIVERY_FAILED', $result->error_code() );
 	}
 
 	private function event( string $previous, string $current ): MonitoringEvent {
@@ -132,23 +134,59 @@ final class NotificationManagerTest extends \WP_UnitTestCase {
 		);
 	}
 
+	private function message_factory(): NotificationMessageFactoryInterface {
+		return new class() implements NotificationMessageFactoryInterface {
+			public function create( MonitoringEvent $event, string $notification_type ): ?NotificationMessage {
+				return new NotificationMessage(
+					$notification_type,
+					'Example Site',
+					'https://example.com',
+					$event->type(),
+					$event->previous_status(),
+					$event->current_status(),
+					$event->occurred_at(),
+					$event->error_code() ?? '—',
+					$event->message()
+				);
+			}
+		};
+	}
+
 	/**
-	 * @return NotificationSenderInterface&object{calls:int,recipient:string,event:?MonitoringEvent,notification_type:string}
+	 * @return NotificationSenderInterface&object{calls:int,message:?NotificationMessage}
 	 */
-	private function sender(): NotificationSenderInterface {
-		return new class() implements NotificationSenderInterface {
-			public int $calls                = 0;
-			public string $recipient         = '';
-			public ?MonitoringEvent $event   = null;
-			public string $notification_type = '';
+	private function sender( string $channel_id, bool $enabled = true, bool $succeeds = true, bool $throws = false ): NotificationSenderInterface {
+		return new class( $channel_id, $enabled, $succeeds, $throws ) implements NotificationSenderInterface {
+			public int $calls                    = 0;
+			public ?NotificationMessage $message = null;
 
-			public function send( string $recipient, MonitoringEvent $event, string $notification_type ): bool {
+			public function __construct(
+				private readonly string $channel_id,
+				private readonly bool $is_enabled,
+				private readonly bool $succeeds,
+				private readonly bool $throws
+			) {
+			}
+
+			public function channel_id(): string {
+				return $this->channel_id;
+			}
+
+			public function enabled(): bool {
+				return $this->is_enabled;
+			}
+
+			public function send( NotificationMessage $message ): NotificationChannelResult {
 				++$this->calls;
-				$this->recipient         = $recipient;
-				$this->event             = $event;
-				$this->notification_type = $notification_type;
+				$this->message = $message;
 
-				return true;
+				if ( $this->throws ) {
+					throw new \RuntimeException( 'Sensitive transport detail.' );
+				}
+
+				return $this->succeeds
+					? NotificationChannelResult::sent( $this->channel_id )
+					: NotificationChannelResult::failed( $this->channel_id, 'TEST_SEND_FAILED' );
 			}
 		};
 	}

@@ -18,7 +18,10 @@ use Olein\WordPressMonitor\Event\EventType;
 use Olein\WordPressMonitor\Event\MonitoringEvent;
 use Olein\WordPressMonitor\Monitor\CheckResult;
 use Olein\WordPressMonitor\Monitor\Status;
+use Olein\WordPressMonitor\Notification\NotificationChannelResult;
 use Olein\WordPressMonitor\Notification\NotificationManager;
+use Olein\WordPressMonitor\Notification\NotificationMessage;
+use Olein\WordPressMonitor\Notification\NotificationMessageFactoryInterface;
 use Olein\WordPressMonitor\Notification\NotificationRule;
 use Olein\WordPressMonitor\Notification\NotificationSenderInterface;
 use Olein\WordPressMonitor\Notification\NotificationSettings;
@@ -92,11 +95,18 @@ final class CheckResultRecorderTest extends \WP_UnitTestCase {
 			/** @var list<string> */
 			public array $types = array();
 
-			public function send( string $recipient, MonitoringEvent $event, string $notification_type ): bool {
-				unset( $recipient, $event );
-				$this->types[] = $notification_type;
+			public function channel_id(): string {
+				return 'email';
+			}
 
+			public function enabled(): bool {
 				return true;
+			}
+
+			public function send( NotificationMessage $message ): NotificationChannelResult {
+				$this->types[] = $message->notification_type();
+
+				return NotificationChannelResult::sent( $this->channel_id() );
 			}
 		};
 		$recorder = $this->recorder_with_sender( $sender );
@@ -122,10 +132,18 @@ final class CheckResultRecorderTest extends \WP_UnitTestCase {
 			)
 		);
 		$sender   = new class() implements NotificationSenderInterface {
-			public function send( string $recipient, MonitoringEvent $event, string $notification_type ): bool {
-				unset( $recipient, $event, $notification_type );
+			public function channel_id(): string {
+				return 'email';
+			}
 
-				return false;
+			public function enabled(): bool {
+				return true;
+			}
+
+			public function send( NotificationMessage $message ): NotificationChannelResult {
+				unset( $message );
+
+				return NotificationChannelResult::failed( $this->channel_id(), 'TEST_SEND_FAILED' );
 			}
 		};
 		$recorder = $this->recorder_with_sender( $sender );
@@ -138,6 +156,8 @@ final class CheckResultRecorderTest extends \WP_UnitTestCase {
 		$this->assertSame( 'failed', $notification['status'] );
 		$this->assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $notification['timestamp'] );
 		$this->assertArrayNotHasKey( 'recipient', $notification );
+		$this->assertSame( 'failed', $notification['channels']['email']['status'] );
+		$this->assertSame( 'TEST_SEND_FAILED', $notification['channels']['email']['error_code'] );
 		$this->assertSame( Status::CRITICAL, $this->statuses->find( 7 )->http_status() );
 		$this->assertCount( 2, $this->checks->for_site( 7 ) );
 	}
@@ -154,11 +174,18 @@ final class CheckResultRecorderTest extends \WP_UnitTestCase {
 			/** @var list<string> */
 			public array $types = array();
 
-			public function send( string $recipient, MonitoringEvent $event, string $notification_type ): bool {
-				unset( $recipient, $event );
-				$this->types[] = $notification_type;
+			public function channel_id(): string {
+				return 'email';
+			}
 
+			public function enabled(): bool {
 				return true;
+			}
+
+			public function send( NotificationMessage $message ): NotificationChannelResult {
+				$this->types[] = $message->notification_type();
+
+				return NotificationChannelResult::sent( $this->channel_id() );
 			}
 		};
 		$recorder = $this->recorder_with_sender( $sender );
@@ -201,7 +228,25 @@ final class CheckResultRecorderTest extends \WP_UnitTestCase {
 			$this->events,
 			new StatusEvaluator(),
 			new StateTransition(),
-			new NotificationManager( new NotificationSettings(), new NotificationRule(), $sender )
+			new NotificationManager(
+				new NotificationRule(),
+				new class() implements NotificationMessageFactoryInterface {
+					public function create( MonitoringEvent $event, string $notification_type ): ?NotificationMessage {
+						return new NotificationMessage(
+							$notification_type,
+							'Example Site',
+							'https://example.com',
+							$event->type(),
+							$event->previous_status(),
+							$event->current_status(),
+							$event->occurred_at(),
+							$event->error_code() ?? '—',
+							$event->message()
+						);
+					}
+				},
+				array( $sender )
+			)
 		);
 	}
 

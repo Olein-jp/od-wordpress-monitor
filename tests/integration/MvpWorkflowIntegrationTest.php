@@ -20,7 +20,6 @@ use Olein\WordPressMonitor\Evaluation\CheckResultRecorder;
 use Olein\WordPressMonitor\Evaluation\StateTransition;
 use Olein\WordPressMonitor\Evaluation\StatusEvaluator;
 use Olein\WordPressMonitor\Event\EventRepository;
-use Olein\WordPressMonitor\Event\MonitoringEvent;
 use Olein\WordPressMonitor\Http\AgentClient;
 use Olein\WordPressMonitor\Http\HttpClient;
 use Olein\WordPressMonitor\Http\UrlValidator;
@@ -31,7 +30,10 @@ use Olein\WordPressMonitor\Monitor\Monitoring\SiteHealthMonitor;
 use Olein\WordPressMonitor\Monitor\Monitoring\SslCertificateClientInterface;
 use Olein\WordPressMonitor\Monitor\Monitoring\SslMonitor;
 use Olein\WordPressMonitor\Monitor\Monitoring\UpdateMonitor;
+use Olein\WordPressMonitor\Notification\NotificationChannelResult;
 use Olein\WordPressMonitor\Notification\NotificationManager;
+use Olein\WordPressMonitor\Notification\NotificationMessage;
+use Olein\WordPressMonitor\Notification\NotificationMessageFactory;
 use Olein\WordPressMonitor\Notification\NotificationRule;
 use Olein\WordPressMonitor\Notification\NotificationSenderInterface;
 use Olein\WordPressMonitor\Notification\NotificationSettings;
@@ -106,11 +108,18 @@ final class MvpWorkflowIntegrationTest extends \WP_UnitTestCase {
 			/** @var list<string> */
 			public array $types = array();
 
-			public function send( string $recipient, MonitoringEvent $event, string $notification_type ): bool {
-				unset( $recipient, $event );
-				$this->types[] = $notification_type;
+			public function channel_id(): string {
+				return 'email';
+			}
 
+			public function enabled(): bool {
 				return true;
+			}
+
+			public function send( NotificationMessage $message ): NotificationChannelResult {
+				$this->types[] = $message->notification_type();
+
+				return NotificationChannelResult::sent( $this->channel_id() );
 			}
 		};
 		update_option(
@@ -128,7 +137,11 @@ final class MvpWorkflowIntegrationTest extends \WP_UnitTestCase {
 			$this->events,
 			new StatusEvaluator(),
 			new StateTransition(),
-			new NotificationManager( new NotificationSettings(), new NotificationRule(), $sender )
+			new NotificationManager(
+				new NotificationRule(),
+				new NotificationMessageFactory( $this->sites ),
+				array( $sender )
+			)
 		);
 		$runner   = new CheckRunner(
 			$this->sites,

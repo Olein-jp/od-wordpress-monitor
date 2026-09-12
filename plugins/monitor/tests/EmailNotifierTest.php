@@ -11,7 +11,11 @@ use DateTimeImmutable;
 use Olein\WordPressMonitor\Activation\DatabaseMigrator;
 use Olein\WordPressMonitor\Event\MonitoringEvent;
 use Olein\WordPressMonitor\Notification\EmailNotifier;
+use Olein\WordPressMonitor\Notification\NotificationChannelResult;
+use Olein\WordPressMonitor\Notification\NotificationMessage;
+use Olein\WordPressMonitor\Notification\NotificationMessageFactory;
 use Olein\WordPressMonitor\Notification\NotificationRule;
+use Olein\WordPressMonitor\Notification\NotificationSettings;
 use Olein\WordPressMonitor\Site\Site;
 use Olein\WordPressMonitor\Site\SiteRepository;
 
@@ -37,6 +41,18 @@ final class EmailNotifierTest extends \WP_UnitTestCase {
 		);
 		$this->assertIsInt( $site_id );
 		$this->site_id = $site_id;
+		update_option(
+			NotificationSettings::OPTION,
+			array(
+				'enabled' => '1',
+				'email'   => 'alerts@example.com',
+			)
+		);
+	}
+
+	public function tear_down(): void {
+		delete_option( NotificationSettings::OPTION );
+		parent::tear_down();
 	}
 
 	/**
@@ -52,14 +68,11 @@ final class EmailNotifierTest extends \WP_UnitTestCase {
 		};
 		add_filter( 'pre_wp_mail', $callback, 10, 2 );
 
-		$sent = ( new EmailNotifier( $this->sites ) )->send(
-			'alerts@example.com',
-			$this->event( $previous, $current ),
-			$notification_type
-		);
+		$result = $this->notifier()->send( $this->message( $previous, $current, $notification_type ) );
 		remove_filter( 'pre_wp_mail', $callback, 10 );
 
-		$this->assertTrue( $sent );
+		$this->assertSame( NotificationChannelResult::SENT, $result->status() );
+		$this->assertSame( 'email', $result->channel_id() );
 		$this->assertSame( 'alerts@example.com', $mail['to'] );
 		$this->assertStringContainsString( $label, $mail['subject'] );
 		$this->assertStringNotContainsString( "\n", $mail['subject'] );
@@ -90,14 +103,11 @@ final class EmailNotifierTest extends \WP_UnitTestCase {
 		$callback = static fn() => false;
 		add_filter( 'pre_wp_mail', $callback );
 
-		$sent = ( new EmailNotifier( $this->sites ) )->send(
-			'alerts@example.com',
-			$this->event( 'healthy', 'critical' ),
-			NotificationRule::OUTAGE
-		);
+		$result = $this->notifier()->send( $this->message( 'healthy', 'critical', NotificationRule::OUTAGE ) );
 		remove_filter( 'pre_wp_mail', $callback );
 
-		$this->assertFalse( $sent );
+		$this->assertSame( NotificationChannelResult::FAILED, $result->status() );
+		$this->assertSame( 'EMAIL_SEND_FAILED', $result->error_code() );
 	}
 
 	public function test_mail_exception_is_contained(): void {
@@ -106,14 +116,38 @@ final class EmailNotifierTest extends \WP_UnitTestCase {
 		};
 		add_filter( 'pre_wp_mail', $callback );
 
-		$sent = ( new EmailNotifier( $this->sites ) )->send(
-			'alerts@example.com',
-			$this->event( 'healthy', 'critical' ),
-			NotificationRule::OUTAGE
-		);
+		$result = $this->notifier()->send( $this->message( 'healthy', 'critical', NotificationRule::OUTAGE ) );
 		remove_filter( 'pre_wp_mail', $callback );
 
-		$this->assertFalse( $sent );
+		$this->assertSame( NotificationChannelResult::FAILED, $result->status() );
+		$this->assertSame( 'EMAIL_SEND_EXCEPTION', $result->error_code() );
+	}
+
+	public function test_disabled_or_invalid_email_is_not_enabled(): void {
+		update_option(
+			NotificationSettings::OPTION,
+			array(
+				'enabled' => '1',
+				'email'   => 'not-an-email',
+			)
+		);
+
+		$this->assertFalse( $this->notifier()->enabled() );
+	}
+
+	private function notifier(): EmailNotifier {
+		return new EmailNotifier( new NotificationSettings() );
+	}
+
+	private function message( string $previous, string $current, string $notification_type ): NotificationMessage {
+		$message = ( new NotificationMessageFactory( $this->sites ) )->create(
+			$this->event( $previous, $current ),
+			$notification_type
+		);
+
+		$this->assertInstanceOf( NotificationMessage::class, $message );
+
+		return $message;
 	}
 
 	private function event( string $previous, string $current ): MonitoringEvent {

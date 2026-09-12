@@ -7,11 +7,19 @@
 
 namespace Olein\WordPressMonitor\Notification;
 
-use Olein\WordPressMonitor\Event\MonitoringEvent;
-
 interface NotificationSenderInterface {
 	/**
-	 * Deliver a selected notification.
+	 * Return a stable, non-sensitive channel identifier.
 	 */
-	public function send( string $recipient, MonitoringEvent $event, string $notification_type ): bool;
+	public function channel_id(): string;
+
+	/**
+	 * Whether this channel currently has valid enabled configuration.
+	 */
+	public function enabled(): bool;
+
+	/**
+	 * Deliver one secret-free notification message.
+	 */
+	public function send( NotificationMessage $message ): NotificationChannelResult;
 }

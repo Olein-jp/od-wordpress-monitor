@@ -36,6 +36,7 @@ use Olein\WordPressMonitor\Monitor\Monitoring\SslMonitor;
 use Olein\WordPressMonitor\Monitor\Monitoring\UpdateMonitor;
 use Olein\WordPressMonitor\Notification\EmailNotifier;
 use Olein\WordPressMonitor\Notification\NotificationManager;
+use Olein\WordPressMonitor\Notification\NotificationMessageFactory;
 use Olein\WordPressMonitor\Notification\NotificationRule;
 use Olein\WordPressMonitor\Notification\NotificationSettings;
 use Olein\WordPressMonitor\Protocol\ResponseValidator;
@@ -99,9 +100,9 @@ final class Plugin {
 			$statuses              = new SiteStatusRepository( $wpdb );
 			$notification_settings = new NotificationSettings();
 			$notifications         = new NotificationManager(
-				$notification_settings,
 				new NotificationRule(),
-				new EmailNotifier( $sites )
+				new NotificationMessageFactory( $sites ),
+				array( new EmailNotifier( $notification_settings ) )
 			);
 			$recorder              = new CheckResultRecorder(
 				$wpdb,
