@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       OD Monitor Agent
  * Description:       Exposes a secure, read-only status API for OD WordPress Monitor.
- * Version:           1.0.3
+ * Version:           1.0.4
  * Requires at least: 6.8
  * Requires PHP:      8.1
  * Update URI:        https://github.com/Olein-jp/od-monitor-agent-release
@@ -18,7 +18,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'OD_MONITOR_AGENT_VERSION', '1.0.3' );
+define( 'OD_MONITOR_AGENT_VERSION', '1.0.4' );
 
 /**
  * Load the bundled translations before Agent endpoints are registered.

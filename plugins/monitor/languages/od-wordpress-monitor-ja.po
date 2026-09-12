@@ -2,7 +2,7 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: OD WordPress Monitor 1.0.7\n"
+"Project-Id-Version: OD WordPress Monitor 1.0.8\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/monitor\n"
 "POT-Creation-Date: 2026-09-12T06:51:15+00:00\n"
 "PO-Revision-Date: 2026-09-12T06:43:36+00:00\n"

@@ -9,8 +9,8 @@ MonitorとAgentは、HTTPS上のWordPress REST APIとApplication Passwordを使�
 
 ## 現在のバージョン
 
-- OD WordPress Monitor：1.0.7
-- OD Monitor Agent：1.0.3
+- OD WordPress Monitor：1.0.8
+- OD Monitor Agent：1.0.4
 - 通信スキーマ：1.0
 
 ## バージョン別アップデート状況
@@ -21,6 +21,7 @@ MonitorとAgentは、HTTPS上のWordPress REST APIとApplication Passwordを使�
 
 | バージョン | 主な変更点 |
 | --- | --- |
+| 1.0.8 | Agentが返すSite Healthのcritical・recommended全件の内訳を表示。日本語翻訳ファイルを同梱し、日本語環境で管理画面・通知・エラーを日本語表示。 |
 | 1.0.7 | Site Healthの診断内訳、部分回復の履歴、有効テーマ・プラグインの更新状態と更新可能バージョンをサイト詳細画面に表示。旧形式データを未確認として安全に表示。 |
 | 1.0.6 | サイト詳細画面にWordPress本体・有効テーマ・有効プラグインの現在バージョンを表示。ソフトウェア情報を現在状態へ保持。 |
 | 1.0.5 | WP-Cron遅延の検知、監視対象の分割処理と再試行、履歴の段階的削除、公開HTTPS検証、再実行可能なDBマイグレーション、バックアップ・復元手順を追加。 |
@@ -28,14 +29,17 @@ MonitorとAgentは、HTTPS上のWordPress REST APIとApplication Passwordを使�
 | 1.0.3 | AgentのSite Healthを定期取得し、healthy・warning・criticalの判定、履歴・通知への反映を追加。 |
 | 1.0.2 | 通知の有効／無効、通知先、障害・復旧メール通知、同一障害の重複通知防止を追加。 |
 | 1.0.1 | 定期監視結果、現在状態、状態変化イベントの保存と、90日を超えた履歴の削除を追加。 |
+| 1.0.0 | 初回リリース。サイト登録、基本的な接続・HTTP・Agent監視を提供。 |
 
 ### OD Monitor Agent
 
 | バージョン | 主な変更点 |
 | --- | --- |
+| 1.0.4 | 日本語翻訳ファイルを同梱し、日本語環境でプラグイン情報・権限名・APIエラーを日本語表示。 |
 | 1.0.3 | リクエスト状態に依存するPHPセッション診断をSite Health監視から除外し、criticalの誤検知を防止。キャッシュキーを更新。 |
 | 1.0.2 | 未認証リクエストと権限不足を適切なHTTP statusで返し、予期しないREST API内部エラーを共通エラーとして返すよう改善。 |
 | 1.0.1 | 認証済み読み取り専用のSite Health APIを追加し、安全な同期テストの集計を15分間キャッシュ。 |
+| 1.0.0 | 初回リリース。認証済み読み取り専用のPing・Status・Updates APIを提供。 |
 
 各バージョンの詳細は、[Monitorの変更履歴](plugins/monitor/README.md#変更履歴)と[Agentの変更履歴](plugins/agent/README.md#変更履歴)、および[公開リリース一覧](#プラグインの更新)を参照してください。
 
