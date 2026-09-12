@@ -63,7 +63,7 @@ final class SiteDetailPage {
 			<h2><?php echo esc_html__( 'Current Status', 'od-wordpress-monitor' ); ?></h2>
 			<?php $this->render_current_status( $site, $status ); ?>
 
-			<h2><?php echo esc_html__( 'Site Health Details', 'od-wordpress-monitor' ); ?></h2>
+			<h2><?php echo esc_html__( 'Agent Site Health Snapshot', 'od-wordpress-monitor' ); ?></h2>
 			<?php $this->render_site_health_details( $status ); ?>
 
 			<h2><?php echo esc_html__( 'Site Software', 'od-wordpress-monitor' ); ?></h2>
@@ -82,22 +82,38 @@ final class SiteDetailPage {
 		$metadata    = null === $status ? array() : $status->metadata();
 		$site_health = isset( $metadata['site_health'] ) && is_array( $metadata['site_health'] ) ? $metadata['site_health'] : null;
 		?>
-		<p><?php echo esc_html__( 'The Agent Site Health check is limited to safe synchronous tests and may not exactly match the WordPress Site Health screen.', 'od-wordpress-monitor' ); ?></p>
+		<p><?php echo esc_html__( 'This snapshot contains only the safe synchronous Site Health tests run by the Agent. The included tests and collection time differ from the complete WordPress Site Health screen, so the totals may not match.', 'od-wordpress-monitor' ); ?></p>
 		<?php
 		if ( null === $site_health ) {
-			echo '<p>' . esc_html__( 'Site Health details have not yet been collected.', 'od-wordpress-monitor' ) . '</p>';
+			echo '<p>' . esc_html__( 'An Agent Site Health snapshot has not yet been collected.', 'od-wordpress-monitor' ) . '</p>';
 			return;
 		}
 
+		$collected_at = isset( $site_health['collected_at'] ) && is_string( $site_health['collected_at'] )
+			? $this->parse_inventory_date( $site_health['collected_at'] )
+			: null;
+		?>
+		<p>
+			<strong><?php echo esc_html__( 'Agent collected at:', 'od-wordpress-monitor' ); ?></strong>
+			<?php $this->render_date( $collected_at ); ?>
+			<br>
+			<strong><?php echo esc_html__( 'Monitor checked at:', 'od-wordpress-monitor' ); ?></strong>
+			<?php $this->render_date( null === $status ? null : $status->site_health_checked_at() ); ?>
+		</p>
+		<?php
+
 		$rows = array(
-			array( __( 'Critical problems', 'od-wordpress-monitor' ), $this->site_health_count( $site_health, 'critical' ) ),
-			array( __( 'Recommended improvements', 'od-wordpress-monitor' ), $this->site_health_count( $site_health, 'recommended' ) ),
-			array( __( 'Good results', 'od-wordpress-monitor' ), $this->site_health_count( $site_health, 'good' ) ),
-			array( __( 'Representative test ID', 'od-wordpress-monitor' ), isset( $site_health['representative_test_id'] ) && is_string( $site_health['representative_test_id'] ) && '' !== $site_health['representative_test_id'] ? $site_health['representative_test_id'] : '—' ),
+			array( __( 'Agent critical results', 'od-wordpress-monitor' ), $this->site_health_count( $site_health, 'critical' ) ),
+			array( __( 'Agent recommended results', 'od-wordpress-monitor' ), $this->site_health_count( $site_health, 'recommended' ) ),
+			array( __( 'Agent good results', 'od-wordpress-monitor' ), $this->site_health_count( $site_health, 'good' ) ),
 		);
+
+		if ( ! isset( $site_health['issues'] ) && isset( $site_health['representative_test_id'] ) && is_string( $site_health['representative_test_id'] ) && '' !== $site_health['representative_test_id'] ) {
+			$rows[] = array( __( 'Legacy representative test ID', 'od-wordpress-monitor' ), $site_health['representative_test_id'] );
+		}
 		?>
 		<table class="widefat striped">
-			<caption class="screen-reader-text"><?php echo esc_html__( 'Latest Site Health diagnostic summary', 'od-wordpress-monitor' ); ?></caption>
+			<caption class="screen-reader-text"><?php echo esc_html__( 'Latest Agent Site Health snapshot summary', 'od-wordpress-monitor' ); ?></caption>
 			<thead><tr>
 				<th scope="col"><?php echo esc_html__( 'Item', 'od-wordpress-monitor' ); ?></th>
 				<th scope="col"><?php echo esc_html__( 'Value', 'od-wordpress-monitor' ); ?></th>
@@ -112,6 +128,38 @@ final class SiteDetailPage {
 			</tbody>
 		</table>
 		<?php
+		if ( ! isset( $site_health['issues'] ) || ! is_array( $site_health['issues'] ) || ! array_is_list( $site_health['issues'] ) ) {
+			echo '<p>' . esc_html__( 'The full issue list is unavailable for this snapshot because it was collected by an earlier Monitor version.', 'od-wordpress-monitor' ) . '</p>';
+			return;
+		}
+
+		if ( array() === $site_health['issues'] ) {
+			echo '<p>' . esc_html__( 'The Agent found no critical or recommended results in this snapshot.', 'od-wordpress-monitor' ) . '</p>';
+			return;
+		}
+		?>
+		<h3><?php echo esc_html__( 'Detected issues', 'od-wordpress-monitor' ); ?></h3>
+		<table class="widefat striped">
+			<caption class="screen-reader-text"><?php echo esc_html__( 'Critical and recommended results detected by the Agent', 'od-wordpress-monitor' ); ?></caption>
+			<thead><tr>
+				<th scope="col"><?php echo esc_html__( 'Status', 'od-wordpress-monitor' ); ?></th>
+				<th scope="col"><?php echo esc_html__( 'Finding', 'od-wordpress-monitor' ); ?></th>
+				<th scope="col"><?php echo esc_html__( 'Test ID', 'od-wordpress-monitor' ); ?></th>
+			</tr></thead>
+			<tbody>
+				<?php foreach ( $site_health['issues'] as $issue ) : ?>
+					<?php if ( ! is_array( $issue ) || ! isset( $issue['id'], $issue['status'], $issue['label'] ) || ! is_string( $issue['id'] ) || ! is_string( $issue['status'] ) || ! is_string( $issue['label'] ) ) : ?>
+						<?php continue; ?>
+					<?php endif; ?>
+					<tr>
+						<td><?php echo esc_html( $this->site_health_issue_status( $issue['status'] ) ); ?></td>
+						<td><?php echo esc_html( $issue['label'] ); ?></td>
+						<td><code><?php echo esc_html( $issue['id'] ); ?></code></td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+		<?php
 	}
 
 	/**
@@ -121,6 +169,14 @@ final class SiteDetailPage {
 		return isset( $metadata[ $key ] ) && is_int( $metadata[ $key ] ) && 0 <= $metadata[ $key ]
 			? (string) $metadata[ $key ]
 			: '—';
+	}
+
+	private function site_health_issue_status( string $status ): string {
+		return match ( $status ) {
+			'critical'    => __( 'Critical', 'od-wordpress-monitor' ),
+			'recommended' => __( 'Recommended', 'od-wordpress-monitor' ),
+			default       => __( 'Unknown', 'od-wordpress-monitor' ),
+		};
 	}
 
 	private function render_software_inventory( ?SiteStatus $status ): void {

@@ -80,19 +80,33 @@ final class SiteHealthMonitorTest extends \WP_UnitTestCase {
 		);
 	}
 
-	public function test_keeps_only_counts_and_highest_severity_test_identifier(): void {
+	public function test_keeps_non_good_tests_and_collection_time(): void {
 		$response                      = $this->site_health_response( 1, 1, 1 );
-		$response['tests'][0]['label'] = 'Database details that must not be retained';
-		$response['tests'][1]['label'] = 'Recommended details that must not be retained';
+		$response['tests'][0]['label'] = 'Critical database finding';
+		$response['tests'][1]['label'] = 'Recommended theme finding';
 		$response['tests'][2]['label'] = 'Good details that must not be retained';
 		$this->mock_response( 200, $response );
 
 		$result  = $this->monitor()->check( $this->site );
 		$content = wp_json_encode( $result->data() );
 
-		$this->assertSame( 'test_critical_0', $result->data()['representative_test_id'] );
-		$this->assertSame( 'critical', $result->data()['representative_test_status'] );
-		$this->assertStringNotContainsString( 'details', $content );
+		$this->assertSame( '2026-09-10T09:00:00Z', $result->data()['collected_at'] );
+		$this->assertSame(
+			array(
+				array(
+					'id'     => 'test_critical_0',
+					'status' => 'critical',
+					'label'  => 'Critical database finding',
+				),
+				array(
+					'id'     => 'test_recommended_0',
+					'status' => 'recommended',
+					'label'  => 'Recommended theme finding',
+				),
+			),
+			$result->data()['issues']
+		);
+		$this->assertStringNotContainsString( 'Good details', $content );
 		$this->assertStringNotContainsString( 'app-password-secret', $content );
 	}
 

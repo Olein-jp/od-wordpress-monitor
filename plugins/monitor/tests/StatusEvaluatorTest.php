@@ -63,12 +63,18 @@ final class StatusEvaluatorTest extends \WP_UnitTestCase {
 			Status::WARNING,
 			$finished,
 			array(
-				'critical'                   => 0,
-				'recommended'                => 1,
-				'good'                       => 4,
-				'representative_test_id'     => 'utf8mb4_support',
-				'representative_test_status' => 'recommended',
-				'label'                      => 'Discarded',
+				'critical'     => 0,
+				'recommended'  => 1,
+				'good'         => 4,
+				'collected_at' => '2026-09-10T04:59:00Z',
+				'issues'       => array(
+					array(
+						'id'     => 'utf8mb4_support',
+						'status' => 'recommended',
+						'label'  => 'Use utf8mb4',
+					),
+				),
+				'label'        => 'Discarded',
 			)
 		);
 		$current  = $this->evaluator->apply( new SiteStatus( 1 ), $result );
@@ -76,7 +82,8 @@ final class StatusEvaluatorTest extends \WP_UnitTestCase {
 		$this->assertSame( Status::WARNING, $current->site_health_status() );
 		$this->assertSame( $finished, $current->site_health_checked_at() );
 		$this->assertSame( $finished, $current->last_checked_at() );
-		$this->assertSame( 'utf8mb4_support', $current->metadata()['site_health']['representative_test_id'] );
+		$this->assertSame( 'utf8mb4_support', $current->metadata()['site_health']['issues'][0]['id'] );
+		$this->assertSame( '2026-09-10T04:59:00Z', $current->metadata()['site_health']['collected_at'] );
 		$this->assertArrayNotHasKey( 'label', $current->metadata()['site_health'] );
 	}
 

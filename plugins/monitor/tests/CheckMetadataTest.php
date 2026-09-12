@@ -214,32 +214,107 @@ final class CheckMetadataTest extends \WP_UnitTestCase {
 		);
 	}
 
-	public function test_site_health_keeps_only_counts_and_representative_test(): void {
+	public function test_site_health_keeps_bounded_issues_and_collection_time(): void {
 		$metadata = $this->metadata->for_result(
 			$this->result(
 				'site_health',
 				array(
-					'critical'                   => 1,
-					'recommended'                => 2,
-					'good'                       => 3,
-					'representative_test_id'     => 'direct_requests',
-					'representative_test_status' => 'critical',
-					'label'                      => 'Discarded diagnostic details',
-					'raw_response'               => array( 'discarded' ),
+					'critical'     => 1,
+					'recommended'  => 1,
+					'good'         => 3,
+					'collected_at' => '2026-09-10T09:00:00Z',
+					'issues'       => array(
+						array(
+							'id'     => 'sql_server',
+							'status' => 'critical',
+							'label'  => '<strong>Database details</strong>',
+						),
+						array(
+							'id'     => 'theme_version',
+							'status' => 'recommended',
+							'label'  => 'Default theme recommended',
+						),
+					),
+					'raw_response' => array( 'discarded' ),
 				)
 			)
 		);
 
 		$this->assertSame(
 			array(
-				'critical'                   => 1,
-				'recommended'                => 2,
-				'good'                       => 3,
-				'representative_test_id'     => 'direct_requests',
-				'representative_test_status' => 'critical',
+				'critical'     => 1,
+				'recommended'  => 1,
+				'good'         => 3,
+				'collected_at' => '2026-09-10T09:00:00Z',
+				'issues'       => array(
+					array(
+						'id'     => 'sql_server',
+						'status' => 'critical',
+						'label'  => 'Database details',
+					),
+					array(
+						'id'     => 'theme_version',
+						'status' => 'recommended',
+						'label'  => 'Default theme recommended',
+					),
+				),
 			),
 			$metadata
 		);
+	}
+
+	public function test_site_health_rejects_inconsistent_issue_list_and_keeps_legacy_identifier(): void {
+		$metadata = $this->metadata->for_result(
+			$this->result(
+				'site_health',
+				array(
+					'critical'                   => 0,
+					'recommended'                => 2,
+					'good'                       => 3,
+					'collected_at'               => 'not-a-date',
+					'issues'                     => array(
+						array(
+							'id'     => 'theme_version',
+							'status' => 'recommended',
+							'label'  => 'Only one issue',
+						),
+					),
+					'representative_test_id'     => 'theme_version',
+					'representative_test_status' => 'recommended',
+				)
+			)
+		);
+
+		$this->assertArrayNotHasKey( 'issues', $metadata );
+		$this->assertArrayNotHasKey( 'collected_at', $metadata );
+		$this->assertSame( 'theme_version', $metadata['representative_test_id'] );
+		$this->assertSame( 'recommended', $metadata['representative_test_status'] );
+	}
+
+	public function test_site_health_rejects_issue_lists_above_fixed_limit(): void {
+		$issues = array();
+
+		for ( $index = 0; $index < 13; ++$index ) {
+			$issues[] = array(
+				'id'     => 'test_' . $index,
+				'status' => 'recommended',
+				'label'  => 'Recommended test',
+			);
+		}
+
+		$metadata = $this->metadata->for_result(
+			$this->result(
+				'site_health',
+				array(
+					'critical'    => 0,
+					'recommended' => 13,
+					'good'        => 0,
+					'issues'      => $issues,
+				)
+			)
+		);
+
+		$this->assertArrayNotHasKey( 'issues', $metadata );
 	}
 
 	public function test_unknown_monitor_has_no_persisted_metadata(): void {

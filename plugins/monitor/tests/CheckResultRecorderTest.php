@@ -189,7 +189,8 @@ final class CheckResultRecorderTest extends \WP_UnitTestCase {
 		$this->assertSame( EventType::SITE_HEALTH_CRITICAL, $events[3]->type() );
 		$this->assertSame( array( NotificationRule::OUTAGE, NotificationRule::OUTAGE, NotificationRule::RECOVERY ), $sender->types );
 		$this->assertSame( Status::HEALTHY, $status->site_health_status() );
-		$this->assertSame( 'site_health_test', $status->metadata()['site_health']['representative_test_id'] );
+		$this->assertSame( array(), $status->metadata()['site_health']['issues'] );
+		$this->assertSame( '2026-09-10T08:00:00Z', $status->metadata()['site_health']['collected_at'] );
 	}
 
 	private function recorder_with_sender( NotificationSenderInterface $sender ): CheckResultRecorder {
@@ -220,12 +221,24 @@ final class CheckResultRecorderTest extends \WP_UnitTestCase {
 	}
 
 	private function site_health_result( string $status, string $time, int $critical, int $recommended ): CheckResult {
-		$checked_at  = new DateTimeImmutable( $time );
-		$test_status = match ( $status ) {
-			Status::CRITICAL => 'critical',
-			Status::WARNING  => 'recommended',
-			default          => 'good',
-		};
+		$checked_at = new DateTimeImmutable( $time );
+		$issues     = array();
+
+		for ( $index = 0; $index < $critical; ++$index ) {
+			$issues[] = array(
+				'id'     => 'critical_test_' . $index,
+				'status' => 'critical',
+				'label'  => 'Critical test',
+			);
+		}
+
+		for ( $index = 0; $index < $recommended; ++$index ) {
+			$issues[] = array(
+				'id'     => 'recommended_test_' . $index,
+				'status' => 'recommended',
+				'label'  => 'Recommended test',
+			);
+		}
 
 		return new CheckResult(
 			7,
@@ -237,11 +250,11 @@ final class CheckResultRecorderTest extends \WP_UnitTestCase {
 			$checked_at,
 			5,
 			array(
-				'critical'                   => $critical,
-				'recommended'                => $recommended,
-				'good'                       => 1,
-				'representative_test_id'     => 'site_health_test',
-				'representative_test_status' => $test_status,
+				'critical'     => $critical,
+				'recommended'  => $recommended,
+				'good'         => 1,
+				'issues'       => $issues,
+				'collected_at' => $time,
 			)
 		);
 	}

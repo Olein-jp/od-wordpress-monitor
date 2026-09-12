@@ -8,10 +8,11 @@
 namespace Olein\WordPressMonitor\Monitor;
 
 final class CheckMetadata {
-	private const MAX_INVENTORY_PLUGINS = 100;
-	private const MAX_IDENTIFIER_LENGTH = 191;
-	private const MAX_NAME_LENGTH       = 160;
-	private const MAX_VERSION_LENGTH    = 64;
+	private const MAX_INVENTORY_PLUGINS  = 100;
+	private const MAX_SITE_HEALTH_ISSUES = 12;
+	private const MAX_IDENTIFIER_LENGTH  = 191;
+	private const MAX_NAME_LENGTH        = 160;
+	private const MAX_VERSION_LENGTH     = 64;
 
 	/**
 	 * Return only the documented, bounded fields for one monitor type.
@@ -236,7 +237,63 @@ final class CheckMetadata {
 			$metadata['representative_test_status'] = $data['representative_test_status'];
 		}
 
+		$collected_at = isset( $data['collected_at'] ) ? $this->utc_timestamp( $data['collected_at'] ) : null;
+
+		if ( null !== $collected_at ) {
+			$metadata['collected_at'] = $collected_at;
+		}
+
+		$issues = isset( $data['issues'] ) ? $this->site_health_issues( $data['issues'] ) : null;
+
+		if (
+			null !== $issues
+			&& isset( $metadata['critical'], $metadata['recommended'] )
+			&& count( array_filter( $issues, static fn( array $issue ): bool => 'critical' === $issue['status'] ) ) === $metadata['critical']
+			&& count( array_filter( $issues, static fn( array $issue ): bool => 'recommended' === $issue['status'] ) ) === $metadata['recommended']
+		) {
+			$metadata['issues'] = $issues;
+		}
+
 		return $metadata;
+	}
+
+	/**
+	 * @param mixed $issues Untrusted Site Health issue list.
+	 * @return list<array{id:string,status:string,label:string}>|null
+	 */
+	private function site_health_issues( $issues ): ?array {
+		if ( ! is_array( $issues ) || ! array_is_list( $issues ) || self::MAX_SITE_HEALTH_ISSUES < count( $issues ) ) {
+			return null;
+		}
+
+		$normalized = array();
+		$seen       = array();
+
+		foreach ( $issues as $issue ) {
+			$id     = is_array( $issue ) && isset( $issue['id'] ) ? $this->bounded_text( $issue['id'], self::MAX_IDENTIFIER_LENGTH ) : null;
+			$status = is_array( $issue ) && isset( $issue['status'] ) && is_string( $issue['status'] ) ? $issue['status'] : null;
+			$label  = is_array( $issue ) && isset( $issue['label'] ) ? $this->bounded_text( $issue['label'], self::MAX_NAME_LENGTH ) : null;
+
+			if ( null === $id || 1 !== preg_match( '/^[a-z0-9_]+$/', $id ) || isset( $seen[ $id ] ) || ! in_array( $status, array( 'critical', 'recommended' ), true ) || null === $label ) {
+				return null;
+			}
+
+			$seen[ $id ]  = true;
+			$normalized[] = compact( 'id', 'status', 'label' );
+		}
+
+		return $normalized;
+	}
+
+	/**
+	 * @param mixed $value Untrusted UTC timestamp.
+	 */
+	private function utc_timestamp( $value ): ?string {
+		return is_string( $value )
+			&& 1 === preg_match( '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $value )
+			&& false !== strtotime( $value )
+			? $value
+			: null;
 	}
 
 	/**

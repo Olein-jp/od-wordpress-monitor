@@ -215,10 +215,22 @@ final class SiteDetailPageTest extends \WP_UnitTestCase {
 					site_health_checked_at: $time,
 					metadata: array(
 						'site_health' => array(
-							'critical'               => 0,
-							'recommended'            => 2,
-							'good'                   => 7,
-							'representative_test_id' => 'php_<script>version</script>',
+							'critical'     => 0,
+							'recommended'  => 2,
+							'good'         => 7,
+							'collected_at' => '2026-09-10T10:45:00Z',
+							'issues'       => array(
+								array(
+									'id'     => 'theme_version',
+									'status' => 'recommended',
+									'label'  => 'Have a default theme available',
+								),
+								array(
+									'id'     => 'sql_server',
+									'status' => 'recommended',
+									'label'  => '<script>Old database server</script>',
+								),
+							),
 						),
 					)
 				)
@@ -242,16 +254,77 @@ final class SiteDetailPageTest extends \WP_UnitTestCase {
 
 		$output = $this->render();
 
-		$this->assertStringContainsString( '<h2>Site Health Details</h2>', $output );
-		$this->assertMatchesRegularExpression( '/<th scope="row">Critical problems<\/th>\s*<td>0<\/td>/s', $output );
-		$this->assertMatchesRegularExpression( '/<th scope="row">Recommended improvements<\/th>\s*<td>2<\/td>/s', $output );
-		$this->assertMatchesRegularExpression( '/<th scope="row">Good results<\/th>\s*<td>7<\/td>/s', $output );
-		$this->assertStringContainsString( 'php_&lt;script&gt;version&lt;/script&gt;', $output );
-		$this->assertStringNotContainsString( 'php_<script>version</script>', $output );
+		$this->assertStringContainsString( '<h2>Agent Site Health Snapshot</h2>', $output );
+		$this->assertMatchesRegularExpression( '/<th scope="row">Agent critical results<\/th>\s*<td>0<\/td>/s', $output );
+		$this->assertMatchesRegularExpression( '/<th scope="row">Agent recommended results<\/th>\s*<td>2<\/td>/s', $output );
+		$this->assertMatchesRegularExpression( '/<th scope="row">Agent good results<\/th>\s*<td>7<\/td>/s', $output );
+		$this->assertStringContainsString( 'Have a default theme available', $output );
+		$this->assertStringContainsString( '<code>theme_version</code>', $output );
+		$this->assertStringContainsString( '&lt;script&gt;Old database server&lt;/script&gt;', $output );
+		$this->assertStringNotContainsString( '<script>Old database server</script>', $output );
+		$this->assertMatchesRegularExpression( '/Agent collected at:<\/strong>\s*<time datetime="2026-09-10T10:45:00\+00:00">/s', $output );
+		$this->assertMatchesRegularExpression( '/Monitor checked at:<\/strong>\s*<time datetime="2026-09-10T11:00:00\+00:00">/s', $output );
 		$this->assertStringContainsString( 'Site Health partially recovered', $output );
 		$this->assertMatchesRegularExpression( '/Site Health partially recovered<\/td>\s*<td>Problem<\/td>\s*<td>Attention<\/td>/s', $output );
 		$this->assertStringContainsString( 'Recent Events is a history of state changes', $output );
-		$this->assertStringContainsString( 'limited to safe synchronous tests', $output );
+		$this->assertStringContainsString( 'safe synchronous Site Health tests', $output );
+		$this->assertStringContainsString( 'totals may not match', $output );
+	}
+
+	public function test_renders_legacy_site_health_metadata_without_issue_list(): void {
+		$site_id = $this->create_site( 'Legacy Health Site' );
+		$this->assertTrue(
+			$this->statuses->upsert(
+				new SiteStatus(
+					site_id: $site_id,
+					site_health_status: 'warning',
+					site_health_checked_at: new DateTimeImmutable( '2026-09-10T11:00:00Z' ),
+					metadata: array(
+						'site_health' => array(
+							'critical'               => 0,
+							'recommended'            => 1,
+							'good'                   => 7,
+							'representative_test_id' => 'theme_version',
+						),
+					)
+				)
+			)
+		);
+		$_GET['site_id'] = (string) $site_id;
+
+		$output = $this->render();
+
+		$this->assertStringContainsString( 'Legacy representative test ID', $output );
+		$this->assertStringContainsString( '>theme_version</td>', $output );
+		$this->assertStringContainsString( 'full issue list is unavailable', $output );
+	}
+
+	public function test_renders_site_health_snapshot_without_detected_issues(): void {
+		$site_id = $this->create_site( 'Healthy Site' );
+		$this->assertTrue(
+			$this->statuses->upsert(
+				new SiteStatus(
+					site_id: $site_id,
+					site_health_status: 'healthy',
+					site_health_checked_at: new DateTimeImmutable( '2026-09-10T11:00:00Z' ),
+					metadata: array(
+						'site_health' => array(
+							'critical'     => 0,
+							'recommended'  => 0,
+							'good'         => 12,
+							'issues'       => array(),
+							'collected_at' => '2026-09-10T10:45:00Z',
+						),
+					)
+				)
+			)
+		);
+		$_GET['site_id'] = (string) $site_id;
+
+		$output = $this->render();
+
+		$this->assertStringContainsString( 'found no critical or recommended results', $output );
+		$this->assertStringNotContainsString( '<h3>Detected issues</h3>', $output );
 	}
 
 	public function test_renders_legacy_software_versions_as_unknown_update_status(): void {
@@ -294,7 +367,7 @@ final class SiteDetailPageTest extends \WP_UnitTestCase {
 		$output = $this->render();
 
 		$this->assertStringContainsString( 'Unknown', $output );
-		$this->assertStringContainsString( 'Site Health details have not yet been collected.', $output );
+		$this->assertStringContainsString( 'An Agent Site Health snapshot has not yet been collected.', $output );
 		$this->assertStringContainsString( 'Software information has not yet been collected.', $output );
 		$this->assertStringContainsString( 'No events have been recorded.', $output );
 		$this->assertStringContainsString( 'No checks have been recorded.', $output );

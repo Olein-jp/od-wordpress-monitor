@@ -73,10 +73,15 @@ final class SiteHealthMonitor implements MonitorInterface {
 			return $this->error_result( $site, $started_at, $started, $response );
 		}
 
-		$summary        = $response['summary'];
-		$status         = CheckResult::STATUS_HEALTHY;
-		$message        = __( 'Site Health reports no problems.', 'od-wordpress-monitor' );
-		$representative = $this->representative_test( $response['tests'] );
+		$summary = $response['summary'];
+		$status  = CheckResult::STATUS_HEALTHY;
+		$message = __( 'Site Health reports no problems.', 'od-wordpress-monitor' );
+		$issues  = array_values(
+			array_filter(
+				$response['tests'],
+				static fn( array $test ): bool => in_array( $test['status'], array( 'critical', 'recommended' ), true )
+			)
+		);
 
 		if ( $summary['critical'] > 0 ) {
 			$status  = CheckResult::STATUS_CRITICAL;
@@ -94,34 +99,13 @@ final class SiteHealthMonitor implements MonitorInterface {
 			null,
 			$message,
 			array(
-				'critical'                   => $summary['critical'],
-				'recommended'                => $summary['recommended'],
-				'good'                       => $summary['good'],
-				'representative_test_id'     => $representative['id'],
-				'representative_test_status' => $representative['status'],
+				'critical'     => $summary['critical'],
+				'recommended'  => $summary['recommended'],
+				'good'         => $summary['good'],
+				'issues'       => $issues,
+				'collected_at' => $response['timestamp'],
 			)
 		);
-	}
-
-	/**
-	 * Select one bounded diagnostic identifier, preferring the highest severity.
-	 *
-	 * @param list<array{id:string,status:string,label:string}> $tests Validated Site Health tests.
-	 * @return array{id:string,status:string}
-	 */
-	private function representative_test( array $tests ): array {
-		foreach ( array( 'critical', 'recommended', 'good' ) as $status ) {
-			foreach ( $tests as $test ) {
-				if ( $status === $test['status'] ) {
-					return array(
-						'id'     => $test['id'],
-						'status' => $test['status'],
-					);
-				}
-			}
-		}
-
-		throw new InvalidArgumentException( 'Site Health monitoring requires at least one valid test.' );
 	}
 
 	private function error_result( Site $site, DateTimeImmutable $started_at, float $started, WP_Error $error ): CheckResult {
