@@ -37,9 +37,9 @@ OD Monitor Agent を導入したWordPressサイトを登録し、接続状況、
 
 監視結果は履歴と現在状態として保存され、稼働停止、復旧、更新あり、Site Healthのcritical、SSL証明書の警告など、意味のある状態変化はイベントとして記録されます。Site Healthのrecommendedのみの状態は履歴へ保存しますが、イベントと通知は生成しません。日次cleanupは1回の処理件数を制限し、90日を超えたチェック履歴、期限切れexecution lock、期限切れのプラグイン固有transientを段階的に削除します。現在状態とイベント履歴は対象外です。
 
-## メール通知
+## Email・Slack・Discord通知
 
-管理画面の「WordPress Monitor」→「Notifications」で通知先メールアドレスを設定し、通知を有効化できます。正常または警告から異常へ変化したときに障害通知を送り、異常から正常へ戻ったときに復旧通知を送ります。同じ異常状態が続いている間は再送しません。
+管理画面の「WordPress Monitor」→「Notifications」で、Email、Slack Incoming Webhook、Discord Incoming Webhookを個別に設定・有効化できます。正常または警告から異常へ変化したときに障害通知を送り、異常から正常へ戻ったときに復旧通知を送ります。同じ異常状態が続いている間は再送しません。Webhook URLは暗号化して保存され、設定画面へ値を再表示しません。
 
 メール送信にはWordPress標準の `wp_mail()` を使用します。実際にメールを配送するには、Monitorサイト側でWordPressのメール送信環境が正しく設定されている必要があります。
 

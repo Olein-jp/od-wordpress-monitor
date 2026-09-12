@@ -29,13 +29,14 @@ Agent側の専用ユーザー、権限グループ、Application Passwordは、M
 
 - `odm_db_version`、`odm_db_migration_status`
 - `odm_notification_settings`
+- `odm_notification_channel_settings`（Slack・Discordの暗号化済みWebhook URL。autoloadなし）
 - `odm_scheduler_heartbeat`
 - `odm_batch_state_*`、`odm_lock_*`、`odm_db_migration_lock`
 - `_transient_odm_status_*`、`_transient_odm_admin_notice_*`と対応するtimeout
 
 lock、cursor、transientは復元に必須ではありませんが、ワイルドカードによる選択的な削除は対象外optionを巻き込む危険があるため行いません。期限切れデータは通常起動と定期cleanupで安全に処理され、WP-Cronイベントは再有効化時に再登録されます。
 
-暗号化済みApplication Passwordを復号する鍵はDBへ保存されません。`CredentialEncryptor`は`wp_salt( 'auth' )`から鍵を導出するため、元環境で実際に使われているauth saltの供給元も必ずバックアップします。通常は`wp-config.php`の`AUTH_KEY`と`AUTH_SALT`ですが、環境変数やsecret managerから供給している場合は、その設定とsecretを同じ値で復元できるよう管理してください。saltを画面、コマンド出力、作業ログへ表示して記録してはいけません。
+暗号化済みApplication Passwordと通知Webhook URLを復号する鍵はDBへ保存されません。`CredentialEncryptor`と通知専用encryptorは、それぞれ異なる鍵導出contextを使い、`wp_salt( 'auth' )`から鍵を導出します。元環境で実際に使われているauth saltの供給元も必ずバックアップしてください。通常は`wp-config.php`の`AUTH_KEY`と`AUTH_SALT`ですが、環境変数やsecret managerから供給している場合は、その設定とsecretを同じ値で復元できるよう管理してください。saltを画面、コマンド出力、作業ログへ表示して記録してはいけません。
 
 加えて、次の情報を保存します。
 

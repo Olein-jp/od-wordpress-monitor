@@ -1,0 +1,130 @@
+<?php
+/**
+ * Encrypted webhook setting tests.
+ *
+ * @package OD_WordPress_Monitor
+ */
+
+namespace Olein\WordPressMonitor\Tests;
+
+use Olein\WordPressMonitor\Notification\DiscordNotifier;
+use Olein\WordPressMonitor\Notification\NotificationChannelSettings;
+use Olein\WordPressMonitor\Notification\NotificationSecretEncryptor;
+use Olein\WordPressMonitor\Notification\SlackNotifier;
+use Olein\WordPressMonitor\Notification\WebhookUrlValidator;
+
+final class NotificationChannelSettingsTest extends \WP_UnitTestCase {
+	private NotificationChannelSettings $settings;
+
+	public function set_up(): void {
+		parent::set_up();
+		delete_option( NotificationChannelSettings::OPTION );
+		$this->settings = new NotificationChannelSettings(
+			new NotificationSecretEncryptor( str_repeat( 'n', SODIUM_CRYPTO_SECRETBOX_KEYBYTES ) ),
+			new WebhookUrlValidator()
+		);
+	}
+
+	public function tear_down(): void {
+		delete_option( NotificationChannelSettings::OPTION );
+		parent::tear_down();
+	}
+
+	public function test_encrypts_secrets_and_creates_a_non_autoloaded_option(): void {
+		$this->settings->register();
+		$plain = 'https://hooks.slack.com/services/T000/B000/private-token';
+		$value = $this->settings->sanitize(
+			array(
+				SlackNotifier::CHANNEL_ID => array(
+					'enabled'     => '1',
+					'webhook_url' => $plain,
+				),
+			)
+		);
+		global $wpdb;
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Avoids applying the registered sanitizer twice in this isolated registration test.
+			$wpdb->options,
+			array( 'option_value' => maybe_serialize( $value ) ),
+			array( 'option_name' => NotificationChannelSettings::OPTION )
+		);
+		wp_cache_delete( NotificationChannelSettings::OPTION, 'options' );
+
+		$stored = get_option( NotificationChannelSettings::OPTION );
+		$this->assertNotSame( $plain, $stored['slack']['encrypted_webhook_url'] );
+		$this->assertStringNotContainsString( 'private-token', (string) wp_json_encode( $stored ) );
+		$this->assertSame( $plain, $this->settings->webhook_url( SlackNotifier::CHANNEL_ID ) );
+		$this->assertTrue( $this->settings->enabled( SlackNotifier::CHANNEL_ID ) );
+
+		$autoload = $wpdb->get_var( $wpdb->prepare( "SELECT autoload FROM {$wpdb->options} WHERE option_name = %s", NotificationChannelSettings::OPTION ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$this->assertContains( $autoload, array( 'no', 'off' ), true );
+	}
+
+	public function test_blank_input_preserves_secret_and_explicit_delete_removes_it(): void {
+		$initial = $this->settings->sanitize(
+			array(
+				DiscordNotifier::CHANNEL_ID => array(
+					'enabled'     => '1',
+					'webhook_url' => 'https://discord.com/api/webhooks/123456/private-token',
+				),
+			)
+		);
+		update_option( NotificationChannelSettings::OPTION, $initial );
+		$preserved = $this->settings->sanitize(
+			array(
+				DiscordNotifier::CHANNEL_ID => array(
+					'enabled'     => '1',
+					'webhook_url' => '',
+				),
+			)
+		);
+		$this->assertSame( $initial['discord']['encrypted_webhook_url'], $preserved['discord']['encrypted_webhook_url'] );
+
+		update_option( NotificationChannelSettings::OPTION, $preserved );
+		$deleted = $this->settings->sanitize(
+			array(
+				DiscordNotifier::CHANNEL_ID => array(
+					'enabled' => '1',
+					'delete'  => '1',
+				),
+			)
+		);
+		$this->assertSame( '0', $deleted['discord']['enabled'] );
+		$this->assertSame( '', $deleted['discord']['encrypted_webhook_url'] );
+	}
+
+	public function test_invalid_replacement_preserves_existing_secret_and_state(): void {
+		$initial = $this->settings->sanitize(
+			array(
+				SlackNotifier::CHANNEL_ID => array(
+					'enabled'     => '1',
+					'webhook_url' => 'https://hooks.slack.com/services/T000/B000/private-token',
+				),
+			)
+		);
+		update_option( NotificationChannelSettings::OPTION, $initial );
+
+		$this->assertSame(
+			$initial,
+			$this->settings->sanitize(
+				array(
+					SlackNotifier::CHANNEL_ID => array( 'webhook_url' => 'https://evil.example/collect' ),
+				)
+			)
+		);
+	}
+
+	public function test_tampered_ciphertext_disables_channel_without_exposing_an_error(): void {
+		update_option(
+			NotificationChannelSettings::OPTION,
+			array(
+				SlackNotifier::CHANNEL_ID => array(
+					'enabled'               => '1',
+					'encrypted_webhook_url' => 'not-ciphertext-private-value',
+				),
+			)
+		);
+
+		$this->assertSame( '', $this->settings->webhook_url( SlackNotifier::CHANNEL_ID ) );
+		$this->assertFalse( $this->settings->enabled( SlackNotifier::CHANNEL_ID ) );
+	}
+}

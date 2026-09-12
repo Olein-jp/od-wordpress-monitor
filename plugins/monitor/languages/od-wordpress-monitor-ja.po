@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OD WordPress Monitor 1.0.8\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/monitor\n"
-"POT-Creation-Date: 2026-09-12T06:51:15+00:00\n"
+"POT-Creation-Date: 2026-09-12T13:46:15+00:00\n"
 "PO-Revision-Date: 2026-09-12T06:43:36+00:00\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -77,7 +77,7 @@ msgstr "データベース移行ロックを保存できませんでした。"
 msgid "You are not allowed to manage monitored sites."
 msgstr "監視対象サイトを管理する権限がありません。"
 
-#: src/Admin/AddSitePage.php:22 src/Admin/Admin.php:66 src/Admin/Admin.php:67
+#: src/Admin/AddSitePage.php:22 src/Admin/Admin.php:67 src/Admin/Admin.php:68
 #: src/Admin/SitesPage.php:38
 msgid "Add Site"
 msgstr "サイトを追加"
@@ -115,29 +115,29 @@ msgid ""
 msgstr ""
 "接続に成功しました。サイト: %1$s — WordPress: %2$s — PHP: %3$s — Agent: %4$s"
 
-#: src/Admin/Admin.php:29 src/Admin/Admin.php:30
+#: src/Admin/Admin.php:30 src/Admin/Admin.php:31
 msgid "WordPress Monitor"
 msgstr "WordPress Monitor"
 
-#: src/Admin/Admin.php:39 src/Admin/Admin.php:40 src/Admin/DashboardPage.php:55
+#: src/Admin/Admin.php:40 src/Admin/Admin.php:41 src/Admin/DashboardPage.php:55
 msgid "Dashboard"
 msgstr "ダッシュボード"
 
-#: src/Admin/Admin.php:48 src/Admin/Admin.php:49 src/Admin/DashboardPage.php:28
+#: src/Admin/Admin.php:49 src/Admin/Admin.php:50 src/Admin/DashboardPage.php:28
 #: src/Admin/SitesPage.php:37
 msgid "Sites"
 msgstr "サイト"
 
-#: src/Admin/Admin.php:57 src/Admin/Admin.php:58
+#: src/Admin/Admin.php:58 src/Admin/Admin.php:59
 #: src/Admin/SiteDetailPage.php:287
 msgid "Site Details"
 msgstr "サイト詳細"
 
-#: src/Admin/Admin.php:75 src/Admin/NotificationSettingsPage.php:48
+#: src/Admin/Admin.php:76 src/Admin/NotificationSettingsPage.php:46
 msgid "Notification Settings"
 msgstr "通知設定"
 
-#: src/Admin/Admin.php:76 src/Admin/NotificationSettingsPage.php:28
+#: src/Admin/Admin.php:77 src/Admin/NotificationSettingsPage.php:31
 msgid "Notifications"
 msgstr "通知"
 
@@ -319,31 +319,87 @@ msgstr "AgentのAPIバージョンに対応していません。"
 msgid "Could not connect to the Agent."
 msgstr "Agentへ接続できませんでした。"
 
-#: src/Admin/NotificationSettingsPage.php:22
+#: src/Admin/NotificationSettingsPage.php:30
 msgid "Email notifications"
 msgstr "メール通知"
 
-#: src/Admin/NotificationSettingsPage.php:35
+#: src/Admin/NotificationSettingsPage.php:32
 msgid "Notification email"
 msgstr "通知先メールアドレス"
 
-#: src/Admin/NotificationSettingsPage.php:44
+#: src/Admin/NotificationSettingsPage.php:35
+msgid "Slack notifications"
+msgstr "Slack通知"
+
+#: src/Admin/NotificationSettingsPage.php:36
+msgid "Discord notifications"
+msgstr "Discord通知"
+
+#: src/Admin/NotificationSettingsPage.php:42
 msgid "You are not allowed to manage notification settings."
 msgstr "通知設定を管理する権限がありません。"
 
-#: src/Admin/NotificationSettingsPage.php:60
+#: src/Admin/NotificationSettingsPage.php:61
+msgid "You are not allowed to test notification settings."
+msgstr "通知設定をテストする権限がありません。"
+
+#: src/Admin/NotificationSettingsPage.php:66
+msgid "The notification channel is invalid."
+msgstr "通知チャネルが無効です。"
+
+#: src/Admin/NotificationSettingsPage.php:93
 msgid ""
 "Configure the global recipient for monitoring outage and recovery "
 "notifications."
 msgstr "監視障害と復旧通知の共通送信先を設定します。"
 
-#: src/Admin/NotificationSettingsPage.php:73
+#: src/Admin/NotificationSettingsPage.php:100
 msgid "Enable email notifications"
 msgstr "メール通知を有効化"
 
-#: src/Admin/NotificationSettingsPage.php:88
+#: src/Admin/NotificationSettingsPage.php:108
 msgid "Notifications remain suppressed until a valid email address is saved."
 msgstr "有効なメールアドレスが保存されるまで通知は送信されません。"
+
+#. translators: %s: service name.
+#: src/Admin/NotificationSettingsPage.php:129
+#, php-format
+msgid "Enable %s notifications"
+msgstr "%s通知を有効化"
+
+#: src/Admin/NotificationSettingsPage.php:132
+msgid "Webhook URL"
+msgstr "Webhook URL"
+
+#: src/Admin/NotificationSettingsPage.php:135
+msgid "Configured. Leave blank to keep the saved webhook."
+msgstr "設定済みです。保存済みのWebhookを維持する場合は空欄のままにしてください。"
+
+#: src/Admin/NotificationSettingsPage.php:135
+msgid "Not configured."
+msgstr "未設定です。"
+
+#: src/Admin/NotificationSettingsPage.php:137
+msgid "Delete the saved webhook"
+msgstr "保存済みのWebhookを削除する"
+
+#. translators: %s: service name.
+#: src/Admin/NotificationSettingsPage.php:160
+#, php-format
+msgid "Send %s test notification"
+msgstr "%sへテスト通知を送信"
+
+#: src/Admin/NotificationSettingsPage.php:175
+msgid "The test notification was sent."
+msgstr "テスト通知を送信しました。"
+
+#: src/Admin/NotificationSettingsPage.php:176
+msgid ""
+"The test notification could not be sent. Check the saved webhook and try "
+"again."
+msgstr ""
+"テスト通知を送信できませんでした。保存済みのWebhookを確認して、もう一度お試し"
+"ください。"
 
 #: src/Admin/SiteDetailPage.php:38
 msgid "You are not allowed to view monitored site details."
@@ -708,15 +764,15 @@ msgstr "保存された認証情報を復号できませんでした。"
 msgid "The check result could not be persisted."
 msgstr "チェック結果を永続化できませんでした。"
 
-#: src/Event/EventRepository.php:54
+#: src/Event/EventRepository.php:55
 msgid "The event could not be saved."
 msgstr "イベントを保存できませんでした。"
 
-#: src/Event/EventRepository.php:76
+#: src/Event/EventRepository.php:77
 msgid "The notification event could not be found."
 msgstr "通知イベントが見つかりませんでした。"
 
-#: src/Event/EventRepository.php:101
+#: src/Event/EventRepository.php:116
 msgid "The notification result could not be saved."
 msgstr "通知結果を保存できませんでした。"
 
@@ -946,82 +1002,110 @@ msgstr "Agentが無効な更新情報の応答を返しました。"
 msgid "The update check failed."
 msgstr "更新チェックに失敗しました。"
 
-#: src/Notification/EmailNotifier.php:38
+#: src/Notification/EmailNotifier.php:35
+#: src/Notification/NotificationTextFormatter.php:15
 msgid "Outage"
 msgstr "障害"
 
-#: src/Notification/EmailNotifier.php:40
+#: src/Notification/EmailNotifier.php:37
+#: src/Notification/NotificationTextFormatter.php:17
 msgid "Recovery"
 msgstr "復旧"
 
 #. translators: 1: Notification type, 2: monitored site name.
-#: src/Notification/EmailNotifier.php:47
+#: src/Notification/EmailNotifier.php:44
+#: src/Notification/NotificationTextFormatter.php:25
 #, php-format
 msgid "[OD Monitor] %1$s: %2$s"
 msgstr "[OD Monitor] %1$s: %2$s"
 
 #. translators: %s: outage or recovery.
-#: src/Notification/EmailNotifier.php:54
+#: src/Notification/EmailNotifier.php:51
 #, php-format
 msgid "Notification: %s"
 msgstr "通知: %s"
 
 #. translators: %s: monitored site name.
-#: src/Notification/EmailNotifier.php:55
+#: src/Notification/EmailNotifier.php:52
 #, php-format
 msgid "Site: %s"
 msgstr "サイト: %s"
 
 #. translators: %s: monitored public URL.
-#: src/Notification/EmailNotifier.php:56
+#: src/Notification/EmailNotifier.php:53
+#: src/Notification/NotificationTextFormatter.php:26
 #, php-format
 msgid "URL: %s"
 msgstr "URL: %s"
 
 #. translators: %s: monitoring event type.
-#: src/Notification/EmailNotifier.php:57
+#: src/Notification/EmailNotifier.php:54
+#: src/Notification/NotificationTextFormatter.php:27
 #, php-format
 msgid "Event: %s"
 msgstr "イベント: %s"
 
 #. translators: %s: previous monitoring status.
-#: src/Notification/EmailNotifier.php:58
+#: src/Notification/EmailNotifier.php:55
+#: src/Notification/NotificationTextFormatter.php:28
 #, php-format
 msgid "Previous status: %s"
 msgstr "以前の状態: %s"
 
 #. translators: %s: current monitoring status.
-#: src/Notification/EmailNotifier.php:59
+#: src/Notification/EmailNotifier.php:56
+#: src/Notification/NotificationTextFormatter.php:29
 #, php-format
 msgid "Current status: %s"
 msgstr "現在の状態: %s"
 
 #. translators: %s: UTC detection time.
-#: src/Notification/EmailNotifier.php:62
+#: src/Notification/EmailNotifier.php:59
+#: src/Notification/NotificationTextFormatter.php:32
 #, php-format
 msgid "Detected at: %s"
 msgstr "検出日時: %s"
 
 #. translators: %s: safe monitoring error code or dash.
-#: src/Notification/EmailNotifier.php:65
+#: src/Notification/EmailNotifier.php:62
+#: src/Notification/NotificationTextFormatter.php:35
 #, php-format
 msgid "Error code: %s"
 msgstr "エラーコード: %s"
 
 #. translators: %s: safe monitoring result message.
-#: src/Notification/EmailNotifier.php:66
+#: src/Notification/EmailNotifier.php:63
+#: src/Notification/NotificationTextFormatter.php:36
 #, php-format
 msgid "Message: %s"
 msgstr "メッセージ: %s"
 
-#: src/Plugin.php:166
+#. translators: %s: notification service name.
+#: src/Notification/NotificationChannelSettings.php:103
+#, php-format
+msgid "%s webhook URL was not changed because it is invalid."
+msgstr "%sのWebhook URLが無効なため変更しませんでした。"
+
+#: src/Notification/NotificationTestService.php:35
+msgid "Test notification"
+msgstr "テスト通知"
+
+#: src/Notification/NotificationTestService.php:42
+msgid "This is a test notification from OD WordPress Monitor."
+msgstr "これはOD WordPress Monitorからのテスト通知です。"
+
+#: src/Notification/WebhookUrlValidator.php:58
+msgid "Enter a valid webhook URL for this service."
+msgstr "このサービスの有効なWebhook URLを入力してください。"
+
+#: src/Plugin.php:186
 msgid ""
 "OD WordPress Monitor requires the sodium PHP extension to protect "
 "credentials."
 msgstr ""
 "認証情報を保護するため、OD WordPress MonitorにはPHPのsodium拡張が必要です。"
 
-#: src/Plugin.php:214
+#: src/Plugin.php:234
 msgid ""
 "OD WordPress Monitor is temporarily paused while its database is being "
 "updated by another request."
@@ -1029,7 +1113,7 @@ msgstr ""
 "別のリクエストでデータベースを更新しているため、OD WordPress Monitorは一時停"
 "止しています。"
 
-#: src/Plugin.php:216
+#: src/Plugin.php:236
 msgid ""
 "OD WordPress Monitor could not update its database. Monitoring is paused; "
 "reload this page to retry after checking database permissions and logs."
@@ -1039,7 +1123,7 @@ msgstr ""
 "てください。"
 
 #. translators: 1: previous database schema version, 2: target database schema version.
-#: src/Plugin.php:224
+#: src/Plugin.php:244
 #, php-format
 msgid "Schema version: %1$s → %2$s."
 msgstr "スキーマバージョン: %1$s → %2$s。"

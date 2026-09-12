@@ -22,6 +22,7 @@ final class Admin {
 		add_action( 'admin_init', array( $this->notification_settings_page, 'register_settings' ) );
 		add_action( 'admin_post_odm_add_site', array( $this->add_site_page, 'handle_post' ) );
 		add_action( 'admin_post_odm_test_connection', array( $this->sites_page, 'handle_test' ) );
+		add_action( 'admin_post_odm_test_notification', array( $this->notification_settings_page, 'handle_test' ) );
 	}
 
 	public function register_menu(): void {

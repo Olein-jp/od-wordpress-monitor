@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-12T06:51:15+00:00\n"
+"POT-Creation-Date: 2026-09-12T13:46:15+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: od-wordpress-monitor\n"
@@ -74,8 +74,8 @@ msgid "You are not allowed to manage monitored sites."
 msgstr ""
 
 #: src/Admin/AddSitePage.php:22
-#: src/Admin/Admin.php:66
 #: src/Admin/Admin.php:67
+#: src/Admin/Admin.php:68
 #: src/Admin/SitesPage.php:38
 msgid "Add Site"
 msgstr ""
@@ -110,37 +110,37 @@ msgstr ""
 msgid "Connected successfully. Site: %1$s — WordPress: %2$s — PHP: %3$s — Agent: %4$s"
 msgstr ""
 
-#: src/Admin/Admin.php:29
 #: src/Admin/Admin.php:30
+#: src/Admin/Admin.php:31
 msgid "WordPress Monitor"
 msgstr ""
 
-#: src/Admin/Admin.php:39
 #: src/Admin/Admin.php:40
+#: src/Admin/Admin.php:41
 #: src/Admin/DashboardPage.php:55
 msgid "Dashboard"
 msgstr ""
 
-#: src/Admin/Admin.php:48
 #: src/Admin/Admin.php:49
+#: src/Admin/Admin.php:50
 #: src/Admin/DashboardPage.php:28
 #: src/Admin/SitesPage.php:37
 msgid "Sites"
 msgstr ""
 
-#: src/Admin/Admin.php:57
 #: src/Admin/Admin.php:58
+#: src/Admin/Admin.php:59
 #: src/Admin/SiteDetailPage.php:287
 msgid "Site Details"
 msgstr ""
 
-#: src/Admin/Admin.php:75
-#: src/Admin/NotificationSettingsPage.php:48
+#: src/Admin/Admin.php:76
+#: src/Admin/NotificationSettingsPage.php:46
 msgid "Notification Settings"
 msgstr ""
 
-#: src/Admin/Admin.php:76
-#: src/Admin/NotificationSettingsPage.php:28
+#: src/Admin/Admin.php:77
+#: src/Admin/NotificationSettingsPage.php:31
 msgid "Notifications"
 msgstr ""
 
@@ -332,28 +332,80 @@ msgstr ""
 msgid "Could not connect to the Agent."
 msgstr ""
 
-#: src/Admin/NotificationSettingsPage.php:22
+#: src/Admin/NotificationSettingsPage.php:30
 msgid "Email notifications"
 msgstr ""
 
-#: src/Admin/NotificationSettingsPage.php:35
+#: src/Admin/NotificationSettingsPage.php:32
 msgid "Notification email"
 msgstr ""
 
-#: src/Admin/NotificationSettingsPage.php:44
+#: src/Admin/NotificationSettingsPage.php:35
+msgid "Slack notifications"
+msgstr ""
+
+#: src/Admin/NotificationSettingsPage.php:36
+msgid "Discord notifications"
+msgstr ""
+
+#: src/Admin/NotificationSettingsPage.php:42
 msgid "You are not allowed to manage notification settings."
 msgstr ""
 
-#: src/Admin/NotificationSettingsPage.php:60
+#: src/Admin/NotificationSettingsPage.php:61
+msgid "You are not allowed to test notification settings."
+msgstr ""
+
+#: src/Admin/NotificationSettingsPage.php:66
+msgid "The notification channel is invalid."
+msgstr ""
+
+#: src/Admin/NotificationSettingsPage.php:93
 msgid "Configure the global recipient for monitoring outage and recovery notifications."
 msgstr ""
 
-#: src/Admin/NotificationSettingsPage.php:73
+#: src/Admin/NotificationSettingsPage.php:100
 msgid "Enable email notifications"
 msgstr ""
 
-#: src/Admin/NotificationSettingsPage.php:88
+#: src/Admin/NotificationSettingsPage.php:108
 msgid "Notifications remain suppressed until a valid email address is saved."
+msgstr ""
+
+#. translators: %s: service name.
+#: src/Admin/NotificationSettingsPage.php:129
+#, php-format
+msgid "Enable %s notifications"
+msgstr ""
+
+#: src/Admin/NotificationSettingsPage.php:132
+msgid "Webhook URL"
+msgstr ""
+
+#: src/Admin/NotificationSettingsPage.php:135
+msgid "Configured. Leave blank to keep the saved webhook."
+msgstr ""
+
+#: src/Admin/NotificationSettingsPage.php:135
+msgid "Not configured."
+msgstr ""
+
+#: src/Admin/NotificationSettingsPage.php:137
+msgid "Delete the saved webhook"
+msgstr ""
+
+#. translators: %s: service name.
+#: src/Admin/NotificationSettingsPage.php:160
+#, php-format
+msgid "Send %s test notification"
+msgstr ""
+
+#: src/Admin/NotificationSettingsPage.php:175
+msgid "The test notification was sent."
+msgstr ""
+
+#: src/Admin/NotificationSettingsPage.php:176
+msgid "The test notification could not be sent. Check the saved webhook and try again."
 msgstr ""
 
 #: src/Admin/SiteDetailPage.php:38
@@ -711,15 +763,15 @@ msgstr ""
 msgid "The check result could not be persisted."
 msgstr ""
 
-#: src/Event/EventRepository.php:54
+#: src/Event/EventRepository.php:55
 msgid "The event could not be saved."
 msgstr ""
 
-#: src/Event/EventRepository.php:76
+#: src/Event/EventRepository.php:77
 msgid "The notification event could not be found."
 msgstr ""
 
-#: src/Event/EventRepository.php:101
+#: src/Event/EventRepository.php:116
 msgid "The notification result could not be saved."
 msgstr ""
 
@@ -949,88 +1001,116 @@ msgstr ""
 msgid "The update check failed."
 msgstr ""
 
-#: src/Notification/EmailNotifier.php:38
+#: src/Notification/EmailNotifier.php:35
+#: src/Notification/NotificationTextFormatter.php:15
 msgid "Outage"
 msgstr ""
 
-#: src/Notification/EmailNotifier.php:40
+#: src/Notification/EmailNotifier.php:37
+#: src/Notification/NotificationTextFormatter.php:17
 msgid "Recovery"
 msgstr ""
 
 #. translators: 1: Notification type, 2: monitored site name.
-#: src/Notification/EmailNotifier.php:47
+#: src/Notification/EmailNotifier.php:44
+#: src/Notification/NotificationTextFormatter.php:25
 #, php-format
 msgid "[OD Monitor] %1$s: %2$s"
 msgstr ""
 
 #. translators: %s: outage or recovery.
-#: src/Notification/EmailNotifier.php:54
+#: src/Notification/EmailNotifier.php:51
 #, php-format
 msgid "Notification: %s"
 msgstr ""
 
 #. translators: %s: monitored site name.
-#: src/Notification/EmailNotifier.php:55
+#: src/Notification/EmailNotifier.php:52
 #, php-format
 msgid "Site: %s"
 msgstr ""
 
 #. translators: %s: monitored public URL.
-#: src/Notification/EmailNotifier.php:56
+#: src/Notification/EmailNotifier.php:53
+#: src/Notification/NotificationTextFormatter.php:26
 #, php-format
 msgid "URL: %s"
 msgstr ""
 
 #. translators: %s: monitoring event type.
-#: src/Notification/EmailNotifier.php:57
+#: src/Notification/EmailNotifier.php:54
+#: src/Notification/NotificationTextFormatter.php:27
 #, php-format
 msgid "Event: %s"
 msgstr ""
 
 #. translators: %s: previous monitoring status.
-#: src/Notification/EmailNotifier.php:58
+#: src/Notification/EmailNotifier.php:55
+#: src/Notification/NotificationTextFormatter.php:28
 #, php-format
 msgid "Previous status: %s"
 msgstr ""
 
 #. translators: %s: current monitoring status.
-#: src/Notification/EmailNotifier.php:59
+#: src/Notification/EmailNotifier.php:56
+#: src/Notification/NotificationTextFormatter.php:29
 #, php-format
 msgid "Current status: %s"
 msgstr ""
 
 #. translators: %s: UTC detection time.
-#: src/Notification/EmailNotifier.php:62
+#: src/Notification/EmailNotifier.php:59
+#: src/Notification/NotificationTextFormatter.php:32
 #, php-format
 msgid "Detected at: %s"
 msgstr ""
 
 #. translators: %s: safe monitoring error code or dash.
-#: src/Notification/EmailNotifier.php:65
+#: src/Notification/EmailNotifier.php:62
+#: src/Notification/NotificationTextFormatter.php:35
 #, php-format
 msgid "Error code: %s"
 msgstr ""
 
 #. translators: %s: safe monitoring result message.
-#: src/Notification/EmailNotifier.php:66
+#: src/Notification/EmailNotifier.php:63
+#: src/Notification/NotificationTextFormatter.php:36
 #, php-format
 msgid "Message: %s"
 msgstr ""
 
-#: src/Plugin.php:166
+#. translators: %s: notification service name.
+#: src/Notification/NotificationChannelSettings.php:103
+#, php-format
+msgid "%s webhook URL was not changed because it is invalid."
+msgstr ""
+
+#: src/Notification/NotificationTestService.php:35
+msgid "Test notification"
+msgstr ""
+
+#: src/Notification/NotificationTestService.php:42
+msgid "This is a test notification from OD WordPress Monitor."
+msgstr ""
+
+#: src/Notification/WebhookUrlValidator.php:58
+msgid "Enter a valid webhook URL for this service."
+msgstr ""
+
+#: src/Plugin.php:186
 msgid "OD WordPress Monitor requires the sodium PHP extension to protect credentials."
 msgstr ""
 
-#: src/Plugin.php:214
+#: src/Plugin.php:234
 msgid "OD WordPress Monitor is temporarily paused while its database is being updated by another request."
 msgstr ""
 
-#: src/Plugin.php:216
+#: src/Plugin.php:236
 msgid "OD WordPress Monitor could not update its database. Monitoring is paused; reload this page to retry after checking database permissions and logs."
 msgstr ""
 
 #. translators: 1: previous database schema version, 2: target database schema version.
-#: src/Plugin.php:224
+#: src/Plugin.php:244
 #, php-format
 msgid "Schema version: %1$s → %2$s."
 msgstr ""
