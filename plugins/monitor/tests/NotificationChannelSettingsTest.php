@@ -33,8 +33,9 @@ final class NotificationChannelSettingsTest extends \WP_UnitTestCase {
 
 	public function test_encrypts_secrets_and_creates_a_non_autoloaded_option(): void {
 		$this->settings->register();
-		$plain = 'https://hooks.slack.com/services/T000/B000/private-token';
-		$value = $this->settings->sanitize(
+		$plain   = 'https://hooks.slack.com/services/T000/B000/private-token';
+		$updated = update_option(
+			NotificationChannelSettings::OPTION,
 			array(
 				SlackNotifier::CHANNEL_ID => array(
 					'enabled'     => '1',
@@ -42,13 +43,8 @@ final class NotificationChannelSettingsTest extends \WP_UnitTestCase {
 				),
 			)
 		);
+		$this->assertTrue( $updated );
 		global $wpdb;
-		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Avoids applying the registered sanitizer twice in this isolated registration test.
-			$wpdb->options,
-			array( 'option_value' => maybe_serialize( $value ) ),
-			array( 'option_name' => NotificationChannelSettings::OPTION )
-		);
-		wp_cache_delete( NotificationChannelSettings::OPTION, 'options' );
 
 		$stored = get_option( NotificationChannelSettings::OPTION );
 		$this->assertNotSame( $plain, $stored['slack']['encrypted_webhook_url'] );
@@ -66,6 +62,124 @@ final class NotificationChannelSettingsTest extends \WP_UnitTestCase {
 		$this->assertFalse( $this->settings->updates_digest_enabled() );
 		$this->assertFalse( $this->settings->site_health_digest_enabled() );
 		$this->assertSame( 9, $this->settings->digest_hour() );
+	}
+
+	public function test_registered_option_saves_all_channels_and_preserves_blank_secrets(): void {
+		$this->settings->register();
+		$slack   = 'https://hooks.slack.com/services/T000/B000/slack-token';
+		$discord = 'https://discord.com/api/webhooks/123456/discord-token';
+		$token   = 'chatwork-token';
+
+		$this->assertTrue(
+			update_option(
+				NotificationChannelSettings::OPTION,
+				array(
+					SlackNotifier::CHANNEL_ID    => array(
+						'enabled'     => '1',
+						'webhook_url' => $slack,
+					),
+					DiscordNotifier::CHANNEL_ID  => array(
+						'enabled'     => '1',
+						'webhook_url' => $discord,
+					),
+					ChatworkNotifier::CHANNEL_ID => array(
+						'enabled'   => '1',
+						'room_id'   => '42',
+						'api_token' => $token,
+					),
+				)
+			)
+		);
+
+		$stored = get_option( NotificationChannelSettings::OPTION );
+		$this->assertSame( $slack, $this->settings->webhook_url( SlackNotifier::CHANNEL_ID ) );
+		$this->assertSame( $discord, $this->settings->webhook_url( DiscordNotifier::CHANNEL_ID ) );
+		$this->assertSame( $token, $this->settings->api_token() );
+		$this->assertTrue( $this->settings->enabled( SlackNotifier::CHANNEL_ID ) );
+		$this->assertTrue( $this->settings->enabled( DiscordNotifier::CHANNEL_ID ) );
+		$this->assertTrue( $this->settings->enabled( ChatworkNotifier::CHANNEL_ID ) );
+		$this->assertStringNotContainsString( 'slack-token', (string) wp_json_encode( $stored ) );
+		$this->assertStringNotContainsString( 'discord-token', (string) wp_json_encode( $stored ) );
+		$this->assertStringNotContainsString( 'chatwork-token', (string) wp_json_encode( $stored ) );
+
+		update_option(
+			NotificationChannelSettings::OPTION,
+			array(
+				SlackNotifier::CHANNEL_ID    => array(
+					'enabled'     => '1',
+					'webhook_url' => '',
+				),
+				DiscordNotifier::CHANNEL_ID  => array(
+					'enabled'     => '1',
+					'webhook_url' => '',
+				),
+				ChatworkNotifier::CHANNEL_ID => array(
+					'enabled'   => '1',
+					'room_id'   => '42',
+					'api_token' => '',
+				),
+			)
+		);
+
+		$this->assertSame( $stored, get_option( NotificationChannelSettings::OPTION ) );
+	}
+
+	public function test_registered_option_replaces_rejects_and_deletes_secrets(): void {
+		$this->settings->register();
+		$first = array(
+			SlackNotifier::CHANNEL_ID    => array(
+				'enabled'     => '1',
+				'webhook_url' => 'https://hooks.slack.com/services/T000/B000/first',
+			),
+			DiscordNotifier::CHANNEL_ID  => array(
+				'enabled'     => '1',
+				'webhook_url' => 'https://discord.com/api/webhooks/123456/first',
+			),
+			ChatworkNotifier::CHANNEL_ID => array(
+				'enabled'   => '1',
+				'room_id'   => '42',
+				'api_token' => 'first-token',
+			),
+		);
+		update_option( NotificationChannelSettings::OPTION, $first );
+
+		$replacement = $first;
+
+		$replacement['slack']['webhook_url']   = 'https://hooks.slack.com/services/T000/B000/replaced';
+		$replacement['discord']['webhook_url'] = 'https://discord.com/api/webhooks/123456/replaced';
+		$replacement['chatwork']['api_token']  = 'replaced-token';
+		update_option( NotificationChannelSettings::OPTION, $replacement );
+		$this->assertSame( $replacement['slack']['webhook_url'], $this->settings->webhook_url( SlackNotifier::CHANNEL_ID ) );
+		$this->assertSame( $replacement['discord']['webhook_url'], $this->settings->webhook_url( DiscordNotifier::CHANNEL_ID ) );
+		$this->assertSame( $replacement['chatwork']['api_token'], $this->settings->api_token() );
+
+		$stored = get_option( NotificationChannelSettings::OPTION );
+
+		$invalid = $replacement;
+
+		$invalid['slack']['webhook_url']   = 'https://invalid.example/slack';
+		$invalid['discord']['webhook_url'] = 'https://invalid.example/discord';
+		$invalid['chatwork']['api_token']  = "invalid\nheader";
+		update_option( NotificationChannelSettings::OPTION, $invalid );
+		$this->assertSame( $stored, get_option( NotificationChannelSettings::OPTION ) );
+
+		update_option(
+			NotificationChannelSettings::OPTION,
+			array(
+				SlackNotifier::CHANNEL_ID    => array( 'delete' => '1' ),
+				DiscordNotifier::CHANNEL_ID  => array( 'delete' => '1' ),
+				ChatworkNotifier::CHANNEL_ID => array(
+					'room_id' => '42',
+					'delete'  => '1',
+				),
+			)
+		);
+		$this->assertFalse( $this->settings->has_webhook( SlackNotifier::CHANNEL_ID ) );
+		$this->assertFalse( $this->settings->has_webhook( DiscordNotifier::CHANNEL_ID ) );
+		$this->assertFalse( $this->settings->has_api_token() );
+		$this->assertFalse( $this->settings->enabled( SlackNotifier::CHANNEL_ID ) );
+		$this->assertFalse( $this->settings->enabled( DiscordNotifier::CHANNEL_ID ) );
+		$this->assertFalse( $this->settings->enabled( ChatworkNotifier::CHANNEL_ID ) );
 	}
 
 	public function test_digest_rules_and_hour_are_sanitized(): void {

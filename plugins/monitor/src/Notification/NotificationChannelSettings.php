@@ -22,12 +22,12 @@ final class NotificationChannelSettings {
 
 	public function register(): void {
 		add_option( self::OPTION, $this->defaults(), '', false );
+		// A registered default can make update_option() sanitize again through add_option().
 		register_setting(
 			NotificationSettings::GROUP,
 			self::OPTION,
 			array(
 				'type'              => 'array',
-				'default'           => $this->defaults(),
 				'sanitize_callback' => array( $this, 'sanitize' ),
 				'show_in_rest'      => false,
 			)

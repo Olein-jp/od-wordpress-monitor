@@ -52,13 +52,20 @@ final class NotificationSettingsPageWebhookTest extends \WP_UnitTestCase {
 
 	public function test_render_never_exposes_plaintext_or_ciphertext_and_has_separate_test_forms(): void {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
-		$plain  = 'https://hooks.slack.com/services/T000/B000/private-token';
-		$token  = 'chatwork-private-token';
-		$stored = $this->channel_settings->sanitize(
+		$plain   = 'https://hooks.slack.com/services/T000/B000/private-token';
+		$discord = 'https://discord.com/api/webhooks/123456/discord-private-token';
+		$token   = 'chatwork-private-token';
+		$this->page->register_settings();
+		update_option(
+			NotificationChannelSettings::OPTION,
 			array(
 				SlackNotifier::CHANNEL_ID    => array(
 					'enabled'     => '1',
 					'webhook_url' => $plain,
+				),
+				DiscordNotifier::CHANNEL_ID  => array(
+					'enabled'     => '1',
+					'webhook_url' => $discord,
 				),
 				ChatworkNotifier::CHANNEL_ID => array(
 					'enabled'   => '1',
@@ -67,8 +74,7 @@ final class NotificationSettingsPageWebhookTest extends \WP_UnitTestCase {
 				),
 			)
 		);
-		update_option( NotificationChannelSettings::OPTION, $stored );
-		$this->page->register_settings();
+		$stored = get_option( NotificationChannelSettings::OPTION );
 
 		ob_start();
 		$this->page->render();
@@ -81,8 +87,11 @@ final class NotificationSettingsPageWebhookTest extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'Configured. Leave blank', $output );
 		$this->assertStringContainsString( 'value="odm_test_notification"', $output );
 		$this->assertSame( 3, substr_count( $output, 'admin-post.php' ) );
+		$this->assertStringNotContainsString( 'disabled="disabled"', $output );
 		$this->assertStringNotContainsString( $plain, $output );
+		$this->assertStringNotContainsString( $discord, $output );
 		$this->assertStringNotContainsString( $stored['slack']['encrypted_webhook_url'], $output );
+		$this->assertStringNotContainsString( $stored['discord']['encrypted_webhook_url'], $output );
 		$this->assertStringNotContainsString( $token, $output );
 		$this->assertStringNotContainsString( $stored['chatwork']['encrypted_api_token'], $output );
 	}
