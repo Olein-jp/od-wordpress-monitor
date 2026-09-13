@@ -9,7 +9,7 @@ MonitorとAgentは、HTTPS上のWordPress REST APIとApplication Passwordを使�
 
 ## 現在のバージョン
 
-- OD WordPress Monitor：1.0.9
+- OD WordPress Monitor：1.0.10
 - OD Monitor Agent：1.0.4
 - 通信スキーマ：1.0
 
@@ -21,6 +21,7 @@ MonitorとAgentは、HTTPS上のWordPress REST APIとApplication Passwordを使�
 
 | バージョン | 主な変更点 |
 | --- | --- |
+| 1.0.10 | 通知設定の保存時に Webhook URL と Chatwork API トークンが失われる問題を修正。 |
 | 1.0.9 | Email・Slack・Discord・Chatworkへの複数チャネル通知、SSL警告、任意の日次まとめ、一時的な配送失敗の限定再送を追加。 |
 | 1.0.8 | Agentが返すSite Healthのcritical・recommended全件の内訳を表示。日本語翻訳ファイルを同梱し、日本語環境で管理画面・通知・エラーを日本語表示。 |
 | 1.0.7 | Site Healthの診断内訳、部分回復の履歴、有効テーマ・プラグインの更新状態と更新可能バージョンをサイト詳細画面に表示。旧形式データを未確認として安全に表示。 |

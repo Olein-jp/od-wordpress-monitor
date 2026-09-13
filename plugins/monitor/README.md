@@ -53,6 +53,10 @@ OD Monitor Agent を導入したWordPressサイトを登録し、接続状況、
 
 ## 変更履歴
 
+### 1.0.10
+
+- 通知設定の保存時に Slack・Discord の Webhook URL と Chatwork の API トークンが失われる問題を修正しました。
+
 ### 1.0.9
 
 - Email・Slack・Discord・Chatworkへの複数チャネル通知と、チャネルごとの配送結果記録に対応しました。
