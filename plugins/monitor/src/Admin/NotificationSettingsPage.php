@@ -245,7 +245,7 @@ final class NotificationSettingsPage {
 				<input name="action" type="hidden" value="odm_test_notification">
 				<input name="channel" type="hidden" value="<?php echo esc_attr( $channel_id ); ?>">
 				<?php wp_nonce_field( 'odm_test_notification_' . $channel_id ); ?>
-				<?php submit_button( sprintf( /* translators: %s: service name. */ __( 'Send %s test notification', 'od-wordpress-monitor' ), ucfirst( $channel_id ) ), 'secondary', 'submit', false, array( 'disabled' => ! $configured ) ); ?>
+				<?php submit_button( sprintf( /* translators: %s: service name. */ __( 'Send %s test notification', 'od-wordpress-monitor' ), ucfirst( $channel_id ) ), 'secondary', 'submit', false, $configured ? array() : array( 'disabled' => 'disabled' ) ); ?>
 			</form>
 			<?php
 		}

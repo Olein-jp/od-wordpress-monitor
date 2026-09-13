@@ -87,13 +87,24 @@ final class NotificationSettingsPageWebhookTest extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'Configured. Leave blank', $output );
 		$this->assertStringContainsString( 'value="odm_test_notification"', $output );
 		$this->assertSame( 3, substr_count( $output, 'admin-post.php' ) );
-		$this->assertStringNotContainsString( 'disabled="disabled"', $output );
+		$this->assertStringNotContainsString( ' disabled=', $output );
 		$this->assertStringNotContainsString( $plain, $output );
 		$this->assertStringNotContainsString( $discord, $output );
 		$this->assertStringNotContainsString( $stored['slack']['encrypted_webhook_url'], $output );
 		$this->assertStringNotContainsString( $stored['discord']['encrypted_webhook_url'], $output );
 		$this->assertStringNotContainsString( $token, $output );
 		$this->assertStringNotContainsString( $stored['chatwork']['encrypted_api_token'], $output );
+	}
+
+	public function test_test_buttons_remain_disabled_until_credentials_are_configured(): void {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$this->page->register_settings();
+
+		ob_start();
+		$this->page->render();
+		$output = (string) ob_get_clean();
+
+		$this->assertSame( 3, substr_count( $output, ' disabled="disabled"' ) );
 	}
 
 	public function test_test_action_requires_manage_options(): void {
